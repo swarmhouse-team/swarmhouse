@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+@import '@robots/ui/theme.css';
+
+/* Классы внутри UI kit: пакет лежит вне apps/web, Tailwind сам его не просканирует. */
+@source '../../../../../packages/ui/src';
