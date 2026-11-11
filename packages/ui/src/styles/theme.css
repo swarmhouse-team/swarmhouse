@@ -1,7 +1,6 @@
 /*
  * Тема UI kit (CSS-переменные shadcn/ui, базовая палитра neutral).
  * Подключается в приложении после `@import "tailwindcss"`.
- * Значения по макетам переносятся сюда в задаче UI-006.
  */
 
 @custom-variant dark (&:is(.dark *));

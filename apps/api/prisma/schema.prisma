@@ -1,6 +1,3 @@
-// Модели появятся вместе с первыми фичами (см. docs/tasks/003-db-draft.md).
-// Строка подключения задаётся в prisma.config.ts.
-
 generator client {
   provider     = "prisma-client"
   output       = "../src/generated/prisma"
