@@ -10,7 +10,9 @@ import type { Env } from './config/env';
 const GLOBAL_PREFIX = 'api';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  // abortOnError: false — при ошибке инициализации (DI и т. п.) Nest бросает исключение,
+  // а не завершает процесс сам: все отказы старта проходят через один catch внизу файла.
+  const app = await NestFactory.create(AppModule, { abortOnError: false });
   const config = app.get<ConfigService<Env, true>>(ConfigService);
 
   app.setGlobalPrefix(GLOBAL_PREFIX);
@@ -32,4 +34,12 @@ async function bootstrap(): Promise<void> {
   logger.log(`Swagger: http://localhost:${port}/${GLOBAL_PREFIX}/docs`);
 }
 
-void bootstrap();
+// Явно завершаемся с кодом 1: не полагаемся на поведение Node по умолчанию для необработанных
+// отказов промисов (с --unhandled-rejections=warn процесс выходил бы с кодом 0).
+bootstrap().catch((error: unknown) => {
+  new Logger('Bootstrap').error(
+    'API не запустился',
+    error instanceof Error ? error.stack : String(error),
+  );
+  process.exit(1);
+});
