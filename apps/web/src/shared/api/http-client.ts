@@ -55,9 +55,17 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
     return undefined as T;
   }
 
-  const data: unknown = await response.json();
-
-  return schema ? schema.parse(data) : (data as T);
+  try {
+    const text = await response.text();
+    const data: unknown = text ? JSON.parse(text) : undefined;
+    return schema ? schema.parse(data) : (data as T);
+  } catch (cause) {
+    throw new HttpError(
+      response.status,
+      { code: API_ERROR_CODES.UNKNOWN_ERROR, message: 'Сервер вернул некорректный ответ' },
+      { cause },
+    );
+  }
 }
 
 async function parseApiError(response: Response): Promise<ApiError> {

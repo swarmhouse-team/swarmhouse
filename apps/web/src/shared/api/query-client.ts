@@ -13,15 +13,20 @@ declare module '@tanstack/react-query' {
   }
 }
 
+/**
+ * Повторяем только то, что может пройти со второй попытки: сеть (0) и сбои сервера (5xx).
+ * 4xx и некорректный ответ при 2xx повторятся так же, а ошибка не из `http` — баг в коде.
+ */
+function isRetryable(error: Error): boolean {
+  return error instanceof HttpError && (error.status === 0 || error.status >= 500);
+}
+
 export function createQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 30_000,
-        // Ошибки клиента (4xx) повторять бессмысленно.
-        retry: (failureCount, error) =>
-          !(error instanceof HttpError && error.status >= 400 && error.status < 500) &&
-          failureCount < 2,
+        retry: (failureCount, error) => failureCount < 2 && isRetryable(error),
       },
     },
     mutationCache: new MutationCache({
