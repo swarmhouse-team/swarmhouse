@@ -26,7 +26,6 @@ export const stationSchema = z.object({
 
 export type Station = z.infer<typeof stationSchema>;
 
-
 export const robotSchema = z.object({
   id: idSchema,
   name: nameSchema,
