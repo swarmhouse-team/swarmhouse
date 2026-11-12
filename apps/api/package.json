@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "postinstall": "prisma generate",
-    "dev": "nest start --watch",
+    "dev": "nest build && concurrently --kill-others --names build,run --prefix-colors blue,green \"tsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"nodemon\"",
     "build": "nest build",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
@@ -36,6 +36,8 @@
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
     "@types/supertest": "^7.2.1",
+    "concurrently": "^10.0.7",
+    "nodemon": "^3.1.14",
     "prisma": "^7.10.1",
     "supertest": "^7.3.2",
     "tsx": "^4.23.15",

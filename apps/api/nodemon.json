@@ -1,0 +1,6 @@
+{
+  "watch": ["dist", "../../packages/shared/dist"],
+  "ext": "js,cjs",
+  "delay": 500,
+  "exec": "node --enable-source-maps dist/main.js"
+}

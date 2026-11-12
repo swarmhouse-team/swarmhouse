@@ -70,7 +70,7 @@ packages/
 ### Общие
 
 - **Контракты — в `packages/shared`.** Zod-схема описывает запрос или ответ один раз: `api` валидирует по ней, `web` выводит из неё типы и проверяет формы. Версия zod одна на весь репозиторий (`catalog:` в [pnpm-workspace.yaml](pnpm-workspace.yaml)).
-- **`shared` импортируется собранным** (`dist/`). `pnpm dev` пересобирает его в watch-режиме; `typecheck` и `test` собирают его перед запуском.
+- **`shared` импортируется собранным** (`dist/`). В `pnpm dev` правки в `packages/shared/src` (включая новые файлы) пересобирают `dist`, после чего `api` перезапускается (nodemon следит за `packages/shared/dist`), а `web` подхватывает изменения сам. `typecheck` и `test` собирают `shared` перед запуском.
 - **Ошибки API — всегда `ApiError`** `{ code, message, details? }` из `shared`. `details` — массив `{ path, message }` для ошибок валидации.
 - Git: trunk-based, в `main` только через PR с ревью. На pre-commit работает lint-staged (ESLint + Prettier), на PR — CI: lint → typecheck → test → build.
 
