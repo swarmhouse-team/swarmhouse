@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { validWarehouseMap } from './fixtures';
+import { validWarehouseMap } from '../fixtures';
+
 import {
   warehouseMapSchema,
   type Obstacle,
@@ -16,7 +17,7 @@ function copyMap(): WarehouseMap {
 function firstStation(map: WarehouseMap): Station {
   const station = map.stations[0];
   if (!station) {
-    throw new Error('В фикстуре нет станции');
+    throw new Error('Fixture has no station');
   }
   return station;
 }
@@ -24,7 +25,7 @@ function firstStation(map: WarehouseMap): Station {
 function secondStation(map: WarehouseMap): Station {
   const station = map.stations[1];
   if (!station) {
-    throw new Error('В фикстуре нет второй станции');
+    throw new Error('Fixture has no second station');
   }
   return station;
 }
@@ -32,7 +33,7 @@ function secondStation(map: WarehouseMap): Station {
 function firstObstacle(map: WarehouseMap): Obstacle {
   const obstacle = map.obstacles[0];
   if (!obstacle) {
-    throw new Error('В фикстуре нет препятствия');
+    throw new Error('Fixture has no obstacle');
   }
   return obstacle;
 }
@@ -40,45 +41,45 @@ function firstObstacle(map: WarehouseMap): Obstacle {
 function firstRobot(map: WarehouseMap): Robot {
   const robot = map.robots[0];
   if (!robot) {
-    throw new Error('В фикстуре нет робота');
+    throw new Error('Fixture has no robot');
   }
   return robot;
 }
 
 describe('warehouseMapSchema', () => {
-  it('принимает валидную карту', () => {
+  it('accepts a valid map', () => {
     expect(warehouseMapSchema.parse(validWarehouseMap)).toEqual(validWarehouseMap);
   });
 
-  it('отклоняет координату на границе сетки', () => {
+  it('rejects a coordinate on the grid boundary', () => {
     const map = copyMap();
     firstObstacle(map).position.x = map.width;
 
     expect(warehouseMapSchema.safeParse(map).success).toBe(false);
   });
 
-  it('отклоняет два объекта на одной клетке', () => {
+  it('rejects two objects on the same cell', () => {
     const map = copyMap();
     firstObstacle(map).position = { ...firstStation(map).position };
 
     expect(warehouseMapSchema.safeParse(map).success).toBe(false);
   });
 
-  it('отклоняет робота внутри препятствия', () => {
+  it('rejects a robot inside an obstacle', () => {
     const map = copyMap();
     firstRobot(map).position = { ...firstObstacle(map).position };
 
     expect(warehouseMapSchema.safeParse(map).success).toBe(false);
   });
 
-  it('отклоняет повторяющиеся id станций', () => {
+  it('rejects duplicate station ids', () => {
     const map = copyMap();
     secondStation(map).id = firstStation(map).id;
 
     expect(warehouseMapSchema.safeParse(map).success).toBe(false);
   });
 
-  it('отклоняет повторяющиеся имена роботов', () => {
+  it('rejects duplicate robot names', () => {
     const map = copyMap();
     map.robots.push({
       id: 'rb-2',
