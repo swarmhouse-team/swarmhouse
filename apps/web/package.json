@@ -15,10 +15,12 @@
     "@robots/shared": "workspace:*",
     "@robots/ui": "workspace:*",
     "@tanstack/react-query": "^5.107.1",
+    "konva": "^10.9.1",
     "next": "^16.4.6",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "catalog:",
+    "react-konva": "^19.3.2",
     "zod": "catalog:"
   },
   "devDependencies": {
