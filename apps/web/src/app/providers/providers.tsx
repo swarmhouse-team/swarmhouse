@@ -1,13 +1,13 @@
 'use client';
 
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
-import { createQueryClient } from '@/shared/api';
+import { useQueryClientWithI18n } from '@/shared/api';
 
+/** Должен рендериться внутри `NextIntlClientProvider`: тосты ошибок берут из него язык. */
 export function Providers({ children }: { children: ReactNode }) {
-  // Клиент создаётся один раз на жизнь вкладки, а не на каждый рендер.
-  const [queryClient] = useState(createQueryClient);
+  const queryClient = useQueryClientWithI18n();
 
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

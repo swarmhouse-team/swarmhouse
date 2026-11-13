@@ -13,6 +13,19 @@ describe('apiErrorSchema', () => {
     expect(apiErrorSchema.parse(error)).toEqual(error);
   });
 
+  it('принимает детали с кодом правила и без него', () => {
+    const error = {
+      code: 'VALIDATION_ERROR',
+      message: 'Validation failed',
+      details: [
+        { path: 'name', code: 'too_small', message: 'Too small' },
+        { path: 'size', message: 'Invalid' },
+      ],
+    };
+
+    expect(apiErrorSchema.parse(error)).toEqual(error);
+  });
+
   it('отклоняет ответ без кода', () => {
     expect(apiErrorSchema.safeParse({ message: 'oops' }).success).toBe(false);
   });

@@ -16,6 +16,7 @@
     "@robots/ui": "workspace:*",
     "@tanstack/react-query": "^5.107.1",
     "next": "^16.4.6",
+    "next-intl": "^4.15.1",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "catalog:",

@@ -22,9 +22,14 @@ export const API_ERROR_CODES = {
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
 
-/** Ошибка одного поля: `path` — путь через точку (`items.0.name`), пустая строка — весь объект. */
+/**
+ * Ошибка одного поля: `path` — путь через точку (`items.0.name`), пустая строка — весь объект.
+ * `code` — код нарушенного правила (код zod issue: `too_small`, `invalid_type`, ...), по нему
+ * клиент переводит сообщение. `message` — технический текст на английском.
+ */
 export const apiErrorDetailSchema = z.object({
   path: z.string(),
+  code: z.string().optional(),
   message: z.string(),
 });
 
