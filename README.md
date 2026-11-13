@@ -13,10 +13,11 @@
 ```bash
 corepack enable        # один раз: включает pnpm нужной версии
 pnpm i                 # зависимости, .env из .env.example, Prisma Client, git-хуки
-docker compose up -d   # PostgreSQL
-pnpm db:migrate        # миграции
-pnpm dev               # shared (watch) + api + web
+pnpm db:migrate        # поднимет Postgres (если ещё не запущен) и применит миграции
+pnpm dev               # shared (watch) + api + web; Postgres поднимается сам
 ```
+
+`pnpm dev` и `pnpm db:migrate` сами поднимают Postgres из `docker-compose.yml` (`predev`/`predb:migrate` → `pnpm docker:up`) и ждут, пока контейнер станет healthy — вручную `docker compose up -d` не нужен. Остановить инфраструктуру: `pnpm docker:down`.
 
 - Фронтенд: http://localhost:3000 — на странице должно быть `health: ok`.
 - API: http://localhost:3001/api, Swagger: http://localhost:3001/api/docs.
@@ -34,17 +35,19 @@ packages/
 
 ## Скрипты (из корня)
 
-| Скрипт             | Что делает                                                                 |
-| ------------------ | -------------------------------------------------------------------------- |
-| `pnpm dev`         | Собирает `shared`, затем запускает `shared` (watch), `api` и `web`         |
-| `pnpm build`       | Продакшн-сборка всех пакетов                                               |
-| `pnpm lint`        | ESLint по всему репозиторию + Steiger (правила FSD) для `apps/web`         |
-| `pnpm typecheck`   | `tsc --noEmit` во всех пакетах                                             |
-| `pnpm test`        | Vitest во всех пакетах                                                     |
-| `pnpm format`      | Prettier: исправить форматирование (`format:check` — только проверка)      |
-| `pnpm db:migrate`  | `prisma migrate dev`: применить миграции, создать новую после правок схемы |
-| `pnpm db:generate` | Перегенерировать Prisma Client                                             |
-| `pnpm db:studio`   | Prisma Studio                                                              |
+| Скрипт             | Что делает                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| `pnpm dev`         | Поднимает Postgres (`predev`), собирает `shared`, запускает `shared` (watch), `api` и `web` |
+| `pnpm docker:up`   | `docker compose up -d --wait`: поднять Postgres и дождаться healthy                         |
+| `pnpm docker:down` | `docker compose down`: остановить инфраструктуру                                            |
+| `pnpm build`       | Продакшн-сборка всех пакетов                                                                |
+| `pnpm lint`        | ESLint по всему репозиторию + Steiger (правила FSD) для `apps/web`                          |
+| `pnpm typecheck`   | `tsc --noEmit` во всех пакетах                                                              |
+| `pnpm test`        | Vitest во всех пакетах                                                                      |
+| `pnpm format`      | Prettier: исправить форматирование (`format:check` — только проверка)                       |
+| `pnpm db:migrate`  | `prisma migrate dev`: применить миграции, создать новую после правок схемы                  |
+| `pnpm db:generate` | Перегенерировать Prisma Client                                                              |
+| `pnpm db:studio`   | Prisma Studio                                                                               |
 
 Запуск в одном пакете: `pnpm --filter @robots/api test`, `pnpm --filter @robots/web dev` и т. д.
 
