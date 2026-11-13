@@ -11,6 +11,16 @@ export const API_ERROR_CODES = {
   FORBIDDEN: 'FORBIDDEN',
   NOT_FOUND: 'NOT_FOUND',
   CONFLICT: 'CONFLICT',
+  /** Карта не прошла проверку схемы. */
+  MAP_INVALID: 'MAP_INVALID',
+  /** Версия карты в запросе не совпала с версией на сервере. */
+  MAP_VERSION_CONFLICT: 'MAP_VERSION_CONFLICT',
+  /** Геометрию карты нельзя менять, пока симуляция запущена. */
+  SIMULATION_ALREADY_RUNNING: 'SIMULATION_ALREADY_RUNNING',
+  /** Станция не найдена на карте склада. */
+  STATION_NOT_FOUND: 'STATION_NOT_FOUND',
+  /** Станции отправки и назначения совпадают. */
+  TASK_SAME_STATIONS: 'TASK_SAME_STATIONS',
   TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
   SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
