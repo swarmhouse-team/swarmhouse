@@ -1,7 +1,15 @@
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@robots/ui';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Heading,
+  Text,
+} from '@robots/ui';
 import Link from 'next/link';
-
-import { Header } from '@/widgets/header';
+import { LandingHeader } from './landing-header';
 
 const steps = [
   {
@@ -75,24 +83,24 @@ const robots = [
 export function LandingPage() {
   return (
     <div className="min-h-dvh bg-background">
-      <Header />
+      <LandingHeader />
 
       <main>
         <section className="border-b">
-          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-2 lg:px-8 lg:py-32">
+          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-10 sm:px-6 sm:py-24 lg:grid-cols-2 lg:px-8 lg:py-32">
             <div>
-              <p className="mb-4 text-sm font-medium text-muted-foreground">
+              <Text variant="muted" size="sm" weight="medium" className="mb-4">
                 Симуляция склада в браузере
-              </p>
+              </Text>
 
-              <h1 className="max-w-2xl text-balance text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+              <Heading level={1} className="max-w-2xl">
                 Соберите склад и наблюдайте, как роботы доставляют грузы
-              </h1>
+              </Heading>
 
-              <p className="mt-6 max-w-xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
+              <Text variant="lead" size="base" className="mt-6 max-w-xl sm:text-lg">
                 Нарисуйте карту, расставьте станции и роботов, создайте задания на перевозку.
                 Симуляция работает на сервере, а вся команда видит изменения в реальном времени.
-              </p>
+              </Text>
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild size="lg">
@@ -106,14 +114,16 @@ export function LandingPage() {
             </div>
 
             <Card className="overflow-hidden bg-muted/30">
-              <CardHeader className="border-b">
+              <CardHeader className="border-b pb-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <CardTitle>Склад №1</CardTitle>
                     <CardDescription className="mt-1">Симуляция запущена</CardDescription>
                   </div>
 
-                  <p className="text-sm font-medium">3 робота</p>
+                  <Text size="sm" weight="medium">
+                    3 робота
+                  </Text>
                 </div>
               </CardHeader>
 
@@ -122,13 +132,15 @@ export function LandingPage() {
                   <Card key={robot.name} className="gap-3 bg-background py-4 shadow-none">
                     <CardHeader className="flex grid-cols-none flex-row items-start justify-between gap-4">
                       <div>
-                        <CardTitle>
-                          <h2 className="text-base">{robot.name}</h2>
+                        <CardTitle asChild>
+                          <Text>{robot.name}</Text>
                         </CardTitle>
                         <CardDescription className="mt-1">{robot.route}</CardDescription>
                       </div>
 
-                      <p className="text-right text-sm font-medium">{robot.status}</p>
+                      <Text size="sm" weight="medium" className="text-right">
+                        {robot.status}
+                      </Text>
                     </CardHeader>
                   </Card>
                 ))}
@@ -137,14 +149,14 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id="how-it-works" className="scroll-mt-28 border-b bg-muted/30">
+        <section id="how-it-works" className="scroll-mt-14 border-b bg-muted/30">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
             <div className="max-w-2xl">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Как это работает</h2>
+              <Heading level={2}>Как это работает</Heading>
 
-              <p className="mt-3 text-muted-foreground">
+              <Text variant="muted" className="mt-3">
                 Четыре шага от пустой карты до первой доставки.
-              </p>
+              </Text>
             </div>
 
             <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -152,15 +164,21 @@ export function LandingPage() {
                 <li key={step.number}>
                   <Card className="h-full shadow-none">
                     <CardHeader>
-                      <p className="text-sm font-medium text-muted-foreground">Шаг {step.number}</p>
+                      <Text variant="muted" size="sm" weight="medium">
+                        Шаг {step.number}
+                      </Text>
 
-                      <CardTitle>
-                        <h3 className="text-lg">{step.title}</h3>
+                      <CardTitle asChild>
+                        <Heading level={3} size="sm">
+                          {step.title}
+                        </Heading>
                       </CardTitle>
                     </CardHeader>
 
                     <CardContent>
-                      <p className="text-sm leading-6 text-muted-foreground">{step.description}</p>
+                      <Text variant="muted" className="leading-6">
+                        {step.description}
+                      </Text>
                     </CardContent>
                   </Card>
                 </li>
@@ -169,10 +187,10 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="scroll-mt-28">
+        <section id="features" className="scroll-mt-14">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
             <div className="max-w-2xl">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Возможности</h2>
+              <Heading level={2}>Возможности</Heading>
 
               <p className="mt-3 text-muted-foreground">
                 Всё необходимое для управления симуляцией и совместной работы.
@@ -184,8 +202,10 @@ export function LandingPage() {
                 <li key={feature.title}>
                   <Card className="h-full shadow-none">
                     <CardHeader>
-                      <CardTitle>
-                        <h3 className="text-lg">{feature.title}</h3>
+                      <CardTitle asChild>
+                        <Heading level={3} size="sm">
+                          {feature.title}
+                        </Heading>
                       </CardTitle>
 
                       <CardDescription className="leading-6">{feature.description}</CardDescription>
@@ -198,11 +218,13 @@ export function LandingPage() {
             <Card className="mt-12 border-primary bg-primary text-primary-foreground">
               <CardContent className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
                 <div>
-                  <h2 className="text-2xl font-semibold">Первый склад — за несколько минут</h2>
+                  <Heading level={2} size="lg">
+                    Первый склад — за несколько минут
+                  </Heading>
 
-                  <p className="mt-2 text-sm text-primary-foreground/80">
+                  <Text size="sm" className="mt-2 text-primary-foreground/80">
                     Добавьте станцию, одного робота и первое задание на перевозку.
-                  </p>
+                  </Text>
                 </div>
 
                 <Button asChild variant="secondary" size="lg">
@@ -215,9 +237,14 @@ export function LandingPage() {
       </main>
 
       <footer className="border-t">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <p>RobotsProject · учебный командный проект</p>
-          <p>Симуляция складской логистики</p>
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+          <Text variant="muted" size="sm">
+            RobotsProject · учебный командный проект
+          </Text>
+
+          <Text variant="muted" size="sm">
+            Симуляция складской логистики
+          </Text>
         </div>
       </footer>
     </div>
