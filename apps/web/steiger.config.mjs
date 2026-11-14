@@ -8,6 +8,14 @@ export default defineConfig([
     ignores: ['**/*.spec.ts', '**/*.spec.tsx'],
   },
   {
+    // По требованиям проекта хедер должен оставаться отдельным виджетом,
+    // даже пока он используется только на лендинге.
+    files: ['./src/widgets/header/**'],
+    rules: {
+      'fsd/insignificant-slice': 'off',
+    },
+  },
+  {
     // `app/providers` и `app/styles` — общепринятые сегменты слоя app.
     files: ['./src/app/**'],
     rules: { 'fsd/segments-by-purpose': 'off' },
