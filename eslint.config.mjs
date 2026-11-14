@@ -5,7 +5,7 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-const reactFiles = ['apps/web/**/*.{ts,tsx,js,jsx,mjs}', 'packages/ui/**/*.{ts,tsx}'];
+const reactFiles = ['apps/web/**/*.{ts,tsx,js,jsx}', 'packages/ui/**/*.{ts,tsx}'];
 
 export default defineConfig(
   globalIgnores([
