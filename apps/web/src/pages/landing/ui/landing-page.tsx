@@ -218,7 +218,7 @@ export function LandingPage() {
             <Card className="mt-12 border-primary bg-primary text-primary-foreground">
               <CardContent className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
                 <div>
-                  <Heading level={2} size="lg">
+                  <Heading level={2} size="lg" className="text-primary-foreground">
                     Первый склад — за несколько минут
                   </Heading>
 
