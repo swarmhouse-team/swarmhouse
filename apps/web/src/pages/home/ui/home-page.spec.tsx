@@ -1,15 +1,9 @@
-import { QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createQueryClient } from '@/shared/api';
+import { renderWithProviders } from '@/shared/lib/test-utils';
 
 import { HomePage } from './home-page';
-
-function renderWithQuery(ui: ReactNode) {
-  return render(<QueryClientProvider client={createQueryClient()}>{ui}</QueryClientProvider>);
-}
 
 function mockFetch(status: number, body: unknown) {
   const fetchMock = vi.fn(async () => Response.json(body, { status }));
@@ -25,7 +19,7 @@ describe('HomePage', () => {
   it('показывает статус health, запрос идёт через /api', async () => {
     const fetchMock = mockFetch(200, { status: 'ok', db: 'up' });
 
-    renderWithQuery(<HomePage />);
+    renderWithProviders(<HomePage />);
 
     expect(await screen.findByText('health: ok')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
@@ -34,11 +28,29 @@ describe('HomePage', () => {
     );
   });
 
-  it('показывает сообщение из ApiError, если API ответил ошибкой', async () => {
+  it('показывает перевод ошибки по коду, а не message сервера', async () => {
     mockFetch(503, { code: 'SERVICE_UNAVAILABLE', message: 'Database is unavailable' });
 
-    renderWithQuery(<HomePage />);
+    renderWithProviders(<HomePage />);
 
-    expect(await screen.findByText(/Database is unavailable/)).toBeInTheDocument();
+    expect(await screen.findByText(/Сервис временно недоступен/)).toBeInTheDocument();
+    expect(screen.queryByText(/Database is unavailable/)).not.toBeInTheDocument();
+  });
+
+  it('на английском выводит тексты из en.json', async () => {
+    mockFetch(200, { status: 'ok', db: 'up' });
+
+    renderWithProviders(<HomePage />, { locale: 'en' });
+
+    expect(await screen.findByText('health: ok')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check again' })).toBeInTheDocument();
+  });
+
+  it('на русском выводит тексты из ru.json', async () => {
+    mockFetch(200, { status: 'ok', db: 'up' });
+
+    renderWithProviders(<HomePage />);
+
+    expect(await screen.findByRole('button', { name: 'Проверить ещё раз' })).toBeInTheDocument();
   });
 });

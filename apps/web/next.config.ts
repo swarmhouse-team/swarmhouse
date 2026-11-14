@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
 
 // Общий .env лежит в корне монорепозитория, Next сам читает только apps/web/.env*.
 const rootEnvFile = resolve(process.cwd(), '../../.env');
@@ -22,4 +23,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withNextIntl = createNextIntlPlugin('./src/shared/i18n/routing/request.ts');
+
+export default withNextIntl(nextConfig);

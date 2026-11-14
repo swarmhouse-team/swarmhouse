@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "title": "Robots — warehouse control room",
+    "description": "Platform for managing robots in a simulated warehouse"
+  },
+  "home": {
+    "title": "Robots",
+    "description": "Project skeleton: web → /api → api → PostgreSQL",
+    "healthPending": "health: …",
+    "healthStatus": "health: {status}",
+    "healthError": "health: {message}",
+    "refresh": "Check again"
+  },
+  "switchLocale": {
+    "label": "Interface language",
+    "languages": {
+      "ru": "Русский",
+      "en": "English"
+    }
+  },
+  "notFound": {
+    "title": "Page not found"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "api": {
+      "VALIDATION_ERROR": "Check the entered data",
+      "BAD_REQUEST": "Invalid request",
+      "UNAUTHORIZED": "Please sign in",
+      "FORBIDDEN": "You don't have permission for this action",
+      "NOT_FOUND": "Not found",
+      "CONFLICT": "The data has changed. Refresh the page and try again",
+      "MAP_INVALID": "The warehouse map contains errors",
+      "MAP_VERSION_CONFLICT": "The map has already been changed. Refresh the page and try again",
+      "SIMULATION_ALREADY_RUNNING": "The map can't be changed while the simulation is running",
+      "STATION_NOT_FOUND": "Station not found on the map",
+      "TASK_SAME_STATIONS": "Pickup and drop-off stations must be different",
+      "TOO_MANY_REQUESTS": "Too many requests. Please wait a moment",
+      "SERVICE_UNAVAILABLE": "The service is temporarily unavailable",
+      "INTERNAL_ERROR": "Server error. Please try again",
+      "NETWORK_ERROR": "No connection to the server",
+      "UNKNOWN_ERROR": "The server returned an invalid response"
+    }
+  },
+  "validation": {
+    "required": "Required field",
+    "invalid": "Invalid value",
+    "invalid_type": "Invalid value type",
+    "too_small": {
+      "string": "At least {minimum, plural, one {# character} other {# characters}}",
+      "number": "Must be at least {minimum}",
+      "numberExclusive": "Must be greater than {minimum}",
+      "array": "Select at least {minimum, plural, one {# item} other {# items}}",
+      "other": "Value is too small"
+    },
+    "too_big": {
+      "string": "At most {maximum, plural, one {# character} other {# characters}}",
+      "number": "Must be at most {maximum}",
+      "numberExclusive": "Must be less than {maximum}",
+      "array": "Select at most {maximum, plural, one {# item} other {# items}}",
+      "other": "Value is too large"
+    },
+    "invalid_format": {
+      "email": "Enter a valid email",
+      "url": "Enter a valid URL",
+      "other": "Invalid format"
+    },
+    "invalid_value": "Value is not allowed",
+    "not_multiple_of": "Must be a multiple of {divisor}",
+    "api": {
+      "invalid_type": "Invalid value type",
+      "too_small": "Value is too short or too small",
+      "too_big": "Value is too long or too large",
+      "invalid_format": "Invalid format",
+      "invalid_value": "Value is not allowed",
+      "not_multiple_of": "Value does not match the allowed step"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 import { toast } from '@robots/ui';
 import { MutationCache, QueryClient } from '@tanstack/react-query';
 
-import { getErrorMessage, HttpError } from './http-error';
+import { HttpError } from './http-error';
 
 declare module '@tanstack/react-query' {
   interface Register {
@@ -21,7 +21,12 @@ function isRetryable(error: Error): boolean {
   return error instanceof HttpError && (error.status === 0 || error.status >= 500);
 }
 
-export function createQueryClient(): QueryClient {
+export type QueryClientOptions = {
+  /** Текст ошибки для тоста. Вызывается в момент ошибки, поэтому язык — текущий. */
+  getErrorMessage: (error: Error) => string;
+};
+
+export function createQueryClient({ getErrorMessage }: QueryClientOptions): QueryClient {
   return new QueryClient({
     defaultOptions: {
       queries: {

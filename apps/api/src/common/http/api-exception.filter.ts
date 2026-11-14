@@ -67,6 +67,8 @@ export class ApiExceptionFilter implements ExceptionFilter {
         message: 'Validation failed',
         details: issues.map((issue) => ({
           path: issue.path.join('.'),
+          // По коду правила клиент переводит сообщение на язык интерфейса.
+          code: issue.code,
           message: issue.message,
         })),
       },

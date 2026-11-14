@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "title": "Robots — диспетчерская склада",
+    "description": "Платформа управления роботами на симулируемом складе"
+  },
+  "home": {
+    "title": "Robots",
+    "description": "Каркас проекта: web → /api → api → PostgreSQL",
+    "healthPending": "health: …",
+    "healthStatus": "health: {status}",
+    "healthError": "health: {message}",
+    "refresh": "Проверить ещё раз"
+  },
+  "switchLocale": {
+    "label": "Язык интерфейса",
+    "languages": {
+      "ru": "Русский",
+      "en": "English"
+    }
+  },
+  "notFound": {
+    "title": "Страница не найдена"
+  },
+  "errors": {
+    "generic": "Что-то пошло не так. Попробуйте ещё раз.",
+    "api": {
+      "VALIDATION_ERROR": "Проверьте введённые данные",
+      "BAD_REQUEST": "Некорректный запрос",
+      "UNAUTHORIZED": "Нужно войти в систему",
+      "FORBIDDEN": "Недостаточно прав для этого действия",
+      "NOT_FOUND": "Не найдено",
+      "CONFLICT": "Данные изменились. Обновите страницу и попробуйте снова",
+      "MAP_INVALID": "Карта склада содержит ошибки",
+      "MAP_VERSION_CONFLICT": "Карту уже изменили. Обновите страницу и попробуйте снова",
+      "SIMULATION_ALREADY_RUNNING": "Нельзя менять карту, пока идёт симуляция",
+      "STATION_NOT_FOUND": "Станция не найдена на карте",
+      "TASK_SAME_STATIONS": "Станции отправки и назначения должны различаться",
+      "TOO_MANY_REQUESTS": "Слишком много запросов. Подождите немного",
+      "SERVICE_UNAVAILABLE": "Сервис временно недоступен",
+      "INTERNAL_ERROR": "Ошибка на сервере. Попробуйте ещё раз",
+      "NETWORK_ERROR": "Нет соединения с сервером",
+      "UNKNOWN_ERROR": "Сервер вернул некорректный ответ"
+    }
+  },
+  "validation": {
+    "required": "Обязательное поле",
+    "invalid": "Некорректное значение",
+    "invalid_type": "Неверный тип значения",
+    "too_small": {
+      "string": "Минимум {minimum, plural, one {# символ} few {# символа} many {# символов} other {# символа}}",
+      "number": "Значение должно быть не меньше {minimum}",
+      "numberExclusive": "Значение должно быть больше {minimum}",
+      "array": "Выберите минимум {minimum, plural, one {# элемент} few {# элемента} many {# элементов} other {# элемента}}",
+      "other": "Слишком маленькое значение"
+    },
+    "too_big": {
+      "string": "Максимум {maximum, plural, one {# символ} few {# символа} many {# символов} other {# символа}}",
+      "number": "Значение должно быть не больше {maximum}",
+      "numberExclusive": "Значение должно быть меньше {maximum}",
+      "array": "Выберите не больше {maximum, plural, one {# элемента} few {# элементов} many {# элементов} other {# элемента}}",
+      "other": "Слишком большое значение"
+    },
+    "invalid_format": {
+      "email": "Введите корректный email",
+      "url": "Введите корректный адрес",
+      "other": "Неверный формат"
+    },
+    "invalid_value": "Недопустимое значение",
+    "not_multiple_of": "Значение должно быть кратно {divisor}",
+    "api": {
+      "invalid_type": "Неверный тип значения",
+      "too_small": "Слишком короткое или маленькое значение",
+      "too_big": "Слишком длинное или большое значение",
+      "invalid_format": "Неверный формат",
+      "invalid_value": "Недопустимое значение",
+      "not_multiple_of": "Значение не кратно допустимому шагу"
+    }
+  }
+}

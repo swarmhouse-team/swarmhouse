@@ -43,7 +43,8 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
     }
     throw new HttpError(0, {
       code: API_ERROR_CODES.NETWORK_ERROR,
-      message: 'Нет соединения с сервером',
+      // Технический текст для логов; пользователю показывается перевод по коду.
+      message: 'Network request failed',
     });
   }
 
@@ -62,7 +63,7 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
   } catch (cause) {
     throw new HttpError(
       response.status,
-      { code: API_ERROR_CODES.UNKNOWN_ERROR, message: 'Сервер вернул некорректный ответ' },
+      { code: API_ERROR_CODES.UNKNOWN_ERROR, message: 'Invalid response body' },
       { cause },
     );
   }
@@ -80,6 +81,6 @@ async function parseApiError(response: Response): Promise<ApiError> {
 
   return {
     code: API_ERROR_CODES.UNKNOWN_ERROR,
-    message: response.statusText || `Ошибка запроса (${response.status})`,
+    message: response.statusText || `Request failed with status ${response.status}`,
   };
 }

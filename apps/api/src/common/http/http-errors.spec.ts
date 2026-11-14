@@ -67,8 +67,8 @@ describe('Формат ошибок API', () => {
       code: 'VALIDATION_ERROR',
       message: 'Validation failed',
       details: [
-        { path: 'name', message: expect.any(String) },
-        { path: 'size', message: expect.any(String) },
+        { path: 'name', code: 'too_small', message: expect.any(String) },
+        { path: 'size', code: 'invalid_type', message: expect.any(String) },
       ],
     });
   });

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
 import { http } from './http-client';
-import { getErrorMessage, HttpError } from './http-error';
+import { HttpError } from './http-error';
 import { createQueryClient } from './query-client';
 
 function mockFetch(response: Response | (() => never)) {
@@ -49,7 +49,6 @@ describe('http', () => {
     expect(error).toBeInstanceOf(HttpError);
     expect(error).toMatchObject({ status: 200, code: API_ERROR_CODES.UNKNOWN_ERROR });
     expect((error as HttpError).cause).toBeInstanceOf(SyntaxError);
-    expect(getErrorMessage(error)).toBe('Сервер вернул некорректный ответ');
   });
 
   it('JSON не по схеме при 200 — HttpError UNKNOWN_ERROR', async () => {
@@ -67,7 +66,7 @@ describe('http', () => {
     const error = await catchError(http('/warehouses/1'));
 
     expect(error).toMatchObject({ status: 404, code: 'NOT_FOUND' });
-    expect(getErrorMessage(error)).toBe('Склад не найден');
+    expect((error as HttpError).error.message).toBe('Склад не найден');
   });
 
   it('сбой сети — HttpError NETWORK_ERROR со статусом 0', async () => {
@@ -81,19 +80,9 @@ describe('http', () => {
   });
 });
 
-describe('getErrorMessage', () => {
-  it('не показывает технический текст обычных ошибок', () => {
-    expect(getErrorMessage(new SyntaxError('Unexpected token <'))).toBe(
-      'Что-то пошло не так. Попробуйте ещё раз.',
-    );
-  });
-});
-
 describe('повтор запросов', () => {
-  const retry = createQueryClient().getDefaultOptions().queries?.retry as (
-    failureCount: number,
-    error: Error,
-  ) => boolean;
+  const retry = createQueryClient({ getErrorMessage: () => '' }).getDefaultOptions().queries
+    ?.retry as (failureCount: number, error: Error) => boolean;
 
   const httpError = (status: number) =>
     new HttpError(status, { code: API_ERROR_CODES.UNKNOWN_ERROR, message: '' });
