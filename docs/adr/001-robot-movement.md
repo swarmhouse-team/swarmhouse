@@ -93,21 +93,15 @@ type Position = {
   y: number;
 };
 
-type Direction = "UP" | "RIGHT" | "DOWN" | "LEFT";
+type Direction = 'UP' | 'RIGHT' | 'DOWN' | 'LEFT';
 
-type Action = "FORWARD" | "TURN_LEFT" | "TURN_RIGHT" | "WAIT";
+type Action = 'FORWARD' | 'TURN_LEFT' | 'TURN_RIGHT' | 'WAIT';
 ```
 
 ## 2.Робот
 
 ```typescript
-type RobotStatus =
-  | "IDLE"
-  | "MOVING"
-  | "WAITING"
-  | "BLOCKED"
-  | "NO_PATH"
-  | "FAULT";
+type RobotStatus = 'IDLE' | 'MOVING' | 'WAITING' | 'BLOCKED' | 'NO_PATH' | 'FAULT';
 
 type Robot = {
   id: string;
@@ -131,7 +125,7 @@ type Grid = {
 
 ```typescript
 type Goal = {
-  type: "STATION";
+  type: 'STATION';
   stationId: string;
   approachPositions: {
     position: Position;
@@ -162,7 +156,7 @@ type PlanningInput = {
 type RouteStep = {
   //состояние робота после выполнения действия на указанном тике.
   tick: number;
-  action: Action | "START";
+  action: Action | 'START';
   position: Position;
   direction: Direction;
 };
@@ -179,9 +173,9 @@ type PlanningResult =
   | {
       success: false;
       reason:
-        | "NO_PATH" // цель недостижима на статической карте
-        | "BLOCKED" // безопасный согласованный план не найден с учётом других роботов
-        | "SEARCH_LIMIT"; // исчерпан лимит поиска
+        | 'NO_PATH' // цель недостижима на статической карте
+        | 'BLOCKED' // безопасный согласованный план не найден с учётом других роботов
+        | 'SEARCH_LIMIT'; // исчерпан лимит поиска
       robotIds: string[];
       attempts: number;
     };
