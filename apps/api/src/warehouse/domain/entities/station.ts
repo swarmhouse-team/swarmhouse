@@ -1,5 +1,5 @@
 import type { StationType } from '../enums/station-type';
-import { assertId } from '../vo/id';
+import { normalizeId } from '../vo/id';
 import { Name } from '../vo/name';
 import { Position } from '../vo/position';
 
@@ -19,7 +19,7 @@ export class Station {
   }
 
   static create(id: string, name: string, type: StationType, position: Position): Station {
-    return new Station(assertId(id), Name.create(name), type, position);
+    return new Station(normalizeId(id), Name.create(name), type, position);
   }
 
   withPosition(position: Position): Station {

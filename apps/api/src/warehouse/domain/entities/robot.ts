@@ -1,4 +1,4 @@
-import { assertId } from '../vo/id';
+import { normalizeId } from '../vo/id';
 import { Name } from '../vo/name';
 import { Position } from '../vo/position';
 
@@ -16,7 +16,7 @@ export class Robot {
   }
 
   static create(id: string, name: string, position: Position): Robot {
-    return new Robot(assertId(id), Name.create(name), position);
+    return new Robot(normalizeId(id), Name.create(name), position);
   }
 
   withPosition(position: Position): Robot {

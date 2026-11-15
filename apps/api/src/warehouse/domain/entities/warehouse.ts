@@ -1,4 +1,4 @@
-import { assertId } from '../vo/id';
+import { normalizeId } from '../vo/id';
 import { Name } from '../vo/name';
 
 /** Warehouse aggregate root. It validates only its own name and does not know about the map. */
@@ -13,7 +13,7 @@ export class Warehouse {
   }
 
   static create(id: string, name: string): Warehouse {
-    return new Warehouse(assertId(id), Name.create(name));
+    return new Warehouse(normalizeId(id), Name.create(name));
   }
 
   /** Returns a new warehouse with the same id and a name checked by `Name`. */

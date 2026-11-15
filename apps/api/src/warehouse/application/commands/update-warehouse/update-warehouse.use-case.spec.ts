@@ -11,6 +11,8 @@ import type {
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
 import { UpdateWarehouse } from './update-warehouse.use-case';
 
+const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
+
 interface Harness {
   useCase: UpdateWarehouse;
   calls: string[];
@@ -42,7 +44,9 @@ function createHarness(options?: {
             if (options?.findError) {
               throw options.findError;
             }
-            return options?.found === undefined ? { id: 'wh-1', name: 'Main' } : options.found;
+            return options?.found === undefined
+              ? { id: WAREHOUSE_ID, name: 'Main' }
+              : options.found;
           },
           async save(warehouse) {
             calls.push('save');
@@ -92,12 +96,12 @@ describe('UpdateWarehouse', () => {
   it('saves a renamed warehouse and returns the normalized name', async () => {
     const harness = createHarness();
 
-    const result = await harness.useCase.execute({ warehouseId: 'wh-1', name: '  North  ' });
+    const result = await harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: '  North  ' });
 
-    expect(harness.calls).toEqual(['execute', 'findById:wh-1', 'save']);
-    expect(harness.saved?.id).toBe('wh-1');
+    expect(harness.calls).toEqual(['execute', `findById:${WAREHOUSE_ID}`, 'save']);
+    expect(harness.saved?.id).toBe(WAREHOUSE_ID);
     expect(harness.saved?.name.value).toBe('North');
-    expect(result).toEqual({ warehouseId: 'wh-1', name: 'North' });
+    expect(result).toEqual({ warehouseId: WAREHOUSE_ID, name: 'North' });
     expect(harness.calls).not.toContain('map');
   });
 
@@ -106,9 +110,9 @@ describe('UpdateWarehouse', () => {
     async (name) => {
       const harness = createHarness();
 
-      await expect(harness.useCase.execute({ warehouseId: 'wh-1', name })).rejects.toBeInstanceOf(
-        InvalidNameError,
-      );
+      await expect(
+        harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name }),
+      ).rejects.toBeInstanceOf(InvalidNameError);
       expect(harness.calls).not.toContain('save');
     },
   );
@@ -117,20 +121,20 @@ describe('UpdateWarehouse', () => {
     const harness = createHarness({ found: null });
 
     await expect(
-      harness.useCase.execute({ warehouseId: 'wh-1', name: 'North' }),
+      harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'North' }),
     ).rejects.toMatchObject({
       name: 'WarehouseNotFoundError',
-      details: { warehouseId: 'wh-1' },
+      details: { warehouseId: WAREHOUSE_ID },
     });
-    expect(harness.calls).toEqual(['execute', 'findById:wh-1']);
+    expect(harness.calls).toEqual(['execute', `findById:${WAREHOUSE_ID}`]);
   });
 
   it('returns the current name without saving when it is already normalized', async () => {
-    const harness = createHarness({ found: { id: 'wh-1', name: 'Main' } });
+    const harness = createHarness({ found: { id: WAREHOUSE_ID, name: 'Main' } });
 
-    const result = await harness.useCase.execute({ warehouseId: 'wh-1', name: '  Main  ' });
+    const result = await harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: '  Main  ' });
 
-    expect(result).toEqual({ warehouseId: 'wh-1', name: 'Main' });
+    expect(result).toEqual({ warehouseId: WAREHOUSE_ID, name: 'Main' });
     expect(harness.calls).not.toContain('save');
     expect(harness.calls).not.toContain('map');
   });
@@ -139,7 +143,7 @@ describe('UpdateWarehouse', () => {
     const harness = createHarness({ saveResult: { status: 'not_found' } });
 
     await expect(
-      harness.useCase.execute({ warehouseId: 'wh-1', name: 'North' }),
+      harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'North' }),
     ).rejects.toBeInstanceOf(WarehouseNotFoundError);
     expect(harness.calls).toContain('save');
   });
@@ -148,9 +152,9 @@ describe('UpdateWarehouse', () => {
     const failure = new Error('database unavailable');
     const harness = createHarness({ findError: failure });
 
-    await expect(harness.useCase.execute({ warehouseId: 'wh-1', name: 'North' })).rejects.toBe(
-      failure,
-    );
+    await expect(
+      harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'North' }),
+    ).rejects.toBe(failure);
   });
 
   it('rejects with the commit error after a successful callback', async () => {
@@ -161,9 +165,9 @@ describe('UpdateWarehouse', () => {
       },
     });
 
-    await expect(harness.useCase.execute({ warehouseId: 'wh-1', name: 'North' })).rejects.toBe(
-      failure,
-    );
+    await expect(
+      harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'North' }),
+    ).rejects.toBe(failure);
   });
 
   it('does not settle before unit of work execute settles', async () => {
@@ -173,9 +177,11 @@ describe('UpdateWarehouse', () => {
     });
     const harness = createHarness({ afterCallback: () => gate });
     let settled = false;
-    const pending = harness.useCase.execute({ warehouseId: 'wh-1', name: 'North' }).finally(() => {
-      settled = true;
-    });
+    const pending = harness.useCase
+      .execute({ warehouseId: WAREHOUSE_ID, name: 'North' })
+      .finally(() => {
+        settled = true;
+      });
 
     await Promise.resolve();
     expect(settled).toBe(false);

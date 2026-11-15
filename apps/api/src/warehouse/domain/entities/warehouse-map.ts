@@ -7,7 +7,7 @@ import {
 } from '../errors/map.errors';
 import type { StationType } from '../enums/station-type';
 import { GridSize } from '../vo/grid-size';
-import { assertId } from '../vo/id';
+import { normalizeId } from '../vo/id';
 import { Position } from '../vo/position';
 import { Robot } from './robot';
 import { Station } from './station';
@@ -68,8 +68,8 @@ export class WarehouseMap {
 
   static create(id: string, warehouseId: string): WarehouseMap {
     return new WarehouseMap(
-      assertId(id),
-      assertId(warehouseId),
+      normalizeId(id),
+      normalizeId(warehouseId),
       GridSize.create(MAP_WIDTH, MAP_HEIGHT),
     );
   }
@@ -133,7 +133,8 @@ export class WarehouseMap {
   }
 
   moveRobot(id: string, position: Position): void {
-    const index = this.robots.findIndex((robot) => robot.id === id);
+    const robotId = normalizeId(id);
+    const index = this.robots.findIndex((robot) => robot.id === robotId);
     const current = this.robots[index];
     if (index === -1 || !current) {
       throw new MapObjectNotFoundError('robot');
@@ -148,7 +149,8 @@ export class WarehouseMap {
   }
 
   moveStation(id: string, position: Position): void {
-    const index = this.stations.findIndex((station) => station.id === id);
+    const stationId = normalizeId(id);
+    const index = this.stations.findIndex((station) => station.id === stationId);
     const current = this.stations[index];
     if (index === -1 || !current) {
       throw new MapObjectNotFoundError('station');
@@ -177,7 +179,8 @@ export class WarehouseMap {
   }
 
   removeRobot(id: string): void {
-    const index = this.robots.findIndex((robot) => robot.id === id);
+    const robotId = normalizeId(id);
+    const index = this.robots.findIndex((robot) => robot.id === robotId);
     if (index === -1) {
       throw new MapObjectNotFoundError('robot');
     }
@@ -185,7 +188,8 @@ export class WarehouseMap {
   }
 
   removeStation(id: string): void {
-    const index = this.stations.findIndex((station) => station.id === id);
+    const stationId = normalizeId(id);
+    const index = this.stations.findIndex((station) => station.id === stationId);
     if (index === -1) {
       throw new MapObjectNotFoundError('station');
     }
