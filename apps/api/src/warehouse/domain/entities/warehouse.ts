@@ -15,4 +15,9 @@ export class Warehouse {
   static create(id: string, name: string): Warehouse {
     return new Warehouse(assertId(id), Name.create(name));
   }
+
+  /** Returns a new warehouse with the same id and a name checked by `Name`. */
+  rename(name: string): Warehouse {
+    return new Warehouse(this.id, Name.create(name));
+  }
 }
