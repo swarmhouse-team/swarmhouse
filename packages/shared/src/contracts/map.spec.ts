@@ -79,6 +79,18 @@ describe('warehouseMapSchema', () => {
     expect(warehouseMapSchema.safeParse(map).success).toBe(false);
   });
 
+  it('rejects station names that differ only by case and surrounding spaces', () => {
+    const map = copyMap();
+    const station = firstStation(map);
+    map.stations.push({
+      id: 'st-3',
+      name: ` ${station.name.toLocaleUpperCase()} `,
+      position: { x: 3, y: 3 },
+    });
+
+    expect(warehouseMapSchema.safeParse(map).success).toBe(false);
+  });
+
   it('rejects duplicate robot names', () => {
     const map = copyMap();
     map.robots.push({

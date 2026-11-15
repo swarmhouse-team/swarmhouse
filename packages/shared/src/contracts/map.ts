@@ -116,7 +116,7 @@ export const warehouseMapSchema = z
     requireUnique(
       'stations',
       'name',
-      map.stations.map((station) => station.name),
+      map.stations.map((station) => station.name.trim().toLocaleLowerCase()),
     );
     requireUnique(
       'robots',
