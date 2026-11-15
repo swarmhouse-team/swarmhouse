@@ -7,6 +7,9 @@ import type { IdGenerator } from '../../ports/system/id-generator';
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
 import { CreateWarehouse } from './create-warehouse.use-case';
 
+const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
+const MAP_ID = '22222222-2222-7111-8111-22222222222b';
+
 interface Harness {
   useCase: CreateWarehouse;
   inserted: { warehouse?: Warehouse; map?: WarehouseMap };
@@ -22,7 +25,7 @@ function createHarness(options?: {
 }): Harness {
   const inserted: Harness['inserted'] = {};
   const calls: string[] = [];
-  const ids = [...(options?.ids ?? ['wh-1', 'map-1'])];
+  const ids = [...(options?.ids ?? [WAREHOUSE_ID, MAP_ID])];
   let executeCount = 0;
   const unitOfWork: UnitOfWork = {
     async execute(work) {
@@ -98,11 +101,11 @@ describe('CreateWarehouse', () => {
 
     expect(harness.executeCount).toBe(1);
     expect(harness.calls).toEqual(['execute', 'insert-warehouse', 'insert-map']);
-    expect(harness.inserted.warehouse?.id).toBe('wh-1');
+    expect(harness.inserted.warehouse?.id).toBe(WAREHOUSE_ID);
     expect(harness.inserted.map?.warehouseId).toBe(harness.inserted.warehouse?.id);
     expect(harness.inserted.map?.snapshot()).toEqual({
-      id: 'map-1',
-      warehouseId: 'wh-1',
+      id: MAP_ID,
+      warehouseId: WAREHOUSE_ID,
       width: 20,
       height: 20,
       obstacles: [],
@@ -110,9 +113,9 @@ describe('CreateWarehouse', () => {
       robots: [],
     });
     expect(result).toEqual({
-      warehouseId: 'wh-1',
+      warehouseId: WAREHOUSE_ID,
       name: 'Main',
-      mapId: 'map-1',
+      mapId: MAP_ID,
       version: 0,
     });
   });

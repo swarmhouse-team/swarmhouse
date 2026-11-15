@@ -14,12 +14,23 @@ import { Robot } from './robot';
 import { Station } from './station';
 import { WarehouseMap, type WarehouseMapSnapshot } from './warehouse-map';
 
+const MAP_ID = '22222222-2222-7111-8111-22222222222b';
+const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
+const ROBOT_ID = '33333333-3333-4111-8111-33333333333c';
+const ROBOT_2_ID = '33333333-3333-4111-a111-333333333334';
+const STATION_ID = '44444444-4444-4111-8111-44444444444e';
+const STATION_2_ID = '44444444-4444-4111-a111-444444444445';
+const OCCUPIED_ID = '55555555-5555-4111-8111-55555555555a';
+const INCOMING_ID = '66666666-6666-4111-8111-66666666666b';
+const SAME_ID = '77777777-7777-4111-8111-77777777777c';
+const ABSENT_ID = '88888888-8888-4111-8111-88888888888d';
+
 function at(x: number, y: number): Position {
   return Position.create(x, y);
 }
 
 function createMap(): WarehouseMap {
-  return WarehouseMap.create('map-1', 'wh-1');
+  return WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
 }
 
 function occupy(
@@ -28,11 +39,11 @@ function occupy(
   position: Position,
 ): void {
   if (kind === 'robot') {
-    map.placeRobot('occupied', 'Occupied', position);
+    map.placeRobot(OCCUPIED_ID, 'Occupied', position);
     return;
   }
   if (kind === 'station') {
-    map.placeStation('occupied', 'Occupied', StationType.Receiving, position);
+    map.placeStation(OCCUPIED_ID, 'Occupied', StationType.Receiving, position);
     return;
   }
   map.addObstacle(position);
@@ -44,11 +55,11 @@ function placeIncoming(
   position: Position,
 ): void {
   if (kind === 'robot') {
-    map.placeRobot('incoming', 'Incoming', position);
+    map.placeRobot(INCOMING_ID, 'Incoming', position);
     return;
   }
   if (kind === 'station') {
-    map.placeStation('incoming', 'Incoming', StationType.Issuing, position);
+    map.placeStation(INCOMING_ID, 'Incoming', StationType.Issuing, position);
     return;
   }
   map.addObstacle(position);
@@ -59,8 +70,8 @@ describe('WarehouseMap', () => {
     const map = createMap();
 
     expect(map.snapshot()).toEqual({
-      id: 'map-1',
-      warehouseId: 'wh-1',
+      id: MAP_ID,
+      warehouseId: WAREHOUSE_ID,
       width: 20,
       height: 20,
       obstacles: [],
@@ -70,11 +81,11 @@ describe('WarehouseMap', () => {
   });
 
   it.each(['', '   ', ' map'])('rejects map id %j', (id) => {
-    expect(() => WarehouseMap.create(id, 'wh-1')).toThrow(InvalidIdError);
+    expect(() => WarehouseMap.create(id, WAREHOUSE_ID)).toThrow(InvalidIdError);
   });
 
   it.each(['', '   ', ' wh'])('rejects warehouseId %j', (warehouseId) => {
-    expect(() => WarehouseMap.create('map-1', warehouseId)).toThrow(InvalidIdError);
+    expect(() => WarehouseMap.create(MAP_ID, warehouseId)).toThrow(InvalidIdError);
   });
 
   it('places an object on the last cell 19,19', () => {
@@ -93,10 +104,10 @@ describe('WarehouseMap', () => {
     const before = map.snapshot();
 
     expect(() => map.addObstacle(at(x, y))).toThrow(PositionOutOfBoundsError);
-    expect(() => map.placeRobot('rb-1', 'Robot', at(x, y))).toThrow(PositionOutOfBoundsError);
-    expect(() => map.placeStation('st-1', 'Receiving', StationType.Receiving, at(x, y))).toThrow(
-      PositionOutOfBoundsError,
-    );
+    expect(() => map.placeRobot(ROBOT_ID, 'Robot', at(x, y))).toThrow(PositionOutOfBoundsError);
+    expect(() =>
+      map.placeStation(STATION_ID, 'Receiving', StationType.Receiving, at(x, y)),
+    ).toThrow(PositionOutOfBoundsError);
     expect(map.snapshot()).toEqual(before);
   });
 
@@ -126,12 +137,12 @@ describe('WarehouseMap', () => {
 
   it('rejects the same id on two robots and on a robot and a station', () => {
     const map = createMap();
-    map.placeRobot('same', 'First', at(0, 0));
-    map.placeStation('station', 'Receiving', StationType.Receiving, at(1, 0));
+    map.placeRobot(SAME_ID, 'First', at(0, 0));
+    map.placeStation(STATION_ID, 'Receiving', StationType.Receiving, at(1, 0));
     const before = map.snapshot();
 
-    expect(() => map.placeRobot('same', 'Second', at(2, 0))).toThrow(DuplicateObjectIdError);
-    expect(() => map.placeStation('same', 'Issuing', StationType.Issuing, at(3, 0))).toThrow(
+    expect(() => map.placeRobot(SAME_ID, 'Second', at(2, 0))).toThrow(DuplicateObjectIdError);
+    expect(() => map.placeStation(SAME_ID, 'Issuing', StationType.Issuing, at(3, 0))).toThrow(
       DuplicateObjectIdError,
     );
     expect(map.snapshot()).toEqual(before);
@@ -139,48 +150,48 @@ describe('WarehouseMap', () => {
 
   it('rejects station names that match after trim regardless of case', () => {
     const map = createMap();
-    map.placeStation('st-1', 'Приёмка', StationType.Receiving, at(0, 0));
+    map.placeStation(STATION_ID, 'Приёмка', StationType.Receiving, at(0, 0));
     const before = map.snapshot();
 
-    expect(() => map.placeStation('st-2', ' приёмка ', StationType.Issuing, at(1, 0))).toThrow(
-      DuplicateStationNameError,
-    );
+    expect(() =>
+      map.placeStation(STATION_2_ID, ' приёмка ', StationType.Issuing, at(1, 0)),
+    ).toThrow(DuplicateStationNameError);
     expect(map.snapshot()).toEqual(before);
   });
 
   it('places a robot and a station and trims their names', () => {
     const map = createMap();
 
-    map.placeRobot('rb-1', '  Robot  ', at(0, 1));
-    map.placeStation('st-1', ' Issuing ', StationType.Issuing, at(0, 2));
+    map.placeRobot(ROBOT_ID, '  Robot  ', at(0, 1));
+    map.placeStation(STATION_ID, ' Issuing ', StationType.Issuing, at(0, 2));
 
-    expect(map.snapshot().robots).toEqual([{ id: 'rb-1', name: 'Robot', x: 0, y: 1 }]);
+    expect(map.snapshot().robots).toEqual([{ id: ROBOT_ID, name: 'Robot', x: 0, y: 1 }]);
     expect(map.snapshot().stations).toEqual([
-      { id: 'st-1', name: 'Issuing', type: StationType.Issuing, x: 0, y: 2 },
+      { id: STATION_ID, name: 'Issuing', type: StationType.Issuing, x: 0, y: 2 },
     ]);
   });
 
   it('moves an object and frees its previous cell', () => {
     const map = createMap();
-    map.placeRobot('rb-1', 'Robot', at(0, 0));
-    map.placeStation('st-1', 'Receiving', StationType.Receiving, at(1, 0));
+    map.placeRobot(ROBOT_ID, 'Robot', at(0, 0));
+    map.placeStation(STATION_ID, 'Receiving', StationType.Receiving, at(1, 0));
     map.addObstacle(at(2, 0));
 
-    map.moveRobot('rb-1', at(0, 1));
-    map.moveStation('st-1', at(1, 1));
+    map.moveRobot(ROBOT_ID, at(0, 1));
+    map.moveStation(STATION_ID, at(1, 1));
     map.moveObstacle(at(2, 0), at(2, 1));
     map.addObstacle(at(0, 0));
-    map.placeRobot('rb-2', 'Second', at(1, 0));
-    map.placeStation('st-2', 'Issuing', StationType.Issuing, at(2, 0));
+    map.placeRobot(ROBOT_2_ID, 'Second', at(1, 0));
+    map.placeStation(STATION_2_ID, 'Issuing', StationType.Issuing, at(2, 0));
 
     expect(map.snapshot()).toMatchObject({
       robots: [
-        { id: 'rb-1', x: 0, y: 1 },
-        { id: 'rb-2', x: 1, y: 0 },
+        { id: ROBOT_ID, x: 0, y: 1 },
+        { id: ROBOT_2_ID, x: 1, y: 0 },
       ],
       stations: [
-        { id: 'st-1', x: 1, y: 1 },
-        { id: 'st-2', x: 2, y: 0 },
+        { id: STATION_ID, x: 1, y: 1 },
+        { id: STATION_2_ID, x: 2, y: 0 },
       ],
       obstacles: [
         { x: 2, y: 1 },
@@ -191,13 +202,13 @@ describe('WarehouseMap', () => {
 
   it('moving an object onto its own cell changes nothing', () => {
     const map = createMap();
-    map.placeRobot('rb-1', 'Robot', at(4, 4));
-    map.placeStation('st-1', 'Receiving', StationType.Intermediate, at(5, 5));
+    map.placeRobot(ROBOT_ID, 'Robot', at(4, 4));
+    map.placeStation(STATION_ID, 'Receiving', StationType.Intermediate, at(5, 5));
     map.addObstacle(at(6, 6));
     const before = map.snapshot();
 
-    map.moveRobot('rb-1', at(4, 4));
-    map.moveStation('st-1', at(5, 5));
+    map.moveRobot(ROBOT_ID, at(4, 4));
+    map.moveStation(STATION_ID, at(5, 5));
     map.moveObstacle(at(6, 6), at(6, 6));
 
     expect(map.snapshot()).toEqual(before);
@@ -205,16 +216,16 @@ describe('WarehouseMap', () => {
 
   it('a failed move leaves the map unchanged', () => {
     const map = createMap();
-    map.placeRobot('rb-1', 'Robot', at(0, 0));
-    map.placeStation('st-1', 'Receiving', StationType.Receiving, at(1, 0));
+    map.placeRobot(ROBOT_ID, 'Robot', at(0, 0));
+    map.placeStation(STATION_ID, 'Receiving', StationType.Receiving, at(1, 0));
     map.addObstacle(at(2, 0));
     const before = map.snapshot();
 
-    expect(() => map.moveRobot('rb-1', at(20, 0))).toThrow(PositionOutOfBoundsError);
-    expect(() => map.moveRobot('rb-1', at(1, 0))).toThrow(CellOccupiedError);
-    expect(() => map.moveRobot('missing', at(3, 0))).toThrow(MapObjectNotFoundError);
-    expect(() => map.moveStation('st-1', at(2, 0))).toThrow(CellOccupiedError);
-    expect(() => map.moveStation('missing', at(3, 0))).toThrow(MapObjectNotFoundError);
+    expect(() => map.moveRobot(ROBOT_ID, at(20, 0))).toThrow(PositionOutOfBoundsError);
+    expect(() => map.moveRobot(ROBOT_ID, at(1, 0))).toThrow(CellOccupiedError);
+    expect(() => map.moveRobot(ABSENT_ID, at(3, 0))).toThrow(MapObjectNotFoundError);
+    expect(() => map.moveStation(STATION_ID, at(2, 0))).toThrow(CellOccupiedError);
+    expect(() => map.moveStation(ABSENT_ID, at(3, 0))).toThrow(MapObjectNotFoundError);
     expect(() => map.moveObstacle(at(2, 0), at(0, 20))).toThrow(PositionOutOfBoundsError);
     expect(() => map.moveObstacle(at(3, 3), at(4, 4))).toThrow(MapObjectNotFoundError);
 
@@ -223,38 +234,38 @@ describe('WarehouseMap', () => {
 
   it('removal frees the cell, id, and name', () => {
     const map = createMap();
-    map.placeRobot('rb-1', 'Robot', at(0, 0));
-    map.placeStation('st-1', 'Receiving', StationType.Receiving, at(1, 0));
+    map.placeRobot(ROBOT_ID, 'Robot', at(0, 0));
+    map.placeStation(STATION_ID, 'Receiving', StationType.Receiving, at(1, 0));
     map.addObstacle(at(2, 0));
 
-    map.removeRobot('rb-1');
-    map.removeStation('st-1');
+    map.removeRobot(ROBOT_ID);
+    map.removeStation(STATION_ID);
     map.removeObstacle(at(2, 0));
 
-    map.placeRobot('rb-1', 'Robot', at(0, 0));
-    map.placeStation('st-1', ' receiving ', StationType.Issuing, at(1, 0));
+    map.placeRobot(ROBOT_ID, 'Robot', at(0, 0));
+    map.placeStation(STATION_ID, ' receiving ', StationType.Issuing, at(1, 0));
     map.addObstacle(at(2, 0));
 
     expect(map.snapshot().robots).toHaveLength(1);
-    expect(map.snapshot().stations[0]).toMatchObject({ id: 'st-1', name: 'receiving' });
+    expect(map.snapshot().stations[0]).toMatchObject({ id: STATION_ID, name: 'receiving' });
     expect(map.snapshot().obstacles).toEqual([{ x: 2, y: 0 }]);
   });
 
   it('removing a missing object does not change the map', () => {
     const map = createMap();
-    map.placeRobot('rb-1', 'Robot', at(0, 0));
+    map.placeRobot(ROBOT_ID, 'Robot', at(0, 0));
     const before = map.snapshot();
 
-    expect(() => map.removeRobot('missing')).toThrow(MapObjectNotFoundError);
-    expect(() => map.removeStation('missing')).toThrow(MapObjectNotFoundError);
+    expect(() => map.removeRobot(ABSENT_ID)).toThrow(MapObjectNotFoundError);
+    expect(() => map.removeStation(ABSENT_ID)).toThrow(MapObjectNotFoundError);
     expect(() => map.removeObstacle(at(3, 3))).toThrow(MapObjectNotFoundError);
     expect(map.snapshot()).toEqual(before);
   });
 
   it('mutating a snapshot or a returned collection does not change the map', () => {
     const map = createMap();
-    map.placeRobot('rb-1', 'Robot', at(0, 0));
-    map.placeStation('st-1', 'Receiving', StationType.Receiving, at(1, 0));
+    map.placeRobot(ROBOT_ID, 'Robot', at(0, 0));
+    map.placeStation(STATION_ID, 'Receiving', StationType.Receiving, at(1, 0));
     map.addObstacle(at(2, 0));
     const before = map.snapshot();
 
@@ -266,7 +277,7 @@ describe('WarehouseMap', () => {
     }
     robotSnapshot.x = 9;
     stationSnapshot.name = 'Other';
-    snapshot.robots.push({ id: 'rb-2', name: 'Extra', x: 3, y: 3 });
+    snapshot.robots.push({ id: ROBOT_2_ID, name: 'Extra', x: 3, y: 3 });
     snapshot.obstacles.splice(0, 1);
 
     (map.getRobots() as Robot[]).splice(0, 1);
@@ -278,7 +289,7 @@ describe('WarehouseMap', () => {
 
   it('returned robot and position are frozen; only map operations can move them', () => {
     const map = createMap();
-    map.placeRobot('rb-1', 'Robot', at(0, 0));
+    map.placeRobot(ROBOT_ID, 'Robot', at(0, 0));
     map.addObstacle(at(1, 0));
     const before = map.snapshot();
     const robot = map.getRobots()[0];
@@ -294,8 +305,51 @@ describe('WarehouseMap', () => {
     robot.withPosition(at(1, 0));
 
     expect(map.snapshot()).toEqual(before);
-    expect(() => map.moveRobot('rb-1', at(1, 0))).toThrow(CellOccupiedError);
-    expect(() => map.moveRobot('rb-1', at(20, 0))).toThrow(PositionOutOfBoundsError);
+    expect(() => map.moveRobot(ROBOT_ID, at(1, 0))).toThrow(CellOccupiedError);
+    expect(() => map.moveRobot(ROBOT_ID, at(20, 0))).toThrow(PositionOutOfBoundsError);
     expect(map.snapshot()).toEqual(before);
+  });
+
+  it('stores an uppercase map id and warehouseId in one lowercase form', () => {
+    const map = WarehouseMap.create(MAP_ID.toUpperCase(), WAREHOUSE_ID.toUpperCase());
+
+    expect(map.id).toBe(MAP_ID);
+    expect(map.warehouseId).toBe(WAREHOUSE_ID);
+  });
+
+  it('rejects a duplicate object id that differs only by letter case', () => {
+    const map = createMap();
+    map.placeRobot(SAME_ID, 'First', at(0, 0));
+    const before = map.snapshot();
+
+    expect(() => map.placeRobot(SAME_ID.toUpperCase(), 'Second', at(1, 0))).toThrow(
+      DuplicateObjectIdError,
+    );
+    expect(() =>
+      map.placeStation(SAME_ID.toUpperCase(), 'Issuing', StationType.Issuing, at(2, 0)),
+    ).toThrow(DuplicateObjectIdError);
+    expect(map.snapshot()).toEqual(before);
+  });
+
+  it('finds a robot and a station by uuid regardless of case', () => {
+    const map = createMap();
+    map.placeRobot(ROBOT_ID, 'Robot', at(0, 0));
+    map.placeStation(STATION_ID, 'Receiving', StationType.Receiving, at(1, 0));
+
+    map.moveRobot(ROBOT_ID.toUpperCase(), at(0, 1));
+    map.moveStation(STATION_ID.toUpperCase(), at(1, 1));
+
+    expect(map.snapshot().robots).toEqual([{ id: ROBOT_ID, name: 'Robot', x: 0, y: 1 }]);
+    expect(map.snapshot().stations).toEqual([
+      { id: STATION_ID, name: 'Receiving', type: StationType.Receiving, x: 1, y: 1 },
+    ]);
+  });
+
+  it('rejects a lookup id that is not a uuid', () => {
+    const map = createMap();
+    map.placeRobot(ROBOT_ID, 'Robot', at(0, 0));
+
+    expect(() => map.moveRobot('missing', at(3, 0))).toThrow(InvalidIdError);
+    expect(() => map.removeStation('missing')).toThrow(InvalidIdError);
   });
 });

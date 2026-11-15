@@ -1,4 +1,5 @@
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
+import { normalizeId } from '../../../domain/vo/id';
 import { Position } from '../../../domain/vo/position';
 import {
   MapVersionConflictError,
@@ -131,24 +132,26 @@ export class EditWarehouseMap {
     stationId: string,
     point: { x: number; y: number },
   ): boolean {
+    const id = normalizeId(stationId);
     const position = Position.create(point.x, point.y);
-    const station = map.getStations().find((item) => item.id === stationId);
+    const station = map.getStations().find((item) => item.id === id);
     if (station && station.position.equals(position)) {
       return false;
     }
 
-    map.moveStation(stationId, position);
+    map.moveStation(id, position);
     return true;
   }
 
   private moveRobot(map: WarehouseMap, robotId: string, point: { x: number; y: number }): boolean {
+    const id = normalizeId(robotId);
     const position = Position.create(point.x, point.y);
-    const robot = map.getRobots().find((item) => item.id === robotId);
+    const robot = map.getRobots().find((item) => item.id === id);
     if (robot && robot.position.equals(position)) {
       return false;
     }
 
-    map.moveRobot(robotId, position);
+    map.moveRobot(id, position);
     return true;
   }
 

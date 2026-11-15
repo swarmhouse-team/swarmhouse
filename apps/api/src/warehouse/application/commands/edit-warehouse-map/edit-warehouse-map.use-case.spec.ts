@@ -23,6 +23,14 @@ import type { WarehouseMap as SavedMap } from '../../../domain/entities/warehous
 import { EditWarehouseMap } from './edit-warehouse-map.use-case';
 import type { EditWarehouseMapInput } from './edit-warehouse-map.types';
 
+const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
+const MAP_ID = '22222222-2222-7111-8111-22222222222b';
+const ROBOT_ID = '33333333-3333-4111-8111-33333333333c';
+const STATION_ID = '44444444-4444-4111-8111-44444444444e';
+const STATION_2_ID = '44444444-4444-4111-a111-444444444445';
+const STATION_9_ID = '44444444-4444-7111-8111-44444444444a';
+const ABSENT_ID = '88888888-8888-4111-8111-88888888888d';
+
 interface Harness {
   useCase: EditWarehouseMap;
   calls: string[];
@@ -30,7 +38,7 @@ interface Harness {
 }
 
 function emptySnapshot(): WarehouseMapSnapshot {
-  return WarehouseMap.create('map-1', 'wh-1').snapshot();
+  return WarehouseMap.create(MAP_ID, WAREHOUSE_ID).snapshot();
 }
 
 function createHarness(options?: {
@@ -97,7 +105,7 @@ function createHarness(options?: {
   const ids: IdGenerator = {
     next() {
       calls.push('nextId');
-      return options?.nextId ?? 'robot-1';
+      return options?.nextId ?? ROBOT_ID;
     },
   };
   state.useCase = new EditWarehouseMap(unitOfWork, ids);
@@ -108,20 +116,20 @@ function addObstacle(expectedVersion = 0): EditWarehouseMapInput & {
   operation: Extract<EditWarehouseMapInput['operation'], { type: 'addObstacle' }>;
 } {
   return {
-    mapId: 'map-1',
+    mapId: MAP_ID,
     expectedVersion,
     operation: { type: 'addObstacle', position: { x: 4, y: 5 } },
   };
 }
 
 function mapWithObstacle(x: number, y: number): WarehouseMapSnapshot {
-  const map = WarehouseMap.create('map-1', 'wh-1');
+  const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
   map.addObstacle(Position.create(x, y));
   return map.snapshot();
 }
 
-function mapWithRobot(id = 'robot-1', x = 1, y = 1): WarehouseMapSnapshot {
-  const map = WarehouseMap.create('map-1', 'wh-1');
+function mapWithRobot(id = ROBOT_ID, x = 1, y = 1): WarehouseMapSnapshot {
+  const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
   map.placeRobot(id, 'loader', Position.create(x, y));
   return map.snapshot();
 }
@@ -137,11 +145,11 @@ describe('EditWarehouseMap addObstacle', () => {
 
     const result = await harness.useCase.execute(addObstacle(2));
 
-    expect(harness.calls).toEqual(['execute', 'findById:map-1', 'save']);
+    expect(harness.calls).toEqual(['execute', `findById:${MAP_ID}`, 'save']);
     expect(harness.saved?.expectedVersion).toBe(2);
     expect(harness.saved?.map.snapshot().obstacles).toEqual([{ x: 4, y: 5 }]);
     expect(result).toEqual({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       version: 3,
       changed: true,
       snapshot: harness.saved?.map.snapshot(),
@@ -154,9 +162,9 @@ describe('EditWarehouseMap addObstacle', () => {
 
     await expect(harness.useCase.execute(addObstacle())).rejects.toMatchObject({
       name: 'WarehouseMapNotFoundError',
-      details: { mapId: 'map-1' },
+      details: { mapId: MAP_ID },
     });
-    expect(harness.calls).toEqual(['execute', 'findById:map-1']);
+    expect(harness.calls).toEqual(['execute', `findById:${MAP_ID}`]);
   });
 
   it('does not save when the loaded version is stale', async () => {
@@ -166,7 +174,7 @@ describe('EditWarehouseMap addObstacle', () => {
       expect.any(MapVersionConflictError),
     );
     await expect(harness.useCase.execute(addObstacle(1))).rejects.toMatchObject({
-      details: { mapId: 'map-1', expectedVersion: 1, actualVersion: 4 },
+      details: { mapId: MAP_ID, expectedVersion: 1, actualVersion: 4 },
     });
     expect(harness.calls.filter((call) => call === 'save')).toEqual([]);
   });
@@ -201,7 +209,7 @@ describe('EditWarehouseMap addObstacle', () => {
   });
 
   it('does not save a second obstacle on an occupied cell', async () => {
-    const map = WarehouseMap.create('map-1', 'wh-1');
+    const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
     map.addObstacle(Position.create(4, 5));
     const harness = createHarness({ found: { snapshot: map.snapshot(), version: 0 } });
 
@@ -214,7 +222,7 @@ describe('EditWarehouseMap addObstacle', () => {
 
     await expect(harness.useCase.execute(addObstacle())).rejects.toMatchObject({
       name: 'MapVersionConflictError',
-      details: { mapId: 'map-1', expectedVersion: 0, actualVersion: 8 },
+      details: { mapId: MAP_ID, expectedVersion: 0, actualVersion: 8 },
     });
   });
 
@@ -273,7 +281,7 @@ describe('EditWarehouseMap moveObstacle', () => {
     });
 
     const result = await harness.useCase.execute({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       expectedVersion: 2,
       operation: { type: 'moveObstacle', from: { x: 1, y: 1 }, to: { x: 2, y: 3 } },
     });
@@ -289,7 +297,7 @@ describe('EditWarehouseMap moveObstacle', () => {
     const harness = createHarness({ found: { snapshot: stored, version: 2 } });
 
     const result = await harness.useCase.execute({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       expectedVersion: 2,
       operation: { type: 'moveObstacle', from: { x: 1, y: 1 }, to: { x: 1, y: 1 } },
     });
@@ -303,7 +311,7 @@ describe('EditWarehouseMap moveObstacle', () => {
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
         operation: { type: 'moveObstacle', from: { x: 1, y: 1 }, to: { x: 1, y: 1 } },
       }),
@@ -312,7 +320,7 @@ describe('EditWarehouseMap moveObstacle', () => {
   });
 
   it('does not save a move onto an occupied cell or outside the map', async () => {
-    const occupied = WarehouseMap.create('map-1', 'wh-1');
+    const occupied = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
     occupied.addObstacle(Position.create(1, 1));
     occupied.addObstacle(Position.create(2, 2));
     const occupiedHarness = createHarness({
@@ -320,7 +328,7 @@ describe('EditWarehouseMap moveObstacle', () => {
     });
     await expect(
       occupiedHarness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
         operation: { type: 'moveObstacle', from: { x: 1, y: 1 }, to: { x: 2, y: 2 } },
       }),
@@ -329,7 +337,7 @@ describe('EditWarehouseMap moveObstacle', () => {
     const outside = createHarness({ found: { snapshot: mapWithObstacle(1, 1), version: 0 } });
     await expect(
       outside.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
         operation: { type: 'moveObstacle', from: { x: 1, y: 1 }, to: { x: 20, y: 0 } },
       }),
@@ -345,7 +353,7 @@ describe('EditWarehouseMap moveObstacle', () => {
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
         operation: { type: 'moveObstacle', from, to },
       }),
@@ -358,13 +366,13 @@ describe('EditWarehouseMap moveObstacle', () => {
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 1,
         operation: { type: 'moveObstacle', from: { x: 1, y: 1 }, to: { x: 1, y: 1 } },
       }),
     ).rejects.toMatchObject({
       name: 'MapVersionConflictError',
-      details: { mapId: 'map-1', expectedVersion: 1, actualVersion: 4 },
+      details: { mapId: MAP_ID, expectedVersion: 1, actualVersion: 4 },
     });
     expect(harness.calls).not.toContain('save');
   });
@@ -380,7 +388,7 @@ describe('EditWarehouseMap removeObstacle', () => {
     });
 
     const result = await harness.useCase.execute({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       expectedVersion: 2,
       operation: { type: 'removeObstacle', position: { x: 1, y: 1 } },
     });
@@ -395,7 +403,7 @@ describe('EditWarehouseMap removeObstacle', () => {
     const missing = createHarness();
     await expect(
       missing.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
         operation: { type: 'removeObstacle', position: { x: 1, y: 1 } },
       }),
@@ -404,7 +412,7 @@ describe('EditWarehouseMap removeObstacle', () => {
     const invalid = createHarness({ found: { snapshot: mapWithObstacle(1, 1), version: 0 } });
     await expect(
       invalid.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
         operation: { type: 'removeObstacle', position: { x: -1, y: 0 } },
       }),
@@ -425,14 +433,14 @@ describe('EditWarehouseMap removeObstacle', () => {
         saveResult: { status: 'conflict', actualVersion: 8 },
       });
       await expect(
-        conflict.useCase.execute({ mapId: 'map-1', expectedVersion: 0, operation }),
+        conflict.useCase.execute({ mapId: MAP_ID, expectedVersion: 0, operation }),
       ).rejects.toMatchObject({
-        details: { mapId: 'map-1', expectedVersion: 0, actualVersion: 8 },
+        details: { mapId: MAP_ID, expectedVersion: 0, actualVersion: 8 },
       });
 
       const missing = createHarness({ found, saveResult: { status: 'not_found' } });
       await expect(
-        missing.useCase.execute({ mapId: 'map-1', expectedVersion: 0, operation }),
+        missing.useCase.execute({ mapId: MAP_ID, expectedVersion: 0, operation }),
       ).rejects.toBeInstanceOf(WarehouseMapNotFoundError);
     },
   );
@@ -440,9 +448,9 @@ describe('EditWarehouseMap removeObstacle', () => {
 
 describe('EditWarehouseMap placeRobot', () => {
   it('places a robot with the generated id and the normalized name', async () => {
-    const map = WarehouseMap.create('map-1', 'wh-1');
+    const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
     map.addObstacle(Position.create(0, 0));
-    map.placeStation('station-1', 'Dock', StationType.Receiving, Position.create(1, 0));
+    map.placeStation(STATION_ID, 'Dock', StationType.Receiving, Position.create(1, 0));
     const stored = map.snapshot();
     const before = structuredClone(stored);
     const harness = createHarness({
@@ -451,21 +459,21 @@ describe('EditWarehouseMap placeRobot', () => {
     });
 
     const result = await harness.useCase.execute({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       expectedVersion: 2,
       operation: { type: 'placeRobot', name: '  loader  ', position: { x: 3, y: 4 } },
     });
 
     const saved = harness.saved?.map.snapshot();
-    expect(saved?.robots).toEqual([{ id: 'robot-1', name: 'loader', x: 3, y: 4 }]);
+    expect(saved?.robots).toEqual([{ id: ROBOT_ID, name: 'loader', x: 3, y: 4 }]);
     expect(saved?.obstacles).toEqual(stored.obstacles);
     expect(saved?.stations).toEqual(stored.stations);
     expect(harness.calls.filter((call) => call === 'nextId')).toEqual(['nextId']);
     expect(result).toEqual({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       version: 3,
       changed: true,
-      createdId: 'robot-1',
+      createdId: ROBOT_ID,
       snapshot: saved,
     });
     expect(stored).toEqual(before);
@@ -476,7 +484,7 @@ describe('EditWarehouseMap placeRobot', () => {
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
         operation: { type: 'placeRobot', name: '   ', position: { x: 1, y: 1 } },
       }),
@@ -491,13 +499,13 @@ describe('EditWarehouseMap placeRobot', () => {
   ])(
     'does not save a rejected place at ($position.x, $position.y)',
     async ({ position, error }) => {
-      const map = WarehouseMap.create('map-1', 'wh-1');
+      const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
       map.addObstacle(Position.create(4, 5));
       const harness = createHarness({ found: { snapshot: map.snapshot(), version: 0 } });
 
       await expect(
         harness.useCase.execute({
-          mapId: 'map-1',
+          mapId: MAP_ID,
           expectedVersion: 0,
           operation: { type: 'placeRobot', name: 'loader', position },
         }),
@@ -506,12 +514,12 @@ describe('EditWarehouseMap placeRobot', () => {
     },
   );
 
-  it.each(['robot-1', 'station-1'])(
+  it.each([ROBOT_ID, STATION_ID])(
     'does not generate another id when %s is already taken',
     async (nextId) => {
-      const map = WarehouseMap.create('map-1', 'wh-1');
-      map.placeRobot('robot-1', 'loader', Position.create(0, 0));
-      map.placeStation('station-1', 'Dock', StationType.Receiving, Position.create(1, 0));
+      const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
+      map.placeRobot(ROBOT_ID, 'loader', Position.create(0, 0));
+      map.placeStation(STATION_ID, 'Dock', StationType.Receiving, Position.create(1, 0));
       const harness = createHarness({
         found: { snapshot: map.snapshot(), version: 0 },
         nextId,
@@ -519,7 +527,7 @@ describe('EditWarehouseMap placeRobot', () => {
 
       await expect(
         harness.useCase.execute({
-          mapId: 'map-1',
+          mapId: MAP_ID,
           expectedVersion: 0,
           operation: { type: 'placeRobot', name: 'spare', position: { x: 2, y: 2 } },
         }),
@@ -532,10 +540,10 @@ describe('EditWarehouseMap placeRobot', () => {
 
 describe('EditWarehouseMap moveRobot', () => {
   it('moves a robot and leaves the previous cell free', async () => {
-    const map = WarehouseMap.create('map-1', 'wh-1');
-    map.placeRobot('robot-1', 'loader', Position.create(1, 1));
+    const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
+    map.placeRobot(ROBOT_ID, 'loader', Position.create(1, 1));
     map.addObstacle(Position.create(0, 0));
-    map.placeStation('station-1', 'Dock', StationType.Receiving, Position.create(1, 0));
+    map.placeStation(STATION_ID, 'Dock', StationType.Receiving, Position.create(1, 0));
     const stored = map.snapshot();
     const before = structuredClone(stored);
     const harness = createHarness({
@@ -544,13 +552,13 @@ describe('EditWarehouseMap moveRobot', () => {
     });
 
     const result = await harness.useCase.execute({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       expectedVersion: 2,
-      operation: { type: 'moveRobot', robotId: 'robot-1', position: { x: 2, y: 3 } },
+      operation: { type: 'moveRobot', robotId: ROBOT_ID, position: { x: 2, y: 3 } },
     });
 
     const saved = harness.saved?.map.snapshot();
-    expect(saved?.robots).toEqual([{ id: 'robot-1', name: 'loader', x: 2, y: 3 }]);
+    expect(saved?.robots).toEqual([{ id: ROBOT_ID, name: 'loader', x: 2, y: 3 }]);
     expect(saved?.obstacles).toEqual(stored.obstacles);
     expect(saved?.stations).toEqual(stored.stations);
     expect(result).toMatchObject({ version: 3, changed: true });
@@ -563,15 +571,33 @@ describe('EditWarehouseMap moveRobot', () => {
     const harness = createHarness({ found: { snapshot: mapWithRobot(), version: 2 } });
 
     const result = await harness.useCase.execute({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       expectedVersion: 2,
-      operation: { type: 'moveRobot', robotId: 'robot-1', position: { x: 1, y: 1 } },
+      operation: { type: 'moveRobot', robotId: ROBOT_ID, position: { x: 1, y: 1 } },
     });
 
-    expect(result).toMatchObject({ mapId: 'map-1', changed: false, version: 2 });
+    expect(result).toMatchObject({ mapId: MAP_ID, changed: false, version: 2 });
     expect(result).not.toHaveProperty('createdId');
     expect(harness.calls).not.toContain('save');
     expect(harness.calls).not.toContain('nextId');
+  });
+
+  it('finds a restored robot when the uuid case differs', async () => {
+    const harness = createHarness({ found: { snapshot: mapWithRobot(), version: 2 } });
+
+    const result = await harness.useCase.execute({
+      mapId: MAP_ID,
+      expectedVersion: 2,
+      operation: {
+        type: 'moveRobot',
+        robotId: ROBOT_ID.toUpperCase(),
+        position: { x: 1, y: 1 },
+      },
+    });
+
+    expect(result).toMatchObject({ mapId: MAP_ID, changed: false, version: 2 });
+    expect(result.snapshot.robots).toEqual([{ id: ROBOT_ID, name: 'loader', x: 1, y: 1 }]);
+    expect(harness.calls).not.toContain('save');
   });
 
   it('does not save a move of a missing robot', async () => {
@@ -579,9 +605,9 @@ describe('EditWarehouseMap moveRobot', () => {
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
-        operation: { type: 'moveRobot', robotId: 'missing', position: { x: 1, y: 1 } },
+        operation: { type: 'moveRobot', robotId: ABSENT_ID, position: { x: 1, y: 1 } },
       }),
     ).rejects.toBeInstanceOf(MapObjectNotFoundError);
     expect(harness.calls).not.toContain('save');
@@ -593,16 +619,16 @@ describe('EditWarehouseMap moveRobot', () => {
     { position: { x: 20, y: 0 }, error: PositionOutOfBoundsError },
     { position: { x: 2, y: 2 }, error: CellOccupiedError },
   ])('does not save a rejected move to ($position.x, $position.y)', async ({ position, error }) => {
-    const map = WarehouseMap.create('map-1', 'wh-1');
-    map.placeRobot('robot-1', 'loader', Position.create(1, 1));
+    const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
+    map.placeRobot(ROBOT_ID, 'loader', Position.create(1, 1));
     map.addObstacle(Position.create(2, 2));
     const harness = createHarness({ found: { snapshot: map.snapshot(), version: 0 } });
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
-        operation: { type: 'moveRobot', robotId: 'robot-1', position },
+        operation: { type: 'moveRobot', robotId: ROBOT_ID, position },
       }),
     ).rejects.toBeInstanceOf(error);
     expect(harness.calls).not.toContain('save');
@@ -613,13 +639,13 @@ describe('EditWarehouseMap moveRobot', () => {
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 1,
-        operation: { type: 'moveRobot', robotId: 'robot-1', position: { x: 1, y: 1 } },
+        operation: { type: 'moveRobot', robotId: ROBOT_ID, position: { x: 1, y: 1 } },
       }),
     ).rejects.toMatchObject({
       name: 'MapVersionConflictError',
-      details: { mapId: 'map-1', expectedVersion: 1, actualVersion: 4 },
+      details: { mapId: MAP_ID, expectedVersion: 1, actualVersion: 4 },
     });
     expect(harness.calls).not.toContain('save');
     expect(harness.calls).not.toContain('nextId');
@@ -628,10 +654,10 @@ describe('EditWarehouseMap moveRobot', () => {
 
 describe('EditWarehouseMap removeRobot', () => {
   it('removes a robot and keeps the other map objects', async () => {
-    const map = WarehouseMap.create('map-1', 'wh-1');
-    map.placeRobot('robot-1', 'loader', Position.create(1, 1));
+    const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
+    map.placeRobot(ROBOT_ID, 'loader', Position.create(1, 1));
     map.addObstacle(Position.create(0, 0));
-    map.placeStation('station-1', 'Dock', StationType.Receiving, Position.create(1, 0));
+    map.placeStation(STATION_ID, 'Dock', StationType.Receiving, Position.create(1, 0));
     const stored = map.snapshot();
     const before = structuredClone(stored);
     const harness = createHarness({
@@ -640,9 +666,9 @@ describe('EditWarehouseMap removeRobot', () => {
     });
 
     const result = await harness.useCase.execute({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       expectedVersion: 2,
-      operation: { type: 'removeRobot', robotId: 'robot-1' },
+      operation: { type: 'removeRobot', robotId: ROBOT_ID },
     });
 
     const saved = harness.saved?.map.snapshot();
@@ -660,9 +686,9 @@ describe('EditWarehouseMap removeRobot', () => {
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
-        operation: { type: 'removeRobot', robotId: 'missing' },
+        operation: { type: 'removeRobot', robotId: ABSENT_ID },
       }),
     ).rejects.toBeInstanceOf(MapObjectNotFoundError);
     expect(harness.calls).not.toContain('save');
@@ -678,8 +704,8 @@ describe('EditWarehouseMap robot save outcomes', () => {
         type === 'placeRobot'
           ? { type, name: 'loader', position: { x: 3, y: 4 } }
           : type === 'moveRobot'
-            ? { type, robotId: 'robot-1', position: { x: 2, y: 2 } }
-            : { type, robotId: 'robot-1' };
+            ? { type, robotId: ROBOT_ID, position: { x: 2, y: 2 } }
+            : { type, robotId: ROBOT_ID };
       const found = {
         snapshot: type === 'placeRobot' ? emptySnapshot() : mapWithRobot(),
         version: 0,
@@ -689,14 +715,14 @@ describe('EditWarehouseMap robot save outcomes', () => {
         saveResult: { status: 'conflict', actualVersion: 8 },
       });
       await expect(
-        conflict.useCase.execute({ mapId: 'map-1', expectedVersion: 0, operation }),
+        conflict.useCase.execute({ mapId: MAP_ID, expectedVersion: 0, operation }),
       ).rejects.toMatchObject({
-        details: { mapId: 'map-1', expectedVersion: 0, actualVersion: 8 },
+        details: { mapId: MAP_ID, expectedVersion: 0, actualVersion: 8 },
       });
 
       const missing = createHarness({ found, saveResult: { status: 'not_found' } });
       await expect(
-        missing.useCase.execute({ mapId: 'map-1', expectedVersion: 0, operation }),
+        missing.useCase.execute({ mapId: MAP_ID, expectedVersion: 0, operation }),
       ).rejects.toBeInstanceOf(WarehouseMapNotFoundError);
     },
   );
@@ -711,7 +737,7 @@ describe('EditWarehouseMap robot save outcomes', () => {
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
         operation: { type: 'placeRobot', name: 'loader', position: { x: 1, y: 1 } },
       }),
@@ -736,7 +762,7 @@ describe('EditWarehouseMap robot save outcomes', () => {
 
       await expect(
         harness.useCase.execute({
-          mapId: 'map-1',
+          mapId: MAP_ID,
           expectedVersion,
           operation: { type: 'placeRobot', name: 'loader', position: { x: 1, y: 1 } },
         }),
@@ -747,23 +773,23 @@ describe('EditWarehouseMap robot save outcomes', () => {
   );
 });
 
-function mapWithStation(id = 'station-1', x = 1, y = 0, name = 'Приёмка'): WarehouseMapSnapshot {
-  const map = WarehouseMap.create('map-1', 'wh-1');
+function mapWithStation(id = STATION_ID, x = 1, y = 0, name = 'Приёмка'): WarehouseMapSnapshot {
+  const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
   map.placeStation(id, name, StationType.Receiving, Position.create(x, y));
   return map.snapshot();
 }
 
 function occupiedMap(kind: 'obstacle' | 'robot' | 'station'): WarehouseMap {
-  const map = WarehouseMap.create('map-1', 'wh-1');
+  const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
   const position = Position.create(4, 5);
   if (kind === 'obstacle') {
     map.addObstacle(position);
   }
   if (kind === 'robot') {
-    map.placeRobot('robot-1', 'loader', position);
+    map.placeRobot(ROBOT_ID, 'loader', position);
   }
   if (kind === 'station') {
-    map.placeStation('station-1', 'Other', StationType.Issuing, position);
+    map.placeStation(STATION_ID, 'Other', StationType.Issuing, position);
   }
   return map;
 }
@@ -772,19 +798,19 @@ describe('EditWarehouseMap placeStation', () => {
   it.each(Object.values(StationType))(
     'places a %s station with the generated id and a normalized name',
     async (stationType) => {
-      const map = WarehouseMap.create('map-1', 'wh-1');
-      map.placeRobot('robot-1', 'loader', Position.create(0, 0));
+      const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
+      map.placeRobot(ROBOT_ID, 'loader', Position.create(0, 0));
       map.addObstacle(Position.create(1, 1));
       const stored = map.snapshot();
       const before = structuredClone(stored);
       const harness = createHarness({
         found: { snapshot: stored, version: 2 },
         saveResult: { status: 'saved', version: 3 },
-        nextId: 'station-9',
+        nextId: STATION_9_ID,
       });
 
       const result = await harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 2,
         operation: {
           type: 'placeStation',
@@ -796,15 +822,15 @@ describe('EditWarehouseMap placeStation', () => {
 
       const saved = harness.saved?.map.snapshot();
       expect(saved?.stations).toEqual([
-        { id: 'station-9', name: 'Приёмка', type: stationType, x: 3, y: 4 },
+        { id: STATION_9_ID, name: 'Приёмка', type: stationType, x: 3, y: 4 },
       ]);
       expect(saved?.robots).toEqual(stored.robots);
       expect(saved?.obstacles).toEqual(stored.obstacles);
       expect(result).toEqual({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         version: 3,
         changed: true,
-        createdId: 'station-9',
+        createdId: STATION_9_ID,
         snapshot: saved,
       });
       expect(stored).toEqual(before);
@@ -813,13 +839,13 @@ describe('EditWarehouseMap placeStation', () => {
 
   it('does not save a station whose name matches an existing one ignoring case', async () => {
     const harness = createHarness({
-      found: { snapshot: mapWithStation('station-1', 1, 0, 'Приёмка'), version: 0 },
-      nextId: 'station-2',
+      found: { snapshot: mapWithStation(STATION_ID, 1, 0, 'Приёмка'), version: 0 },
+      nextId: STATION_2_ID,
     });
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
         operation: {
           type: 'placeStation',
@@ -837,7 +863,7 @@ describe('EditWarehouseMap placeStation', () => {
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
         operation: {
           type: 'placeStation',
@@ -850,17 +876,17 @@ describe('EditWarehouseMap placeStation', () => {
     expect(harness.calls).not.toContain('save');
   });
 
-  it.each(['robot-1', 'station-1'])(
+  it.each([ROBOT_ID, STATION_ID])(
     'does not generate another id when %s is already taken',
     async (nextId) => {
-      const map = WarehouseMap.create('map-1', 'wh-1');
-      map.placeRobot('robot-1', 'loader', Position.create(0, 0));
-      map.placeStation('station-1', 'Dock', StationType.Receiving, Position.create(1, 0));
+      const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
+      map.placeRobot(ROBOT_ID, 'loader', Position.create(0, 0));
+      map.placeStation(STATION_ID, 'Dock', StationType.Receiving, Position.create(1, 0));
       const harness = createHarness({ found: { snapshot: map.snapshot(), version: 0 }, nextId });
 
       await expect(
         harness.useCase.execute({
-          mapId: 'map-1',
+          mapId: MAP_ID,
           expectedVersion: 0,
           operation: {
             type: 'placeStation',
@@ -887,12 +913,12 @@ describe('EditWarehouseMap placeStation', () => {
       const stored = occupy === 'none' ? emptySnapshot() : occupiedMap(occupy).snapshot();
       const harness = createHarness({
         found: { snapshot: stored, version: 0 },
-        nextId: 'station-9',
+        nextId: STATION_9_ID,
       });
 
       await expect(
         harness.useCase.execute({
-          mapId: 'map-1',
+          mapId: MAP_ID,
           expectedVersion: 0,
           operation: {
             type: 'placeStation',
@@ -909,9 +935,9 @@ describe('EditWarehouseMap placeStation', () => {
 
 describe('EditWarehouseMap moveStation', () => {
   it('moves a station without changing its id, name, or type', async () => {
-    const map = WarehouseMap.create('map-1', 'wh-1');
-    map.placeStation('station-1', 'Приёмка', StationType.Receiving, Position.create(1, 0));
-    map.placeRobot('robot-1', 'loader', Position.create(0, 0));
+    const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
+    map.placeStation(STATION_ID, 'Приёмка', StationType.Receiving, Position.create(1, 0));
+    map.placeRobot(ROBOT_ID, 'loader', Position.create(0, 0));
     map.addObstacle(Position.create(2, 0));
     const stored = map.snapshot();
     const before = structuredClone(stored);
@@ -921,14 +947,14 @@ describe('EditWarehouseMap moveStation', () => {
     });
 
     const result = await harness.useCase.execute({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       expectedVersion: 2,
-      operation: { type: 'moveStation', stationId: 'station-1', position: { x: 3, y: 4 } },
+      operation: { type: 'moveStation', stationId: STATION_ID, position: { x: 3, y: 4 } },
     });
 
     const saved = harness.saved?.map.snapshot();
     expect(saved?.stations).toEqual([
-      { id: 'station-1', name: 'Приёмка', type: StationType.Receiving, x: 3, y: 4 },
+      { id: STATION_ID, name: 'Приёмка', type: StationType.Receiving, x: 3, y: 4 },
     ]);
     expect(saved?.robots).toEqual(stored.robots);
     expect(saved?.obstacles).toEqual(stored.obstacles);
@@ -942,12 +968,12 @@ describe('EditWarehouseMap moveStation', () => {
     const harness = createHarness({ found: { snapshot: mapWithStation(), version: 2 } });
 
     const result = await harness.useCase.execute({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       expectedVersion: 2,
-      operation: { type: 'moveStation', stationId: 'station-1', position: { x: 1, y: 0 } },
+      operation: { type: 'moveStation', stationId: STATION_ID, position: { x: 1, y: 0 } },
     });
 
-    expect(result).toMatchObject({ mapId: 'map-1', changed: false, version: 2 });
+    expect(result).toMatchObject({ mapId: MAP_ID, changed: false, version: 2 });
     expect(result).not.toHaveProperty('createdId');
     expect(harness.calls).not.toContain('save');
     expect(harness.calls).not.toContain('nextId');
@@ -958,9 +984,9 @@ describe('EditWarehouseMap moveStation', () => {
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
-        operation: { type: 'moveStation', stationId: 'missing', position: { x: 1, y: 1 } },
+        operation: { type: 'moveStation', stationId: ABSENT_ID, position: { x: 1, y: 1 } },
       }),
     ).rejects.toBeInstanceOf(MapObjectNotFoundError);
     expect(harness.calls).not.toContain('save');
@@ -972,16 +998,16 @@ describe('EditWarehouseMap moveStation', () => {
     { position: { x: 20, y: 0 }, error: PositionOutOfBoundsError },
     { position: { x: 0, y: 0 }, error: CellOccupiedError },
   ])('does not save a rejected move to ($position.x, $position.y)', async ({ position, error }) => {
-    const map = WarehouseMap.create('map-1', 'wh-1');
-    map.placeStation('station-1', 'Приёмка', StationType.Receiving, Position.create(1, 0));
-    map.placeRobot('robot-1', 'loader', Position.create(0, 0));
+    const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
+    map.placeStation(STATION_ID, 'Приёмка', StationType.Receiving, Position.create(1, 0));
+    map.placeRobot(ROBOT_ID, 'loader', Position.create(0, 0));
     const harness = createHarness({ found: { snapshot: map.snapshot(), version: 0 } });
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
-        operation: { type: 'moveStation', stationId: 'station-1', position },
+        operation: { type: 'moveStation', stationId: STATION_ID, position },
       }),
     ).rejects.toBeInstanceOf(error);
     expect(harness.calls).not.toContain('save');
@@ -992,13 +1018,13 @@ describe('EditWarehouseMap moveStation', () => {
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 1,
-        operation: { type: 'moveStation', stationId: 'station-1', position: { x: 1, y: 0 } },
+        operation: { type: 'moveStation', stationId: STATION_ID, position: { x: 1, y: 0 } },
       }),
     ).rejects.toMatchObject({
       name: 'MapVersionConflictError',
-      details: { mapId: 'map-1', expectedVersion: 1, actualVersion: 4 },
+      details: { mapId: MAP_ID, expectedVersion: 1, actualVersion: 4 },
     });
     expect(harness.calls).not.toContain('save');
     expect(harness.calls).not.toContain('nextId');
@@ -1007,9 +1033,9 @@ describe('EditWarehouseMap moveStation', () => {
 
 describe('EditWarehouseMap removeStation', () => {
   it('removes a station and keeps the other map objects', async () => {
-    const map = WarehouseMap.create('map-1', 'wh-1');
-    map.placeStation('station-1', 'Приёмка', StationType.Receiving, Position.create(1, 0));
-    map.placeRobot('robot-1', 'loader', Position.create(0, 0));
+    const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
+    map.placeStation(STATION_ID, 'Приёмка', StationType.Receiving, Position.create(1, 0));
+    map.placeRobot(ROBOT_ID, 'loader', Position.create(0, 0));
     map.addObstacle(Position.create(2, 0));
     const stored = map.snapshot();
     const before = structuredClone(stored);
@@ -1019,9 +1045,9 @@ describe('EditWarehouseMap removeStation', () => {
     });
 
     const result = await harness.useCase.execute({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       expectedVersion: 2,
-      operation: { type: 'removeStation', stationId: 'station-1' },
+      operation: { type: 'removeStation', stationId: STATION_ID },
     });
 
     const saved = harness.saved?.map.snapshot();
@@ -1036,22 +1062,22 @@ describe('EditWarehouseMap removeStation', () => {
 
   it('frees the cell and the station name for a later placement', async () => {
     const removed = createHarness({
-      found: { snapshot: mapWithStation('station-1', 1, 0, 'Приёмка'), version: 0 },
+      found: { snapshot: mapWithStation(STATION_ID, 1, 0, 'Приёмка'), version: 0 },
       saveResult: { status: 'saved', version: 1 },
     });
     await removed.useCase.execute({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       expectedVersion: 0,
-      operation: { type: 'removeStation', stationId: 'station-1' },
+      operation: { type: 'removeStation', stationId: STATION_ID },
     });
 
     const placed = createHarness({
       found: { snapshot: removed.saved?.map.snapshot() ?? emptySnapshot(), version: 1 },
       saveResult: { status: 'saved', version: 2 },
-      nextId: 'station-2',
+      nextId: STATION_2_ID,
     });
     const result = await placed.useCase.execute({
-      mapId: 'map-1',
+      mapId: MAP_ID,
       expectedVersion: 1,
       operation: {
         type: 'placeStation',
@@ -1062,9 +1088,9 @@ describe('EditWarehouseMap removeStation', () => {
     });
 
     expect(placed.saved?.map.snapshot().stations).toEqual([
-      { id: 'station-2', name: 'приёмка', type: StationType.Issuing, x: 1, y: 0 },
+      { id: STATION_2_ID, name: 'приёмка', type: StationType.Issuing, x: 1, y: 0 },
     ]);
-    expect(result.createdId).toBe('station-2');
+    expect(result.createdId).toBe(STATION_2_ID);
   });
 
   it('does not save removal of a missing station', async () => {
@@ -1072,9 +1098,9 @@ describe('EditWarehouseMap removeStation', () => {
 
     await expect(
       harness.useCase.execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
-        operation: { type: 'removeStation', stationId: 'missing' },
+        operation: { type: 'removeStation', stationId: ABSENT_ID },
       }),
     ).rejects.toBeInstanceOf(MapObjectNotFoundError);
     expect(harness.calls).not.toContain('save');
@@ -1095,8 +1121,8 @@ describe('EditWarehouseMap station save outcomes', () => {
               position: { x: 3, y: 4 },
             }
           : type === 'moveStation'
-            ? { type, stationId: 'station-1', position: { x: 2, y: 2 } }
-            : { type, stationId: 'station-1' };
+            ? { type, stationId: STATION_ID, position: { x: 2, y: 2 } }
+            : { type, stationId: STATION_ID };
       const found = {
         snapshot: type === 'placeStation' ? emptySnapshot() : mapWithStation(),
         version: 0,
@@ -1104,21 +1130,21 @@ describe('EditWarehouseMap station save outcomes', () => {
       const conflict = createHarness({
         found,
         saveResult: { status: 'conflict', actualVersion: 8 },
-        nextId: 'station-9',
+        nextId: STATION_9_ID,
       });
       await expect(
-        conflict.useCase.execute({ mapId: 'map-1', expectedVersion: 0, operation }),
+        conflict.useCase.execute({ mapId: MAP_ID, expectedVersion: 0, operation }),
       ).rejects.toMatchObject({
-        details: { mapId: 'map-1', expectedVersion: 0, actualVersion: 8 },
+        details: { mapId: MAP_ID, expectedVersion: 0, actualVersion: 8 },
       });
 
       const missing = createHarness({
         found,
         saveResult: { status: 'not_found' },
-        nextId: 'station-9',
+        nextId: STATION_9_ID,
       });
       await expect(
-        missing.useCase.execute({ mapId: 'map-1', expectedVersion: 0, operation }),
+        missing.useCase.execute({ mapId: MAP_ID, expectedVersion: 0, operation }),
       ).rejects.toBeInstanceOf(WarehouseMapNotFoundError);
     },
   );
@@ -1128,11 +1154,11 @@ describe('EditWarehouseMap station save outcomes', () => {
     const gate = new Promise<void>((resolve) => {
       release = resolve;
     });
-    const harness = createHarness({ afterCallback: () => gate, nextId: 'station-9' });
+    const harness = createHarness({ afterCallback: () => gate, nextId: STATION_9_ID });
     let settled = false;
     const pending = harness.useCase
       .execute({
-        mapId: 'map-1',
+        mapId: MAP_ID,
         expectedVersion: 0,
         operation: {
           type: 'placeStation',

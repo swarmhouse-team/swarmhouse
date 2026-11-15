@@ -5,8 +5,11 @@ import { CorruptedMapStateError, WarehouseMapNotFoundError } from '../../errors/
 import type { WarehouseMapRepository } from '../../ports/repositories/warehouse-map.repository';
 import { GetWarehouseMap } from './get-warehouse-map.use-case';
 
+const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
+const MAP_ID = '22222222-2222-7111-8111-22222222222b';
+
 function snapshot(): WarehouseMapSnapshot {
-  return WarehouseMap.create('map-1', 'wh-1').snapshot();
+  return WarehouseMap.create(MAP_ID, WAREHOUSE_ID).snapshot();
 }
 
 function repository(
@@ -48,9 +51,9 @@ describe('GetWarehouseMap', () => {
     const stored = snapshot();
     const { maps, calls } = repository({ snapshot: stored, version: 4 });
 
-    const result = await new GetWarehouseMap(maps).execute({ mapId: 'map-1' });
+    const result = await new GetWarehouseMap(maps).execute({ mapId: MAP_ID });
 
-    expect(calls).toEqual(['findById:map-1']);
+    expect(calls).toEqual([`findById:${MAP_ID}`]);
     expect(result).toEqual({ snapshot: stored, version: 4 });
   });
 
@@ -58,11 +61,11 @@ describe('GetWarehouseMap', () => {
     const stored = snapshot();
     const { maps, calls } = repository({ snapshot: stored, version: 1 });
 
-    const result = await new GetWarehouseMap(maps).execute({ warehouseId: 'wh-1' });
+    const result = await new GetWarehouseMap(maps).execute({ warehouseId: WAREHOUSE_ID });
 
-    expect(calls).toEqual(['findByWarehouseId:wh-1']);
+    expect(calls).toEqual([`findByWarehouseId:${WAREHOUSE_ID}`]);
     expect(result.version).toBe(1);
-    expect(result.snapshot.warehouseId).toBe('wh-1');
+    expect(result.snapshot.warehouseId).toBe(WAREHOUSE_ID);
   });
 
   it('reports a missing map by the lookup key that was used', async () => {
@@ -90,14 +93,14 @@ describe('GetWarehouseMap', () => {
     const corrupted = repository({ snapshot: stored, version: 2 });
 
     await expect(
-      new GetWarehouseMap(corrupted.maps).execute({ mapId: 'map-1' }),
+      new GetWarehouseMap(corrupted.maps).execute({ mapId: MAP_ID }),
     ).rejects.toBeInstanceOf(CorruptedMapStateError);
-    expect(corrupted.calls).toEqual(['findById:map-1']);
+    expect(corrupted.calls).toEqual([`findById:${MAP_ID}`]);
 
     const failure = new Error('database unavailable');
     const broken = repository(null, failure);
-    await expect(new GetWarehouseMap(broken.maps).execute({ warehouseId: 'wh-1' })).rejects.toBe(
-      failure,
-    );
+    await expect(
+      new GetWarehouseMap(broken.maps).execute({ warehouseId: WAREHOUSE_ID }),
+    ).rejects.toBe(failure);
   });
 });

@@ -5,13 +5,20 @@ import { InvalidIdError, InvalidNameError } from '../errors/value.errors';
 import { Position } from '../vo/position';
 import { Station } from './station';
 
+const STATION_ID = '44444444-4444-4111-8111-44444444444e';
+
 describe('Station', () => {
   const position = Position.create(0, 0);
 
   it('keeps id, name, type, and position', () => {
-    const station = Station.create('st-1', ' Receiving ', StationType.Receiving, position);
+    const station = Station.create(
+      STATION_ID.toUpperCase(),
+      ' Receiving ',
+      StationType.Receiving,
+      position,
+    );
 
-    expect(station.id).toBe('st-1');
+    expect(station.id).toBe(STATION_ID);
     expect(station.name.value).toBe('Receiving');
     expect(station.type).toBe(StationType.Receiving);
     expect(station.position).toBe(position);
@@ -25,7 +32,7 @@ describe('Station', () => {
   });
 
   it('rejects an empty name', () => {
-    expect(() => Station.create('st-1', ' ', StationType.Issuing, position)).toThrow(
+    expect(() => Station.create(STATION_ID, ' ', StationType.Issuing, position)).toThrow(
       InvalidNameError,
     );
   });

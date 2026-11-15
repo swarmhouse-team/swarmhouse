@@ -1,6 +1,6 @@
 import { DomainError } from './domain.error';
 
-/** ID is empty, whitespace-only, or has leading or trailing spaces. */
+/** ID is not a UUID in 8-4-4-4-12 form, or it is the nil or max UUID. */
 export class InvalidIdError extends DomainError {
   constructor(readonly value: string) {
     super('INVALID_ID', 'Invalid id', { value });
