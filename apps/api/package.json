@@ -9,6 +9,7 @@
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.mts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
@@ -26,6 +27,7 @@
     "nestjs-zod": "^5.6.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
+    "uuid": "11.1.1",
     "zod": "catalog:"
   },
   "devDependencies": {
