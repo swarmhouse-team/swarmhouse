@@ -10,6 +10,8 @@ import {
   renameWarehouseResponseSchema,
   mapVersionConflictErrorSchema,
   uuidTextSchema,
+  listWarehousesResponseSchema,
+  warehouseDetailsSchema,
   warehouseMapBodySchema,
   warehouseMapPathParamsSchema,
   warehousePathParamsSchema,
@@ -213,6 +215,35 @@ describe('ответы склада', () => {
     const renamed = { warehouseId: UUID_V4, name: 'dock' };
     const edited = { changed: false, map: emptyMap };
 
+    expect(
+      warehouseDetailsSchema.parse({
+        warehouseId: UUID_V4,
+        name: 'dock',
+        createdAt: null,
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      }),
+    ).toEqual({
+      warehouseId: UUID_V4,
+      name: 'dock',
+      createdAt: null,
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    expect(
+      listWarehousesResponseSchema.safeParse({
+        items: [
+          {
+            warehouseId: UUID_V4,
+            name: 'new',
+            createdAt: '2026-02-01T00:00:00.000Z',
+            updatedAt: '2026-02-01T00:00:00.000Z',
+          },
+          { warehouseId: UUID_V7, name: 'old', createdAt: null, updatedAt: null },
+        ],
+        total: 2,
+      }).success,
+    ).toBe(true);
+    expect(listWarehousesResponseSchema.safeParse({ items: [], total: 1 }).success).toBe(false);
+    expect(listWarehousesResponseSchema.safeParse({ items: [], total: -1 }).success).toBe(false);
     expect(createWarehouseResponseSchema.parse(created)).toEqual(created);
     expect(renameWarehouseResponseSchema.parse(renamed)).toEqual(renamed);
     expect(editWarehouseMapResponseSchema.parse(edited)).toEqual(edited);

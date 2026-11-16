@@ -52,16 +52,20 @@ packages/
 
 Один файл `.env` в корне (не коммитится). Шаблон — [.env.example](.env.example); `pnpm i` копирует его в `.env`, если файла ещё нет.
 
-| Переменная          | По умолчанию                                                     | Кто читает      | Назначение                              |
-| ------------------- | ---------------------------------------------------------------- | --------------- | --------------------------------------- |
-| `NODE_ENV`          | `development`                                                    | api             | Режим работы                            |
-| `DATABASE_URL`      | `postgresql://robots:robots@localhost:5432/robots?schema=public` | api, Prisma CLI | Подключение к PostgreSQL (обязательная) |
-| `API_PORT`          | `3001`                                                           | api             | Порт бэкенда                            |
-| `API_INTERNAL_URL`  | `http://localhost:3001`                                          | web (сервер)    | Куда Next проксирует `/api/*`           |
-| `POSTGRES_USER`     | `robots`                                                         | docker compose  | Пользователь БД                         |
-| `POSTGRES_PASSWORD` | `robots`                                                         | docker compose  | Пароль БД                               |
-| `POSTGRES_DB`       | `robots`                                                         | docker compose  | Имя БД                                  |
-| `POSTGRES_PORT`     | `5432`                                                           | docker compose  | Порт БД на хосте                        |
+| Переменная                 | По умолчанию                                                     | Кто читает      | Назначение                                        |
+| -------------------------- | ---------------------------------------------------------------- | --------------- | ------------------------------------------------- |
+| `NODE_ENV`                 | `development`                                                    | api             | Режим работы                                      |
+| `DATABASE_URL`             | `postgresql://robots:robots@localhost:5432/robots?schema=public` | api, Prisma CLI | Подключение к PostgreSQL (обязательная)           |
+| `API_PORT`                 | `3001`                                                           | api             | Порт бэкенда                                      |
+| `CACHE_DRIVER`             | нет, обязателен: `memory` или `redis`                            | api             | Какой адаптер кэша создать                        |
+| `CACHE_MEMORY_MAX_ENTRIES` | нет, обязателен для `memory`                                     | api             | Лимит записей process-local кэша                  |
+| `REDIS_URL`                | нет, обязателен для `redis`                                      | api             | Адрес Redis; в ошибках конфигурации не печатается |
+| `CACHE_KEY_PREFIX`         | нет, обязателен для `redis`                                      | api             | Префикс ключей Redis                              |
+| `API_INTERNAL_URL`         | `http://localhost:3001`                                          | web (сервер)    | Куда Next проксирует `/api/*`                     |
+| `POSTGRES_USER`            | `robots`                                                         | docker compose  | Пользователь БД                                   |
+| `POSTGRES_PASSWORD`        | `robots`                                                         | docker compose  | Пароль БД                                         |
+| `POSTGRES_DB`              | `robots`                                                         | docker compose  | Имя БД                                            |
+| `POSTGRES_PORT`            | `5432`                                                           | docker compose  | Порт БД на хосте                                  |
 
 Окружение `api` проверяется при старте zod-схемой ([apps/api/src/config/env.ts](apps/api/src/config/env.ts)): с некорректными значениями приложение не запустится. Новую переменную добавляем в схему, в `.env.example` и в эту таблицу.
 

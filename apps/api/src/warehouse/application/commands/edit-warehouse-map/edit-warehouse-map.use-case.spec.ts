@@ -74,6 +74,9 @@ function createHarness(options?: {
           async delete() {
             throw new Error('warehouse repository must not be used');
           },
+          async list() {
+            throw new Error('warehouse repository must not be used');
+          },
         },
         maps: {
           async insert() {

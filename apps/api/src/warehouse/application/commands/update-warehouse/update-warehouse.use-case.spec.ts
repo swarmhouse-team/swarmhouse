@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { CacheError } from '../../../../cache/application/errors/cache.error';
+
 import type { Warehouse } from '../../../domain/entities/warehouse';
 import { InvalidNameError } from '../../../domain/errors/value.errors';
 import { MAX_NAME_LENGTH } from '../../../domain/constants';
@@ -8,17 +10,28 @@ import type {
   SaveWarehouseResult,
   StoredWarehouse,
 } from '../../ports/repositories/warehouse.repository';
+import type { Clock } from '../../ports/system/clock';
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
 import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
+import { RecordingCache } from '../../testing/recording-cache';
+import {
+  WAREHOUSE_LIST_CACHE_KEY,
+  warehouseDetailsCacheKey,
+} from '../../queries/warehouse-cache.policy';
 import { UpdateWarehouse } from './update-warehouse.use-case';
 
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
+const CREATED_AT = new Date('2026-01-01T00:00:00.000Z');
+const UPDATED_AT = new Date('2026-11-16T12:00:00.000Z');
 
 interface Harness {
   useCase: UpdateWarehouse;
   calls: string[];
   logs: LogEntry[];
+  cache: RecordingCache;
+  nowCalls: number;
   saved?: Warehouse;
+  savedAt?: Date;
 }
 
 function createHarness(options?: {
@@ -29,11 +42,23 @@ function createHarness(options?: {
   afterCallback?: () => Promise<void>;
 }): Harness {
   const calls: string[] = [];
+  const cache = new RecordingCache();
   const { logger, logs } = createRecordingLogger();
+  let nowCalls = 0;
+  const clock: Clock = {
+    now() {
+      nowCalls += 1;
+      return UPDATED_AT;
+    },
+  };
   const state: Harness = {
     useCase: undefined as unknown as UpdateWarehouse,
     calls,
     logs,
+    cache,
+    get nowCalls() {
+      return nowCalls;
+    },
   };
   const unitOfWork: UnitOfWork = {
     async execute(work) {
@@ -49,15 +74,19 @@ function createHarness(options?: {
               throw options.findError;
             }
             return options?.found === undefined
-              ? { id: WAREHOUSE_ID, name: 'Main' }
+              ? { id: WAREHOUSE_ID, name: 'Main', createdAt: CREATED_AT, updatedAt: CREATED_AT }
               : options.found;
           },
-          async save(warehouse) {
+          async list() {
+            throw new Error('list must not be used');
+          },
+          async save(warehouse, updatedAt) {
             calls.push('save');
             if (options?.saveError) {
               throw options.saveError;
             }
             state.saved = warehouse;
+            state.savedAt = updatedAt;
             return options?.saveResult ?? { status: 'saved' };
           },
           async delete() {
@@ -92,11 +121,29 @@ function createHarness(options?: {
       return result;
     },
   };
-  state.useCase = new UpdateWarehouse(unitOfWork, logger);
+  state.useCase = new UpdateWarehouse(unitOfWork, clock, cache, logger);
   return state;
 }
 
 describe('UpdateWarehouse', () => {
+  it('deletes the list key when the details key delete fails', async () => {
+    const harness = createHarness();
+    harness.cache.deleteErrors.push(new CacheError('command_failed'));
+
+    await expect(
+      harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'North' }),
+    ).resolves.toEqual({ warehouseId: WAREHOUSE_ID, name: 'North' });
+    expect(harness.cache.deleted).toEqual([
+      warehouseDetailsCacheKey(WAREHOUSE_ID),
+      WAREHOUSE_LIST_CACHE_KEY,
+    ]);
+    expect(harness.logs[0]).toMatchObject({
+      level: 'warn',
+      event: 'warehouse.cache.invalidate_failed',
+      context: { errorClass: 'CacheError', kind: 'command_failed' },
+    });
+  });
+
   it('saves a renamed warehouse and returns the normalized name', async () => {
     const harness = createHarness();
 
@@ -105,6 +152,12 @@ describe('UpdateWarehouse', () => {
     expect(harness.calls).toEqual(['execute', `findById:${WAREHOUSE_ID}`, 'save']);
     expect(harness.saved?.id).toBe(WAREHOUSE_ID);
     expect(harness.saved?.name.value).toBe('North');
+    expect(harness.nowCalls).toBe(1);
+    expect(harness.savedAt).toBe(UPDATED_AT);
+    expect(harness.cache.deleted).toEqual([
+      warehouseDetailsCacheKey(WAREHOUSE_ID),
+      WAREHOUSE_LIST_CACHE_KEY,
+    ]);
     expect(result).toEqual({ warehouseId: WAREHOUSE_ID, name: 'North' });
     expect(harness.calls).not.toContain('map');
     expect(harness.logs).toEqual([
@@ -142,14 +195,43 @@ describe('UpdateWarehouse', () => {
   });
 
   it('returns the current name without saving when it is already normalized', async () => {
-    const harness = createHarness({ found: { id: WAREHOUSE_ID, name: 'Main' } });
+    const harness = createHarness({
+      found: { id: WAREHOUSE_ID, name: 'Main', createdAt: CREATED_AT, updatedAt: CREATED_AT },
+    });
 
     const result = await harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: '  Main  ' });
 
     expect(result).toEqual({ warehouseId: WAREHOUSE_ID, name: 'Main' });
     expect(harness.calls).not.toContain('save');
     expect(harness.calls).not.toContain('map');
+    expect(harness.nowCalls).toBe(0);
+    expect(harness.cache.deleted).toEqual([]);
     expect(harness.logs).toEqual([]);
+  });
+
+  it('keeps a legacy null createdAt and changes only updatedAt', async () => {
+    const harness = createHarness({
+      found: { id: WAREHOUSE_ID, name: 'Main', createdAt: null, updatedAt: null },
+    });
+
+    await harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'North' });
+
+    expect(harness.savedAt).toBe(UPDATED_AT);
+    expect(harness.calls).toContain('save');
+  });
+
+  it('does not invalidate when the commit fails', async () => {
+    const failure = new Error('commit failed');
+    const harness = createHarness({
+      afterCallback: () => {
+        throw failure;
+      },
+    });
+
+    await expect(
+      harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'North' }),
+    ).rejects.toBe(failure);
+    expect(harness.cache.deleted).toEqual([]);
   });
 
   it('rejects when the warehouse disappears before save', async () => {

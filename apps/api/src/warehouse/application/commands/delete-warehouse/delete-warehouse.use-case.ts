@@ -1,3 +1,5 @@
+import type { CachePort } from '../../../../cache/application/ports/cache.port';
+import { invalidateWarehouseCache } from '../../cache/invalidate-warehouse-cache';
 import { WarehouseNotFoundError } from '../../errors/application.errors';
 import type { LoggerPort } from '../../ports/system/logger.port';
 import type { UnitOfWork } from '../../ports/system/unit-of-work';
@@ -7,11 +9,12 @@ import type { DeleteWarehouseInput } from './delete-warehouse.types';
 export class DeleteWarehouse {
   constructor(
     private readonly unitOfWork: UnitOfWork,
+    private readonly cache: CachePort,
     private readonly logger: LoggerPort,
   ) {}
 
   async execute(input: DeleteWarehouseInput): Promise<void> {
-    await this.unitOfWork.execute(async (tx) => {
+    const warehouseId = await this.unitOfWork.execute(async (tx) => {
       const record = await tx.warehouses.findById(input.warehouseId);
       if (!record) {
         throw new WarehouseNotFoundError({ warehouseId: input.warehouseId });
@@ -22,8 +25,10 @@ export class DeleteWarehouse {
       if (deleted.status === 'not_found') {
         throw new WarehouseNotFoundError({ warehouseId: input.warehouseId });
       }
+      return record.id;
     });
 
+    await invalidateWarehouseCache(this.cache, this.logger, [warehouseId]);
     this.logger.info('warehouse.deleted', { warehouseId: input.warehouseId });
   }
 }

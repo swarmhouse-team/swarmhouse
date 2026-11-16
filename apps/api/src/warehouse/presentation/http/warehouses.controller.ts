@@ -24,6 +24,8 @@ import {
 import type {
   CreateWarehouseResponse,
   GetWarehouseMapResponse,
+  GetWarehouseResponse,
+  ListWarehousesResponse,
   RenameWarehouseResponse,
 } from '@robots/shared';
 
@@ -31,6 +33,8 @@ import { CreateWarehouse } from '../../application/commands/create-warehouse/cre
 import { DeleteWarehouse } from '../../application/commands/delete-warehouse/delete-warehouse.use-case';
 import { UpdateWarehouse } from '../../application/commands/update-warehouse/update-warehouse.use-case';
 import { GetWarehouseMap } from '../../application/queries/get-warehouse-map/get-warehouse-map.use-case';
+import { GetWarehouse } from '../../application/queries/get-warehouse/get-warehouse.use-case';
+import { ListWarehouses } from '../../application/queries/list-warehouses/list-warehouses.use-case';
 import {
   CreateWarehouseDto,
   RenameWarehouseDto,
@@ -42,6 +46,9 @@ import { toWarehouseMapBody } from './warehouse-map.body';
 const NO_ACCESS_CHECK =
   'At this stage the endpoint does not check access: any client that can reach the API may call it.';
 
+const TEMPORARY_LIST =
+  'Temporary stage contract: every stored warehouse is returned, not the warehouses available to one user. There is no pagination. A null date was not recorded; a future UI may render it as an em dash.';
+
 @ApiTags('warehouses')
 @UseFilters(WarehouseHttpExceptionFilter)
 @Controller('warehouses')
@@ -51,7 +58,25 @@ export class WarehousesController {
     private readonly updateWarehouse: UpdateWarehouse,
     private readonly deleteWarehouse: DeleteWarehouse,
     private readonly getWarehouseMap: GetWarehouseMap,
+    private readonly getWarehouse: GetWarehouse,
+    private readonly listWarehouses: ListWarehouses,
   ) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List warehouses', description: `${NO_ACCESS_CHECK} ${TEMPORARY_LIST}` })
+  @ApiOkResponse({ description: 'Every warehouse, without map content' })
+  list(): Promise<ListWarehousesResponse> {
+    return this.listWarehouses.execute();
+  }
+
+  @Get(':warehouseId')
+  @ApiOperation({ summary: 'Read warehouse metadata', description: NO_ACCESS_CHECK })
+  @ApiOkResponse({ description: 'Warehouse metadata without the map' })
+  @ApiBadRequestResponse({ description: 'Invalid path' })
+  @ApiNotFoundResponse({ description: 'Warehouse was not found' })
+  get(@Param() params: WarehousePathParamsDto): Promise<GetWarehouseResponse> {
+    return this.getWarehouse.execute({ warehouseId: params.warehouseId });
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
