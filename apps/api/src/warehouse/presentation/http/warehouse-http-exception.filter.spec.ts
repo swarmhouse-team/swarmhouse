@@ -139,7 +139,7 @@ describe('WarehouseHttpExceptionFilter', () => {
     expect(response.statusCode).toBe(409);
     expect(response.body).toEqual({
       code: 'MAP_VERSION_CONFLICT',
-      message: 'Версия карты устарела. Перечитайте карту и повторите команду.',
+      message: 'The map version is stale. Read the map again and repeat the command.',
     });
     expect(mapVersionConflictErrorSchema.parse(response.body)).toEqual(response.body);
     expect(apiErrorSchema.parse(response.body)).toEqual(response.body);

@@ -1,3 +1,4 @@
+import { WAREHOUSE_MAP_HEIGHT, WAREHOUSE_MAP_WIDTH } from '../constants';
 import {
   CellOccupiedError,
   DuplicateObjectIdError,
@@ -11,9 +12,6 @@ import { normalizeId } from '../vo/id';
 import { Position } from '../vo/position';
 import { Robot } from './robot';
 import { Station } from './station';
-
-const MAP_WIDTH = 20;
-const MAP_HEIGHT = 20;
 
 export interface ObstacleSnapshot {
   x: number;
@@ -70,7 +68,7 @@ export class WarehouseMap {
     return new WarehouseMap(
       normalizeId(id),
       normalizeId(warehouseId),
-      GridSize.create(MAP_WIDTH, MAP_HEIGHT),
+      GridSize.create(WAREHOUSE_MAP_WIDTH, WAREHOUSE_MAP_HEIGHT),
     );
   }
 

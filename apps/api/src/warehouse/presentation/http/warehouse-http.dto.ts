@@ -7,7 +7,7 @@ import {
 } from '@robots/shared';
 import { createZodDto } from 'nestjs-zod';
 
-/** DTO из shared-схем: валидирует глобальный pipe, отдельной схемы в API нет. */
+/** DTOs from shared schemas. The global pipe validates them; the API has no separate schema. */
 export class CreateWarehouseDto extends createZodDto(createWarehouseRequestSchema) {}
 
 export class RenameWarehouseDto extends createZodDto(renameWarehouseRequestSchema) {}

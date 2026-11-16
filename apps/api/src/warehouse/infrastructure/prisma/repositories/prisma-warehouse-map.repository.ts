@@ -1,11 +1,11 @@
 import type { Prisma } from '../../../../generated/prisma/client';
-import type { WarehouseMap, WarehouseMapSnapshot } from '../../../domain/entities/warehouse-map';
+import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import type {
   SaveMapResult,
   StoredWarehouseMap,
   WarehouseMapRepository,
 } from '../../../application/ports/repositories/warehouse-map.repository';
-import { parseMapContent } from '../mapping/map-content.schema';
+import { parseMapContent, toMapContent } from '../mapping/map-content.schema';
 import type { PrismaDb } from '../prisma-db';
 
 /** Stores one map row. It does not restore the aggregate or open a transaction. */
@@ -19,7 +19,7 @@ export class PrismaWarehouseMapRepository implements WarehouseMapRepository {
         id: snapshot.id,
         warehouseId: snapshot.warehouseId,
         version: 0,
-        content: mapContent(snapshot),
+        content: toMapContent(snapshot),
       },
     });
   }
@@ -43,7 +43,7 @@ export class PrismaWarehouseMapRepository implements WarehouseMapRepository {
     const updated = await this.db.warehouseMapRecord.updateMany({
       where: { id: snapshot.id, version: expectedVersion },
       data: {
-        content: mapContent(snapshot),
+        content: toMapContent(snapshot),
         version: { increment: 1 },
       },
     });
@@ -78,25 +78,4 @@ export class PrismaWarehouseMapRepository implements WarehouseMapRepository {
       version: row.version,
     };
   }
-}
-
-function mapContent(snapshot: WarehouseMapSnapshot): Prisma.InputJsonObject {
-  return {
-    width: snapshot.width,
-    height: snapshot.height,
-    obstacles: snapshot.obstacles.map((obstacle) => ({ x: obstacle.x, y: obstacle.y })),
-    robots: snapshot.robots.map((robot) => ({
-      id: robot.id,
-      name: robot.name,
-      x: robot.x,
-      y: robot.y,
-    })),
-    stations: snapshot.stations.map((station) => ({
-      id: station.id,
-      name: station.name,
-      type: station.type,
-      x: station.x,
-      y: station.y,
-    })),
-  };
 }

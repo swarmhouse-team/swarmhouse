@@ -328,7 +328,7 @@ describe('HTTP склада', () => {
     expect(response.status).toBe(409);
     expect(mapVersionConflictErrorSchema.parse(response.body)).toEqual({
       code: 'MAP_VERSION_CONFLICT',
-      message: 'Версия карты устарела. Перечитайте карту и повторите команду.',
+      message: 'The map version is stale. Read the map again and repeat the command.',
     });
     const serialized = JSON.stringify(response.body);
     expect(serialized).not.toContain('expectedVersion');

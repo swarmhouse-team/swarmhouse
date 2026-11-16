@@ -185,7 +185,7 @@ describe('warehouse HTTP on the test database', () => {
     expect(conflict.status).toBe(409);
     expect(mapVersionConflictErrorSchema.parse(conflict.body)).toEqual({
       code: 'MAP_VERSION_CONFLICT',
-      message: 'Версия карты устарела. Перечитайте карту и повторите команду.',
+      message: 'The map version is stale. Read the map again and repeat the command.',
     });
     expect(apiErrorSchema.parse(conflict.body)).toEqual(conflict.body);
     const serialized = JSON.stringify(conflict.body);

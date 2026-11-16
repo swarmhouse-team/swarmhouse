@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import type { Warehouse } from '../../../domain/entities/warehouse';
 import { InvalidNameError } from '../../../domain/errors/value.errors';
-import { MAX_NAME_LENGTH } from '../../../domain/vo/name';
+import { MAX_NAME_LENGTH } from '../../../domain/constants';
 import { WarehouseNotFoundError } from '../../errors/application.errors';
 import type {
   SaveWarehouseResult,
   StoredWarehouse,
 } from '../../ports/repositories/warehouse.repository';
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
+import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
 import { UpdateWarehouse } from './update-warehouse.use-case';
 
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
@@ -16,6 +17,7 @@ const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
 interface Harness {
   useCase: UpdateWarehouse;
   calls: string[];
+  logs: LogEntry[];
   saved?: Warehouse;
 }
 
@@ -27,9 +29,11 @@ function createHarness(options?: {
   afterCallback?: () => Promise<void>;
 }): Harness {
   const calls: string[] = [];
+  const { logger, logs } = createRecordingLogger();
   const state: Harness = {
     useCase: undefined as unknown as UpdateWarehouse,
     calls,
+    logs,
   };
   const unitOfWork: UnitOfWork = {
     async execute(work) {
@@ -88,7 +92,7 @@ function createHarness(options?: {
       return result;
     },
   };
-  state.useCase = new UpdateWarehouse(unitOfWork);
+  state.useCase = new UpdateWarehouse(unitOfWork, logger);
   return state;
 }
 
@@ -103,6 +107,13 @@ describe('UpdateWarehouse', () => {
     expect(harness.saved?.name.value).toBe('North');
     expect(result).toEqual({ warehouseId: WAREHOUSE_ID, name: 'North' });
     expect(harness.calls).not.toContain('map');
+    expect(harness.logs).toEqual([
+      {
+        level: 'info',
+        event: 'warehouse.renamed',
+        context: { warehouseId: WAREHOUSE_ID },
+      },
+    ]);
   });
 
   it.each(['   ', 'x'.repeat(MAX_NAME_LENGTH + 1)])(
@@ -127,6 +138,7 @@ describe('UpdateWarehouse', () => {
       details: { warehouseId: WAREHOUSE_ID },
     });
     expect(harness.calls).toEqual(['execute', `findById:${WAREHOUSE_ID}`]);
+    expect(harness.logs).toEqual([]);
   });
 
   it('returns the current name without saving when it is already normalized', async () => {
@@ -137,6 +149,7 @@ describe('UpdateWarehouse', () => {
     expect(result).toEqual({ warehouseId: WAREHOUSE_ID, name: 'Main' });
     expect(harness.calls).not.toContain('save');
     expect(harness.calls).not.toContain('map');
+    expect(harness.logs).toEqual([]);
   });
 
   it('rejects when the warehouse disappears before save', async () => {
@@ -168,9 +181,10 @@ describe('UpdateWarehouse', () => {
     await expect(
       harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'North' }),
     ).rejects.toBe(failure);
+    expect(harness.logs).toEqual([]);
   });
 
-  it('does not settle before unit of work execute settles', async () => {
+  it('logs warehouse.renamed only after unit of work execute settles', async () => {
     let release: (() => void) | undefined;
     const gate = new Promise<void>((resolve) => {
       release = resolve;
@@ -185,8 +199,16 @@ describe('UpdateWarehouse', () => {
 
     await Promise.resolve();
     expect(settled).toBe(false);
+    expect(harness.logs).toEqual([]);
     release?.();
     await pending;
     expect(settled).toBe(true);
+    expect(harness.logs).toEqual([
+      {
+        level: 'info',
+        event: 'warehouse.renamed',
+        context: { warehouseId: WAREHOUSE_ID },
+      },
+    ]);
   });
 });

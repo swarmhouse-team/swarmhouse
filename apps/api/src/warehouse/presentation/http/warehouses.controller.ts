@@ -40,7 +40,7 @@ import { WarehouseHttpExceptionFilter } from './warehouse-http-exception.filter'
 import { toWarehouseMapBody } from './warehouse-map.body';
 
 const NO_ACCESS_CHECK =
-  'На текущем этапе endpoint не проверяет доступ: он доступен любому клиенту, который может обратиться к API.';
+  'At this stage the endpoint does not check access: any client that can reach the API may call it.';
 
 @ApiTags('warehouses')
 @UseFilters(WarehouseHttpExceptionFilter)
@@ -55,21 +55,21 @@ export class WarehousesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Создать склад', description: NO_ACCESS_CHECK })
-  @ApiCreatedResponse({ description: 'Склад и пустая карта созданы' })
-  @ApiBadRequestResponse({ description: 'Некорректное тело запроса' })
-  @ApiUnprocessableEntityResponse({ description: 'Имя не прошло доменную проверку' })
+  @ApiOperation({ summary: 'Create a warehouse', description: NO_ACCESS_CHECK })
+  @ApiCreatedResponse({ description: 'The warehouse and an empty map were created' })
+  @ApiBadRequestResponse({ description: 'Invalid request body' })
+  @ApiUnprocessableEntityResponse({ description: 'The name failed the domain check' })
   create(@Body() body: CreateWarehouseDto): Promise<CreateWarehouseResponse> {
     return this.createWarehouse.execute({ name: body.name });
   }
 
   @Patch(':warehouseId')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Переименовать склад', description: NO_ACCESS_CHECK })
-  @ApiOkResponse({ description: 'Склад переименован' })
-  @ApiBadRequestResponse({ description: 'Некорректный path или тело' })
-  @ApiNotFoundResponse({ description: 'Склад не найден' })
-  @ApiUnprocessableEntityResponse({ description: 'Имя не прошло доменную проверку' })
+  @ApiOperation({ summary: 'Rename a warehouse', description: NO_ACCESS_CHECK })
+  @ApiOkResponse({ description: 'The warehouse was renamed' })
+  @ApiBadRequestResponse({ description: 'Invalid path or body' })
+  @ApiNotFoundResponse({ description: 'Warehouse was not found' })
+  @ApiUnprocessableEntityResponse({ description: 'The name failed the domain check' })
   rename(
     @Param() params: WarehousePathParamsDto,
     @Body() body: RenameWarehouseDto,
@@ -82,20 +82,20 @@ export class WarehousesController {
 
   @Delete(':warehouseId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Удалить склад', description: NO_ACCESS_CHECK })
-  @ApiNoContentResponse({ description: 'Склад удалён, тела нет' })
-  @ApiBadRequestResponse({ description: 'Некорректный path' })
-  @ApiNotFoundResponse({ description: 'Склад не найден' })
+  @ApiOperation({ summary: 'Delete a warehouse', description: NO_ACCESS_CHECK })
+  @ApiNoContentResponse({ description: 'The warehouse was deleted; there is no body' })
+  @ApiBadRequestResponse({ description: 'Invalid path' })
+  @ApiNotFoundResponse({ description: 'Warehouse was not found' })
   async remove(@Param() params: WarehousePathParamsDto): Promise<void> {
     await this.deleteWarehouse.execute({ warehouseId: params.warehouseId });
   }
 
   @Get(':warehouseId/map')
-  @ApiOperation({ summary: 'Прочитать карту склада', description: NO_ACCESS_CHECK })
-  @ApiOkResponse({ description: 'Плоское тело карты' })
-  @ApiBadRequestResponse({ description: 'Некорректный path' })
-  @ApiNotFoundResponse({ description: 'Карта не найдена' })
-  @ApiInternalServerErrorResponse({ description: 'Повреждённые данные карты' })
+  @ApiOperation({ summary: 'Read the warehouse map', description: NO_ACCESS_CHECK })
+  @ApiOkResponse({ description: 'Flat map body' })
+  @ApiBadRequestResponse({ description: 'Invalid path' })
+  @ApiNotFoundResponse({ description: 'Warehouse map was not found' })
+  @ApiInternalServerErrorResponse({ description: 'Stored map data is corrupted' })
   async getMap(@Param() params: WarehousePathParamsDto): Promise<GetWarehouseMapResponse> {
     const result = await this.getWarehouseMap.execute({ warehouseId: params.warehouseId });
     return toWarehouseMapBody(result.snapshot, result.version);

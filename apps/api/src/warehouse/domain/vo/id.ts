@@ -1,9 +1,5 @@
 import { InvalidIdError } from '../errors/value.errors';
-
-const UUID_TEXT = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-
-const NIL_UUID = '00000000-0000-0000-0000-000000000000';
-const MAX_UUID = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+import { MAX_UUID, NIL_UUID, UUID_TEXT } from '../constants';
 
 /**
  * Checks the shared UUID text form for a warehouse, map, robot, and station.

@@ -5,6 +5,7 @@ import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { InvalidNameError } from '../../../domain/errors/value.errors';
 import type { IdGenerator } from '../../ports/system/id-generator';
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
+import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
 import { CreateWarehouse } from './create-warehouse.use-case';
 
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
@@ -14,6 +15,7 @@ interface Harness {
   useCase: CreateWarehouse;
   inserted: { warehouse?: Warehouse; map?: WarehouseMap };
   calls: string[];
+  logs: LogEntry[];
   executeCount: number;
 }
 
@@ -25,6 +27,7 @@ function createHarness(options?: {
 }): Harness {
   const inserted: Harness['inserted'] = {};
   const calls: string[] = [];
+  const { logger, logs } = createRecordingLogger();
   const ids = [...(options?.ids ?? [WAREHOUSE_ID, MAP_ID])];
   let executeCount = 0;
   const unitOfWork: UnitOfWork = {
@@ -84,9 +87,10 @@ function createHarness(options?: {
   };
 
   return {
-    useCase: new CreateWarehouse(unitOfWork, idGenerator),
+    useCase: new CreateWarehouse(unitOfWork, idGenerator, logger),
     inserted,
     calls,
+    logs,
     get executeCount() {
       return executeCount;
     },
@@ -118,6 +122,13 @@ describe('CreateWarehouse', () => {
       mapId: MAP_ID,
       version: 0,
     });
+    expect(harness.logs).toEqual([
+      {
+        level: 'info',
+        event: 'warehouse.created',
+        context: { warehouseId: WAREHOUSE_ID, mapId: MAP_ID, version: 0 },
+      },
+    ]);
   });
 
   it('does not insert anything when the name is empty', async () => {
@@ -127,6 +138,7 @@ describe('CreateWarehouse', () => {
     expect(harness.executeCount).toBe(0);
     expect(harness.inserted.warehouse).toBeUndefined();
     expect(harness.inserted.map).toBeUndefined();
+    expect(harness.logs).toEqual([]);
   });
 
   it('does not insert the map when the warehouse insert fails', async () => {
@@ -140,6 +152,7 @@ describe('CreateWarehouse', () => {
     await expect(harness.useCase.execute({ name: 'Main' })).rejects.toBe(failure);
     expect(harness.calls).toEqual(['execute', 'insert-warehouse']);
     expect(harness.inserted.map).toBeUndefined();
+    expect(harness.logs).toEqual([]);
   });
 
   it('propagates the map insert error as the same object', async () => {
@@ -152,6 +165,7 @@ describe('CreateWarehouse', () => {
 
     await expect(harness.useCase.execute({ name: 'Main' })).rejects.toBe(failure);
     expect(harness.calls).toEqual(['execute', 'insert-warehouse', 'insert-map']);
+    expect(harness.logs).toEqual([]);
   });
 
   it('does not return success when commit fails after the callback', async () => {
@@ -163,9 +177,10 @@ describe('CreateWarehouse', () => {
     });
 
     await expect(harness.useCase.execute({ name: 'Main' })).rejects.toBe(failure);
+    expect(harness.logs).toEqual([]);
   });
 
-  it('stays pending until unit of work execute settles', async () => {
+  it('logs warehouse.created only after unit of work execute settles', async () => {
     let release: (() => void) | undefined;
     const gate = new Promise<void>((resolve) => {
       release = resolve;
@@ -181,8 +196,16 @@ describe('CreateWarehouse', () => {
     await Promise.resolve();
 
     expect(settled).toBe(false);
+    expect(harness.logs).toEqual([]);
     release?.();
     await pending;
     expect(settled).toBe(true);
+    expect(harness.logs).toEqual([
+      {
+        level: 'info',
+        event: 'warehouse.created',
+        context: { warehouseId: WAREHOUSE_ID, mapId: MAP_ID, version: 0 },
+      },
+    ]);
   });
 });

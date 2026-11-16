@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { InvalidNameError } from '../errors/value.errors';
-import { MAX_NAME_LENGTH, Name } from './name';
+import { MAX_NAME_LENGTH } from '../constants';
+import { Name } from './name';
 
 describe('Name', () => {
   it('trims surrounding spaces', () => {

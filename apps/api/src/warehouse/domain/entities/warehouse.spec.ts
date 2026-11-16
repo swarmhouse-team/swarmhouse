@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { InvalidIdError, InvalidNameError } from '../errors/value.errors';
-import { MAX_NAME_LENGTH } from '../vo/name';
+import { MAX_NAME_LENGTH } from '../constants';
 import { Warehouse } from './warehouse';
 
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
