@@ -17,6 +17,17 @@ describe('Position', () => {
     expect(Position.create(1, 2).equals(Position.create(2, 1))).toBe(false);
   });
 
+  it('is not assignable from a structural object', () => {
+    // @ts-expect-error A structural object is not a Position.
+    const structural: Position = {
+      x: 0,
+      y: 0,
+      equals: () => false,
+    };
+
+    expect(structural).not.toBeInstanceOf(Position);
+  });
+
   it.each([
     [-1, 0],
     [1.5, 0],

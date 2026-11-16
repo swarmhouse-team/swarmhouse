@@ -9,7 +9,7 @@ import {
   MapObjectNotFoundError,
   PositionOutOfBoundsError,
 } from '../errors/map.errors';
-import { InvalidIdError } from '../errors/value.errors';
+import { InvalidIdError, InvalidPositionError } from '../errors/value.errors';
 import { Position } from '../vo/position';
 import { Robot } from './robot';
 import { Station } from './station';
@@ -145,6 +145,19 @@ describe('WarehouseMap', () => {
     expect(() => map.placeRobot(SAME_ID, 'Second', at(2, 0))).toThrow(DuplicateObjectIdError);
     expect(() => map.placeStation(SAME_ID, 'Issuing', StationType.Issuing, at(3, 0))).toThrow(
       DuplicateObjectIdError,
+    );
+    expect(map.snapshot()).toEqual(before);
+  });
+
+  it('rejects robot and station names ID and id regardless of the process locale', () => {
+    const map = createMap();
+    map.placeRobot(ROBOT_ID, 'ID', at(0, 0));
+    map.placeStation(STATION_ID, 'ID', StationType.Receiving, at(1, 0));
+    const before = map.snapshot();
+
+    expect(() => map.placeRobot(ROBOT_2_ID, 'id', at(2, 0))).toThrow(DuplicateRobotNameError);
+    expect(() => map.placeStation(STATION_2_ID, 'id', StationType.Issuing, at(3, 0))).toThrow(
+      DuplicateStationNameError,
     );
     expect(map.snapshot()).toEqual(before);
   });
@@ -373,5 +386,52 @@ describe('WarehouseMap', () => {
 
     expect(() => map.moveRobot('missing', at(3, 0))).toThrow(InvalidIdError);
     expect(() => map.removeStation('missing')).toThrow(InvalidIdError);
+  });
+
+  it('removes a robot and a station when the uuid differs only by letter case', () => {
+    const map = createMap();
+    map.placeRobot(ROBOT_ID, 'Robot', at(0, 0));
+    map.placeStation(STATION_ID, 'Receiving', StationType.Receiving, at(1, 0));
+
+    map.removeRobot(ROBOT_ID.toUpperCase());
+    map.removeStation(STATION_ID.toUpperCase());
+
+    expect(map.snapshot().robots).toEqual([]);
+    expect(map.snapshot().stations).toEqual([]);
+    expect(map.getRobots()).toEqual([]);
+    expect(map.getStations()).toEqual([]);
+  });
+
+  it('rejects a cell object that was not created by Position and leaves the map unchanged', () => {
+    const map = createMap();
+    map.placeRobot(ROBOT_ID, 'Robot', at(0, 0));
+    map.placeStation(STATION_ID, 'Receiving', StationType.Receiving, at(1, 0));
+    map.addObstacle(at(2, 0));
+    const before = map.snapshot();
+    const foreign = {
+      x: 3,
+      y: 3,
+      equals: () => false,
+    } as unknown as Position;
+
+    expect(() => map.addObstacle(foreign)).toThrow(InvalidPositionError);
+    expect(() => map.placeRobot(ROBOT_2_ID, 'Second', foreign)).toThrow(InvalidPositionError);
+    expect(() => map.placeStation(STATION_2_ID, 'Issuing', StationType.Issuing, foreign)).toThrow(
+      InvalidPositionError,
+    );
+    expect(() => map.moveRobot(ROBOT_ID, foreign)).toThrow(InvalidPositionError);
+    expect(() => map.moveStation(STATION_ID, foreign)).toThrow(InvalidPositionError);
+    expect(() => map.moveObstacle(at(2, 0), foreign)).toThrow(InvalidPositionError);
+    expect(() => map.removeObstacle(foreign)).toThrow(InvalidPositionError);
+    expect(map.snapshot()).toEqual(before);
+  });
+
+  it('keeps the map frozen and hides its collections', () => {
+    const map = createMap();
+
+    expect(Object.isFrozen(map)).toBe(true);
+    expect(Object.hasOwn(map, 'robots')).toBe(false);
+    expect(Object.hasOwn(map, 'stations')).toBe(false);
+    expect(Object.hasOwn(map, 'obstacles')).toBe(false);
   });
 });

@@ -1,7 +1,5 @@
 import type { DomainErrorCode } from './domain-error-code';
 
-export type { DomainErrorCode } from './domain-error-code';
-
 export type ErrorDetails = Readonly<Record<string, string | number | boolean | null>>;
 
 export abstract class DomainError extends Error {
