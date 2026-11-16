@@ -192,9 +192,9 @@ export function LandingPage() {
             <div className="max-w-2xl">
               <Heading level={2}>Возможности</Heading>
 
-              <p className="mt-3 text-muted-foreground">
+              <Text variant="muted" className="mt-3">
                 Всё необходимое для управления симуляцией и совместной работы.
-              </p>
+              </Text>
             </div>
 
             <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -239,7 +239,7 @@ export function LandingPage() {
       <footer className="border-t">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <Text variant="muted" size="sm">
-            RobotsProject · учебный командный проект
+            Swarmhouse · учебный командный проект
           </Text>
 
           <Text variant="muted" size="sm">

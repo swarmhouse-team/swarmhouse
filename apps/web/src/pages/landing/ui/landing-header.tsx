@@ -5,7 +5,7 @@ export function LandingHeader() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" aria-label="RobotsProject — главная" className="flex items-center gap-2">
+        <Link href="/" aria-label="Swarmhouse — главная" className="flex items-center gap-2">
           <Text
             as="span"
             size="sm"
@@ -13,11 +13,11 @@ export function LandingHeader() {
             aria-hidden="true"
             className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground"
           >
-            R
+            S
           </Text>
 
           <Text as="span" size="sm" weight="semibold">
-            RobotsProject
+            Swarmhouse
           </Text>
         </Link>
 
