@@ -1,36 +1,47 @@
 import { StationType } from '../../domain/enums/station-type';
-import { WarehouseMap, type WarehouseMapSnapshot } from '../../domain/entities/warehouse-map';
+import { WarehouseMap, type StationSnapshot } from '../../domain/entities/warehouse-map';
 import { DomainError } from '../../domain/errors/domain.error';
 import { Position } from '../../domain/vo/position';
 import { CorruptedMapStateError } from '../errors/application.errors';
+import type { WarehouseMapRestoreInput } from './warehouse-map-restore-input';
 
 const MAP_SIZE = 20;
 
-/** Rebuilds a map from a stored snapshot. Invalid stored data is not repaired. */
-export function restoreWarehouseMap(snapshot: WarehouseMapSnapshot): WarehouseMap {
-  if (snapshot.width !== MAP_SIZE || snapshot.height !== MAP_SIZE) {
-    throw new CorruptedMapStateError(snapshot.id, 'GRID_SIZE_MISMATCH');
+/** Rebuilds a map from stored data. Invalid stored data is not repaired. */
+export function restoreWarehouseMap(input: WarehouseMapRestoreInput): WarehouseMap {
+  if (input.width !== MAP_SIZE || input.height !== MAP_SIZE) {
+    throw new CorruptedMapStateError(input.id, 'GRID_SIZE_MISMATCH');
   }
-  for (const station of snapshot.stations) {
+
+  const stations: StationSnapshot[] = [];
+  for (const station of input.stations) {
     if (!isStationType(station.type)) {
-      throw new CorruptedMapStateError(snapshot.id, 'UNKNOWN_STATION_TYPE');
+      throw new CorruptedMapStateError(input.id, 'UNKNOWN_STATION_TYPE');
     }
+    stations.push({
+      id: station.id,
+      name: station.name,
+      type: station.type,
+      x: station.x,
+      y: station.y,
+    });
   }
-  for (const named of [...snapshot.robots, ...snapshot.stations]) {
+
+  for (const named of [...input.robots, ...input.stations]) {
     if (named.name !== named.name.trim()) {
-      throw new CorruptedMapStateError(snapshot.id, 'DENORMALIZED_NAME');
+      throw new CorruptedMapStateError(input.id, 'DENORMALIZED_NAME');
     }
   }
 
   try {
-    const map = WarehouseMap.create(snapshot.id, snapshot.warehouseId);
-    for (const obstacle of snapshot.obstacles) {
+    const map = WarehouseMap.create(input.id, input.warehouseId);
+    for (const obstacle of input.obstacles) {
       map.addObstacle(Position.create(obstacle.x, obstacle.y));
     }
-    for (const robot of snapshot.robots) {
+    for (const robot of input.robots) {
       map.placeRobot(robot.id, robot.name, Position.create(robot.x, robot.y));
     }
-    for (const station of snapshot.stations) {
+    for (const station of stations) {
       map.placeStation(
         station.id,
         station.name,
@@ -41,7 +52,7 @@ export function restoreWarehouseMap(snapshot: WarehouseMapSnapshot): WarehouseMa
     return map;
   } catch (error) {
     if (error instanceof DomainError) {
-      throw new CorruptedMapStateError(snapshot.id, 'DOMAIN_INVARIANT', error);
+      throw new CorruptedMapStateError(input.id, 'DOMAIN_INVARIANT', error);
     }
     throw error;
   }

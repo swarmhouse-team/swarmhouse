@@ -78,6 +78,12 @@ describe('ApplicationError', () => {
       code: 'CORRUPTED_MAP_STATE' as const,
       details: { mapId: 'map-1', reason: 'GRID_SIZE_MISMATCH' },
     },
+    {
+      create: () => new CorruptedMapStateError('map-1', 'INVALID_STORED_FORMAT'),
+      name: 'CorruptedMapStateError',
+      code: 'CORRUPTED_MAP_STATE' as const,
+      details: { mapId: 'map-1', reason: 'INVALID_STORED_FORMAT' },
+    },
   ])('$name exposes $code and its details', ({ create, name, code, details }) => {
     const error = create();
 
@@ -97,5 +103,13 @@ describe('ApplicationError', () => {
 
     expect(error.cause).toBe(cause);
     expect(error.details).toEqual({ mapId: 'map-1', reason: 'DOMAIN_INVARIANT' });
+  });
+
+  it('keeps the original parse error as the cause of an invalid stored format', () => {
+    const cause = new Error('content is not an object');
+    const error = new CorruptedMapStateError('map-1', 'INVALID_STORED_FORMAT', cause);
+
+    expect(error.cause).toBe(cause);
+    expect(error.details).toEqual({ mapId: 'map-1', reason: 'INVALID_STORED_FORMAT' });
   });
 });

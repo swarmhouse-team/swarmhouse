@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { StationType } from '../../domain/enums/station-type';
 import { WarehouseMap, type WarehouseMapSnapshot } from '../../domain/entities/warehouse-map';
+import type { WarehouseMapRestoreInput } from './warehouse-map-restore-input';
 import {
   CellOccupiedError,
   DuplicateObjectIdError,
@@ -18,9 +19,9 @@ const ROBOT_ID = '33333333-3333-4111-8111-33333333333c';
 const STATION_ID = '44444444-4444-4111-8111-44444444444e';
 const STATION_2_ID = '44444444-4444-4111-a111-444444444445';
 
-function causeOf(snapshot: WarehouseMapSnapshot): unknown {
+function causeOf(input: WarehouseMapRestoreInput): unknown {
   try {
-    restoreWarehouseMap(snapshot);
+    restoreWarehouseMap(input);
   } catch (error) {
     return (error as CorruptedMapStateError).cause;
   }
@@ -62,8 +63,9 @@ describe('restoreWarehouseMap', () => {
   it('round-trips obstacles, robots, and stations', () => {
     const snapshot = filledSnapshot();
     const before = structuredClone(snapshot);
+    const input: WarehouseMapRestoreInput = snapshot;
 
-    expect(restoreWarehouseMap(snapshot).snapshot()).toEqual(snapshot);
+    expect(restoreWarehouseMap(input).snapshot()).toEqual(snapshot);
     expect(snapshot).toEqual(before);
   });
 
@@ -85,16 +87,19 @@ describe('restoreWarehouseMap', () => {
   });
 
   it('rejects an unknown station type', () => {
-    const snapshot = filledSnapshot();
-    const station = snapshot.stations[0];
+    const source = filledSnapshot();
+    const station = source.stations[0];
     if (!station) {
       throw new Error('Station is missing');
     }
-    station.type = 'packing' as StationType;
+    const input: WarehouseMapRestoreInput = {
+      ...source,
+      stations: [{ ...station, type: 'packing' }],
+    };
 
-    expect(() => restoreWarehouseMap(snapshot)).toThrow(CorruptedMapStateError);
+    expect(() => restoreWarehouseMap(input)).toThrow(CorruptedMapStateError);
     try {
-      restoreWarehouseMap(snapshot);
+      restoreWarehouseMap(input);
     } catch (error) {
       expect((error as CorruptedMapStateError).details).toEqual({
         mapId: MAP_ID,

@@ -1,23 +1,29 @@
-import type { WarehouseMap, WarehouseMapSnapshot } from '../../../domain/entities/warehouse-map';
+import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
+import type { WarehouseMapRestoreInput } from '../../mapping/warehouse-map-restore-input';
 
-/** A stored map record. `snapshot` and `version` belong to the same committed write. */
+/**
+ * A stored map record. `snapshot` is structural data that still has to pass
+ * `restoreWarehouseMap`. `version` belongs to the same committed write.
+ * A valid aggregate snapshot is a valid value of this field.
+ */
 export interface StoredWarehouseMap {
-  snapshot: WarehouseMapSnapshot;
+  snapshot: WarehouseMapRestoreInput;
   version: number;
 }
 
 /**
  * Result of a conditional update. `save` never creates a missing map.
- * `saved` — the map existed, the version matched, and the stored version is
- * `expectedVersion + 1`. Inside a future unit of work this still does not mean
- * the transaction has committed: that is decided only when `execute` finishes.
- * If the map changes or disappears before commit, `execute` rejects and applies
- * none of the transaction's writes.
- * `conflict` — the map exists, but `expectedVersion` does not match. Storage
- * stays unchanged.
- * `not_found` — no map has this id. Storage stays unchanged.
- * A future `EditWarehouseMap` maps `conflict` to `MapVersionConflictError` and
- * `not_found` to `WarehouseMapNotFoundError`.
+ * `saved` — the write for `expectedVersion` succeeded in the current transaction,
+ * and the stored version is `expectedVersion + 1`. Inside a unit of work this
+ * does not mean the transaction has committed.
+ * `conflict` — the write for the expected version did not happen. `actualVersion`
+ * is the version the adapter observed while checking the conflict. It may already
+ * be stale when the caller receives the result.
+ * `not_found` — the adapter found no row for this id while performing the operation.
+ * `conflict` and `not_found` mean this `save` wrote nothing. They do not describe
+ * other writes in the same transaction or in the database.
+ * `EditWarehouseMap` throws `MapVersionConflictError` for `conflict` and
+ * `WarehouseMapNotFoundError` for `not_found`.
  */
 export type SaveMapResult =
   | { status: 'saved'; version: number }

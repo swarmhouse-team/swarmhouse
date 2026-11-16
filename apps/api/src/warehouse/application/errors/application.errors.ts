@@ -1,7 +1,11 @@
 import { ApplicationError } from './application.error';
 
 export type CorruptedMapReason =
-  'GRID_SIZE_MISMATCH' | 'UNKNOWN_STATION_TYPE' | 'DENORMALIZED_NAME' | 'DOMAIN_INVARIANT';
+  | 'GRID_SIZE_MISMATCH'
+  | 'UNKNOWN_STATION_TYPE'
+  | 'DENORMALIZED_NAME'
+  | 'DOMAIN_INVARIANT'
+  | 'INVALID_STORED_FORMAT';
 
 /** The requested warehouse does not exist. */
 export class WarehouseNotFoundError extends ApplicationError {
@@ -24,7 +28,11 @@ export class MapVersionConflictError extends ApplicationError {
   }
 }
 
-/** Stored map data cannot be restored. A domain cause is kept when there is one. */
+/**
+ * Stored map data cannot be restored.
+ * `INVALID_STORED_FORMAT` means the stored representation cannot be parsed into a snapshot.
+ * A cause is kept when one is given, whether it is a domain error or a parse error.
+ */
 export class CorruptedMapStateError extends ApplicationError {
   constructor(mapId: string, reason: CorruptedMapReason, cause?: Error) {
     super('CORRUPTED_MAP_STATE', 'Stored warehouse map is corrupted', { mapId, reason }, cause);
