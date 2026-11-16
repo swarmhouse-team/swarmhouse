@@ -1,4 +1,4 @@
-# Инфраструктура для локальной разработки. Приложения запускаются на хосте через `pnpm dev`.
+# Инфраструктура для локальной разработки (PostgreSQL, Redis). Приложения запускаются на хосте через `pnpm dev`.
 services:
   postgres:
     image: postgres:17-alpine
@@ -17,5 +17,19 @@ services:
       timeout: 3s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
   postgres-data:
+  redis-data:
