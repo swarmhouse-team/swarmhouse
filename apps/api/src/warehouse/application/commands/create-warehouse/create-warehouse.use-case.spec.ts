@@ -1,21 +1,30 @@
 import { describe, expect, it } from 'vitest';
 
+import { CacheError } from '../../../../cache/application/errors/cache.error';
+
 import type { Warehouse } from '../../../domain/entities/warehouse';
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { InvalidNameError } from '../../../domain/errors/value.errors';
+import type { Clock } from '../../ports/system/clock';
 import type { IdGenerator } from '../../ports/system/id-generator';
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
 import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
+import { RecordingCache } from '../../testing/recording-cache';
+import { WAREHOUSE_LIST_CACHE_KEY } from '../../queries/warehouse-cache.policy';
 import { CreateWarehouse } from './create-warehouse.use-case';
 
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
 const MAP_ID = '22222222-2222-7111-8111-22222222222b';
 
+const RECORDED_AT = new Date('2026-11-16T12:00:00.000Z');
+
 interface Harness {
   useCase: CreateWarehouse;
-  inserted: { warehouse?: Warehouse; map?: WarehouseMap };
+  inserted: { warehouse?: Warehouse; map?: WarehouseMap; recordedAt?: Date };
   calls: string[];
   logs: LogEntry[];
+  cache: RecordingCache;
+  nowCalls: number;
   executeCount: number;
 }
 
@@ -27,7 +36,15 @@ function createHarness(options?: {
 }): Harness {
   const inserted: Harness['inserted'] = {};
   const calls: string[] = [];
+  const cache = new RecordingCache();
   const { logger, logs } = createRecordingLogger();
+  let nowCalls = 0;
+  const clock: Clock = {
+    now() {
+      nowCalls += 1;
+      return RECORDED_AT;
+    },
+  };
   const ids = [...(options?.ids ?? [WAREHOUSE_ID, MAP_ID])];
   let executeCount = 0;
   const unitOfWork: UnitOfWork = {
@@ -36,13 +53,17 @@ function createHarness(options?: {
       calls.push('execute');
       const tx: TransactionContext = {
         warehouses: {
-          async insert(warehouse) {
+          async insert(warehouse, recordedAt) {
             calls.push('insert-warehouse');
             await options?.onInsertWarehouse?.();
             inserted.warehouse = warehouse;
+            inserted.recordedAt = recordedAt;
           },
           async findById() {
             throw new Error('findById must not be used');
+          },
+          async list() {
+            throw new Error('list must not be used');
           },
           async save() {
             throw new Error('save must not be used');
@@ -87,10 +108,14 @@ function createHarness(options?: {
   };
 
   return {
-    useCase: new CreateWarehouse(unitOfWork, idGenerator, logger),
+    useCase: new CreateWarehouse(unitOfWork, idGenerator, clock, cache, logger),
     inserted,
     calls,
     logs,
+    cache,
+    get nowCalls() {
+      return nowCalls;
+    },
     get executeCount() {
       return executeCount;
     },
@@ -98,6 +123,20 @@ function createHarness(options?: {
 }
 
 describe('CreateWarehouse', () => {
+  it('keeps the created warehouse when list invalidation fails', async () => {
+    const harness = createHarness();
+    harness.cache.deleteErrors.push(new CacheError('unavailable'));
+
+    await expect(harness.useCase.execute({ name: 'Main' })).resolves.toMatchObject({
+      warehouseId: WAREHOUSE_ID,
+    });
+    expect(harness.cache.deleted).toEqual([WAREHOUSE_LIST_CACHE_KEY]);
+    expect(harness.logs.map((entry) => entry.event)).toEqual([
+      'warehouse.cache.invalidate_failed',
+      'warehouse.created',
+    ]);
+  });
+
   it('creates a warehouse and an empty 20x20 map inside one execute', async () => {
     const harness = createHarness();
 
@@ -105,6 +144,9 @@ describe('CreateWarehouse', () => {
 
     expect(harness.executeCount).toBe(1);
     expect(harness.calls).toEqual(['execute', 'insert-warehouse', 'insert-map']);
+    expect(harness.nowCalls).toBe(1);
+    expect(harness.inserted.recordedAt).toBe(RECORDED_AT);
+    expect(harness.cache.deleted).toEqual([WAREHOUSE_LIST_CACHE_KEY]);
     expect(harness.inserted.warehouse?.id).toBe(WAREHOUSE_ID);
     expect(harness.inserted.map?.warehouseId).toBe(harness.inserted.warehouse?.id);
     expect(harness.inserted.map?.snapshot()).toEqual({
@@ -177,6 +219,7 @@ describe('CreateWarehouse', () => {
     });
 
     await expect(harness.useCase.execute({ name: 'Main' })).rejects.toBe(failure);
+    expect(harness.cache.deleted).toEqual([]);
     expect(harness.logs).toEqual([]);
   });
 

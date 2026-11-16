@@ -1,4 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import {
   apiErrorSchema,
@@ -7,11 +8,14 @@ import {
   mapVersionConflictErrorSchema,
   renameWarehouseResponseSchema,
   warehouseMapBodySchema,
+  type GetWarehouseResponse,
+  type ListWarehousesResponse,
 } from '@robots/shared';
 import request from 'supertest';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { httpProviders } from '../../../common/http/http.providers';
+import { validateEnv } from '../../../config/env';
 import { PrismaService } from '../../../prisma/prisma.service';
 import type {
   CreateWarehouseInput,
@@ -41,6 +45,8 @@ import type {
   GetWarehouseMapResult,
 } from '../../application/queries/get-warehouse-map/get-warehouse-map.types';
 import { GetWarehouseMap } from '../../application/queries/get-warehouse-map/get-warehouse-map.use-case';
+import { GetWarehouse } from '../../application/queries/get-warehouse/get-warehouse.use-case';
+import { ListWarehouses } from '../../application/queries/list-warehouses/list-warehouses.use-case';
 import type { WarehouseMapSnapshot } from '../../domain/entities/warehouse-map';
 import { InvalidNameError } from '../../domain/errors/value.errors';
 import { WarehousePresentationModule } from '../warehouse-presentation.module';
@@ -76,6 +82,31 @@ const updateExecute = vi.fn(
 );
 
 const deleteExecute = vi.fn(async (_input: DeleteWarehouseInput): Promise<void> => undefined);
+
+const detailsExecute = vi.fn(async (): Promise<GetWarehouseResponse> => ({
+  warehouseId: WAREHOUSE_ID,
+  name: 'dock',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-02-01T00:00:00.000Z',
+}));
+
+const listExecute = vi.fn(async (): Promise<ListWarehousesResponse> => ({
+  items: [
+    {
+      warehouseId: WAREHOUSE_ID,
+      name: 'newer',
+      createdAt: '2026-03-01T00:00:00.000Z',
+      updatedAt: '2026-03-01T00:00:00.000Z',
+    },
+    {
+      warehouseId: MAP_ID,
+      name: 'older',
+      createdAt: null,
+      updatedAt: null,
+    },
+  ],
+  total: 2,
+}));
 
 const getExecute = vi.fn(async (input: GetWarehouseMapInput): Promise<GetWarehouseMapResult> => ({
   snapshot: mapSnapshot('warehouseId' in input ? input.warehouseId : WAREHOUSE_ID),
@@ -122,7 +153,20 @@ describe('HTTP склада', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [WarehousePresentationModule],
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          validate: () =>
+            validateEnv({
+              NODE_ENV: 'test',
+              DATABASE_URL: 'postgresql://localhost:5432/robots',
+              CACHE_DRIVER: 'memory',
+              CACHE_MEMORY_MAX_ENTRIES: '8',
+            }),
+        }),
+        WarehousePresentationModule,
+      ],
       providers: [...httpProviders],
     })
       .overrideProvider(PrismaService)
@@ -135,6 +179,10 @@ describe('HTTP склада', () => {
       .useValue({ execute: deleteExecute })
       .overrideProvider(GetWarehouseMap)
       .useValue({ execute: getExecute })
+      .overrideProvider(GetWarehouse)
+      .useValue({ execute: detailsExecute })
+      .overrideProvider(ListWarehouses)
+      .useValue({ execute: listExecute })
       .overrideProvider(EditWarehouseMap)
       .useValue({ execute: editExecute })
       .compile();
@@ -284,6 +332,68 @@ describe('HTTP склада', () => {
     expect(response.status).toBe(400);
     expect(apiErrorSchema.parse(response.body).code).toBe('VALIDATION_ERROR');
     expect(called()).not.toHaveBeenCalled();
+  });
+
+  it('возвращает метаданные склада', async () => {
+    const response = await request(app.getHttpServer()).get(`/api/warehouses/${WAREHOUSE_ID}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      warehouseId: WAREHOUSE_ID,
+      name: 'dock',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-02-01T00:00:00.000Z',
+    });
+  });
+
+  it('возвращает общий список без пагинации, включая неизвестные даты', async () => {
+    const response = await request(app.getHttpServer()).get('/api/warehouses');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      items: [
+        {
+          warehouseId: WAREHOUSE_ID,
+          name: 'newer',
+          createdAt: '2026-03-01T00:00:00.000Z',
+          updatedAt: '2026-03-01T00:00:00.000Z',
+        },
+        { warehouseId: MAP_ID, name: 'older', createdAt: null, updatedAt: null },
+      ],
+      total: 2,
+    });
+    expect(listExecute).toHaveBeenCalledOnce();
+  });
+
+  it('пустой список — 200', async () => {
+    listExecute.mockResolvedValueOnce({ items: [], total: 0 });
+
+    const response = await request(app.getHttpServer()).get('/api/warehouses');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ items: [], total: 0 });
+  });
+
+  it('неизвестный склад — 404 без details', async () => {
+    detailsExecute.mockRejectedValueOnce(new WarehouseNotFoundError({ warehouseId: WAREHOUSE_ID }));
+
+    const response = await request(app.getHttpServer()).get(`/api/warehouses/${WAREHOUSE_ID}`);
+
+    expect(response.status).toBe(404);
+    expect(apiErrorSchema.parse(response.body)).toEqual({
+      code: 'WAREHOUSE_NOT_FOUND',
+      message: 'Warehouse was not found',
+    });
+    expect(response.body.details).toBeUndefined();
+  });
+
+  it('неверный UUID склада — 400', async () => {
+    const response = await request(app.getHttpServer()).get('/api/warehouses/not-a-uuid');
+
+    expect(response.status).toBe(400);
+    expect(apiErrorSchema.parse(response.body).code).toBe('VALIDATION_ERROR');
+    expect(Array.isArray(response.body.details)).toBe(true);
+    expect(detailsExecute).not.toHaveBeenCalled();
   });
 
   it('WarehouseNotFoundError → 404', async () => {

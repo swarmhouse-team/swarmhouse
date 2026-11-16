@@ -1,9 +1,14 @@
 import type { Warehouse } from '../../../domain/entities/warehouse';
 
-/** A stored warehouse. `name` is the value last saved by the domain. */
+/**
+ * A stored warehouse. `name` is the value last saved by the domain.
+ * A null timestamp means the instant was not recorded for that row.
+ */
 export interface StoredWarehouse {
   id: string;
   name: string;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 /**
@@ -31,11 +36,22 @@ export type DeleteWarehouseResult = { status: 'deleted' } | { status: 'not_found
  * `save` updates an existing warehouse and must not insert one.
  */
 export interface WarehouseRepository {
-  insert(warehouse: Warehouse): Promise<void>;
+  /** Stores `recordedAt` as both `createdAt` and `updatedAt`. */
+  insert(warehouse: Warehouse, recordedAt: Date): Promise<void>;
 
   findById(warehouseId: string): Promise<StoredWarehouse | null>;
 
-  save(warehouse: Warehouse): Promise<SaveWarehouseResult>;
+  /**
+   * Updates the name and `updatedAt` of an existing warehouse.
+   * `createdAt` stays as it was, including null.
+   */
+  save(warehouse: Warehouse, updatedAt: Date): Promise<SaveWarehouseResult>;
+
+  /**
+   * All warehouses, without map content.
+   * Order is `createdAt` descending, nulls last, then `id` descending.
+   */
+  list(): Promise<StoredWarehouse[]>;
 
   delete(warehouseId: string): Promise<DeleteWarehouseResult>;
 }

@@ -167,6 +167,40 @@ export const getWarehouseMapResponseSchema = warehouseMapBodySchema;
 
 export type GetWarehouseMapResponse = z.infer<typeof getWarehouseMapResponseSchema>;
 
+/**
+ * Public warehouse metadata.
+ * `createdAt` and `updatedAt` are required and are either an ISO UTC instant or `null`.
+ * `null` means the instant was not recorded. It is not replaced with a guessed time.
+ */
+export const warehouseDetailsSchema = z.strictObject({
+  warehouseId: uuidTextSchema,
+  name: z.string(),
+  createdAt: z.iso.datetime().nullable(),
+  updatedAt: z.iso.datetime().nullable(),
+});
+
+export type WarehouseDetails = z.infer<typeof warehouseDetailsSchema>;
+
+export const getWarehouseResponseSchema = warehouseDetailsSchema;
+
+export type GetWarehouseResponse = z.infer<typeof getWarehouseResponseSchema>;
+
+/**
+ * Temporary stage contract: every warehouse, not the warehouses a user can access.
+ * There is no pagination. `total` is the number of returned items.
+ */
+export const listWarehousesResponseSchema = z
+  .strictObject({
+    items: z.array(warehouseDetailsSchema),
+    total: z.number().int().nonnegative(),
+  })
+  .refine((list) => list.total === list.items.length, {
+    path: ['total'],
+    message: 'total must equal items.length',
+  });
+
+export type ListWarehousesResponse = z.infer<typeof listWarehousesResponseSchema>;
+
 export const createWarehouseResponseSchema = z.strictObject({
   warehouseId: uuidTextSchema,
   name: z.string(),

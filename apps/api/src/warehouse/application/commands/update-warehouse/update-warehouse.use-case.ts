@@ -1,5 +1,8 @@
+import type { CachePort } from '../../../../cache/application/ports/cache.port';
 import { Warehouse } from '../../../domain/entities/warehouse';
+import { invalidateWarehouseCache } from '../../cache/invalidate-warehouse-cache';
 import { WarehouseNotFoundError } from '../../errors/application.errors';
+import type { Clock } from '../../ports/system/clock';
 import type { LoggerPort } from '../../ports/system/logger.port';
 import type { UnitOfWork } from '../../ports/system/unit-of-work';
 import type { UpdateWarehouseInput, UpdateWarehouseResult } from './update-warehouse.types';
@@ -11,6 +14,8 @@ import type { UpdateWarehouseInput, UpdateWarehouseResult } from './update-wareh
 export class UpdateWarehouse {
   constructor(
     private readonly unitOfWork: UnitOfWork,
+    private readonly clock: Clock,
+    private readonly cache: CachePort,
     private readonly logger: LoggerPort,
   ) {}
 
@@ -30,7 +35,7 @@ export class UpdateWarehouse {
         };
       }
 
-      const saved = await tx.warehouses.save(renamed);
+      const saved = await tx.warehouses.save(renamed, this.clock.now());
       if (saved.status === 'not_found') {
         throw new WarehouseNotFoundError({ warehouseId: input.warehouseId });
       }
@@ -42,6 +47,7 @@ export class UpdateWarehouse {
     });
 
     if (outcome.changed) {
+      await invalidateWarehouseCache(this.cache, this.logger, [outcome.result.warehouseId]);
       this.logger.info('warehouse.renamed', { warehouseId: outcome.result.warehouseId });
     }
 
