@@ -2,7 +2,7 @@ import type { WarehouseMapBody } from '@robots/shared';
 
 import type { WarehouseMapSnapshot } from '../../domain/entities/warehouse-map';
 
-/** Плоское HTTP-тело карты. Исходный снимок не меняется. */
+/** Flat HTTP body of a map. The source snapshot is not changed. */
 export function toWarehouseMapBody(
   snapshot: WarehouseMapSnapshot,
   version: number,

@@ -42,7 +42,8 @@ export type SaveMapResult =
  * not change the stored record.
  *
  * `save` updates an existing map only. The expected-version check and the
- * write are one atomic step. See `SaveMapResult`.
+ * write are one atomic step. A read that does not call `save` does not get
+ * this check. See `SaveMapResult`.
  */
 export interface WarehouseMapRepository {
   insert(map: WarehouseMap): Promise<void>;

@@ -7,6 +7,7 @@ import {
 } from '../../errors/application.errors';
 import { restoreWarehouseMap } from '../../mapping/restore-warehouse-map';
 import type { IdGenerator } from '../../ports/system/id-generator';
+import type { LoggerPort } from '../../ports/system/logger.port';
 import type { UnitOfWork } from '../../ports/system/unit-of-work';
 import type {
   EditWarehouseMapInput,
@@ -19,15 +20,21 @@ interface AppliedEdit {
   createdId?: string;
 }
 
-/** Applies one map edit inside a unit of work. */
+/**
+ * Applies one map edit inside a unit of work.
+ * A no-op returns the consistent snapshot and version of the state it read.
+ * `expectedVersion` is checked against that read. A later concurrent change is allowed.
+ * A changing `save` performs its own atomic version check.
+ */
 export class EditWarehouseMap {
   constructor(
     private readonly unitOfWork: UnitOfWork,
     private readonly ids: IdGenerator,
+    private readonly logger: LoggerPort,
   ) {}
 
   async execute(input: EditWarehouseMapInput): Promise<EditWarehouseMapResult> {
-    return this.unitOfWork.execute(async (tx) => {
+    const result = await this.unitOfWork.execute(async (tx) => {
       const record = await tx.maps.findById(input.mapId);
       if (!record) {
         throw new WarehouseMapNotFoundError({ mapId: input.mapId });
@@ -71,6 +78,23 @@ export class EditWarehouseMap {
         ...(applied.createdId === undefined ? {} : { createdId: applied.createdId }),
       };
     });
+
+    if (result.changed) {
+      this.logger.info('warehouse.map.updated', {
+        mapId: result.mapId,
+        operationType: input.operation.type,
+        version: result.version,
+        ...(result.createdId === undefined ? {} : { createdId: result.createdId }),
+      });
+    } else {
+      this.logger.debug('warehouse.map.noop', {
+        mapId: result.mapId,
+        operationType: input.operation.type,
+        version: result.version,
+      });
+    }
+
+    return result;
   }
 
   private apply(map: WarehouseMap, operation: MapOperation): AppliedEdit {

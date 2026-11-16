@@ -1,7 +1,5 @@
+import { MAX_NAME_LENGTH } from '../constants';
 import { InvalidNameError } from '../errors/value.errors';
-
-/** Stage assumption: length is counted after trim and must not exceed 100 characters. */
-export const MAX_NAME_LENGTH = 100;
 
 export class Name {
   readonly value: string;

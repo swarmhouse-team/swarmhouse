@@ -2,14 +2,16 @@ import { StationType } from '../../domain/enums/station-type';
 import { WarehouseMap, type StationSnapshot } from '../../domain/entities/warehouse-map';
 import { DomainError } from '../../domain/errors/domain.error';
 import { Position } from '../../domain/vo/position';
+import { EXPECTED_WAREHOUSE_MAP_SIZE } from '../constants';
 import { CorruptedMapStateError } from '../errors/application.errors';
 import type { WarehouseMapRestoreInput } from './warehouse-map-restore-input';
 
-const MAP_SIZE = 20;
-
 /** Rebuilds a map from stored data. Invalid stored data is not repaired. */
 export function restoreWarehouseMap(input: WarehouseMapRestoreInput): WarehouseMap {
-  if (input.width !== MAP_SIZE || input.height !== MAP_SIZE) {
+  if (
+    input.width !== EXPECTED_WAREHOUSE_MAP_SIZE ||
+    input.height !== EXPECTED_WAREHOUSE_MAP_SIZE
+  ) {
     throw new CorruptedMapStateError(input.id, 'GRID_SIZE_MISMATCH');
   }
 

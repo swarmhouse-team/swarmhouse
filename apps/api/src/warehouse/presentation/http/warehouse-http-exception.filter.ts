@@ -13,11 +13,11 @@ import { DomainError } from '../../domain/errors/domain.error';
 
 const INTERNAL_ERROR_MESSAGE = 'Internal server error';
 const MAP_VERSION_CONFLICT_MESSAGE =
-  'Версия карты устарела. Перечитайте карту и повторите команду.';
+  'The map version is stale. Read the map again and repeat the command.';
 
 type ErrorResponse = { status: number; body: ApiError };
 
-/** Переводит ошибки склада в `ApiError`. Остальные исключения ему не передаются. */
+/** Maps warehouse errors to `ApiError`. Other exceptions are not passed here. */
 @Catch(ApplicationError, DomainError)
 export class WarehouseHttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(WarehouseHttpExceptionFilter.name);

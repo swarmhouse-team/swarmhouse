@@ -4,7 +4,7 @@ import { WarehouseInfrastructureModule } from '../infrastructure/warehouse-infra
 import { WarehouseMapsController } from './http/warehouse-maps.controller';
 import { WarehousesController } from './http/warehouses.controller';
 
-/** HTTP склада. Use cases приходят из infrastructure, свои провайдеры не дублируются. */
+/** Warehouse HTTP. Use cases come from infrastructure; this module does not redeclare their providers. */
 @Module({
   imports: [WarehouseInfrastructureModule],
   controllers: [WarehousesController, WarehouseMapsController],

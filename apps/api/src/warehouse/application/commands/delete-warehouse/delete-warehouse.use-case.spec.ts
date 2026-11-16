@@ -3,11 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { WarehouseNotFoundError } from '../../errors/application.errors';
 import type { DeleteWarehouseResult } from '../../ports/repositories/warehouse.repository';
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
+import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
 import { DeleteWarehouse } from './delete-warehouse.use-case';
 
 interface Harness {
   useCase: DeleteWarehouse;
   calls: string[];
+  logs: LogEntry[];
 }
 
 function createHarness(options?: {
@@ -18,6 +20,7 @@ function createHarness(options?: {
   afterCallback?: () => Promise<void>;
 }): Harness {
   const calls: string[] = [];
+  const { logger, logs } = createRecordingLogger();
   const unitOfWork: UnitOfWork = {
     async execute(work) {
       calls.push('execute');
@@ -67,7 +70,7 @@ function createHarness(options?: {
       return result;
     },
   };
-  return { useCase: new DeleteWarehouse(unitOfWork), calls };
+  return { useCase: new DeleteWarehouse(unitOfWork, logger), calls, logs };
 }
 
 describe('DeleteWarehouse', () => {
@@ -82,6 +85,13 @@ describe('DeleteWarehouse', () => {
       'delete-maps:wh-1',
       'delete-warehouse:wh-1',
     ]);
+    expect(harness.logs).toEqual([
+      {
+        level: 'info',
+        event: 'warehouse.deleted',
+        context: { warehouseId: 'wh-1' },
+      },
+    ]);
   });
 
   it('does not delete when the warehouse is missing', async () => {
@@ -92,6 +102,7 @@ describe('DeleteWarehouse', () => {
       details: { warehouseId: 'wh-1' },
     });
     expect(harness.calls).toEqual(['execute', 'findById:wh-1']);
+    expect(harness.logs).toEqual([]);
   });
 
   it('deletes a warehouse that has no maps', async () => {
@@ -136,9 +147,10 @@ describe('DeleteWarehouse', () => {
     });
 
     await expect(harness.useCase.execute({ warehouseId: 'wh-1' })).rejects.toBe(failure);
+    expect(harness.logs).toEqual([]);
   });
 
-  it('does not settle before unit of work execute settles', async () => {
+  it('logs warehouse.deleted only after unit of work execute settles', async () => {
     let release: (() => void) | undefined;
     const gate = new Promise<void>((resolve) => {
       release = resolve;
@@ -151,8 +163,16 @@ describe('DeleteWarehouse', () => {
 
     await Promise.resolve();
     expect(settled).toBe(false);
+    expect(harness.logs).toEqual([]);
     release?.();
     await pending;
     expect(settled).toBe(true);
+    expect(harness.logs).toEqual([
+      {
+        level: 'info',
+        event: 'warehouse.deleted',
+        context: { warehouseId: 'wh-1' },
+      },
+    ]);
   });
 });

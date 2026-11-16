@@ -1,6 +1,7 @@
 import { Warehouse } from '../../../domain/entities/warehouse';
 import { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import type { IdGenerator } from '../../ports/system/id-generator';
+import type { LoggerPort } from '../../ports/system/logger.port';
 import type { UnitOfWork } from '../../ports/system/unit-of-work';
 import type { CreateWarehouseInput, CreateWarehouseResult } from './create-warehouse.types';
 
@@ -9,6 +10,7 @@ export class CreateWarehouse {
   constructor(
     private readonly unitOfWork: UnitOfWork,
     private readonly ids: IdGenerator,
+    private readonly logger: LoggerPort,
   ) {}
 
   async execute(input: CreateWarehouseInput): Promise<CreateWarehouseResult> {
@@ -20,11 +22,19 @@ export class CreateWarehouse {
       await tx.maps.insert(map);
     });
 
-    return {
+    const result: CreateWarehouseResult = {
       warehouseId: warehouse.id,
       name: warehouse.name.value,
       mapId: map.id,
       version: 0,
     };
+
+    this.logger.info('warehouse.created', {
+      warehouseId: result.warehouseId,
+      mapId: result.mapId,
+      version: result.version,
+    });
+
+    return result;
   }
 }

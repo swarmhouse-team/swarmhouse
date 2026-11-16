@@ -17,7 +17,7 @@ import { WarehouseHttpExceptionFilter } from './warehouse-http-exception.filter'
 import { toWarehouseMapBody } from './warehouse-map.body';
 
 const NO_ACCESS_CHECK =
-  'На текущем этапе endpoint не проверяет доступ: он доступен любому клиенту, который может обратиться к API.';
+  'At this stage the endpoint does not check access: any client that can reach the API may call it.';
 
 @ApiTags('warehouse-maps')
 @UseFilters(WarehouseHttpExceptionFilter)
@@ -27,13 +27,15 @@ export class WarehouseMapsController {
 
   @Post(':mapId/operations')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Изменить карту одной операцией', description: NO_ACCESS_CHECK })
-  @ApiOkResponse({ description: 'Операция применена или оказалась no-op' })
-  @ApiBadRequestResponse({ description: 'Некорректный path или тело' })
-  @ApiNotFoundResponse({ description: 'Карта не найдена' })
-  @ApiConflictResponse({ description: 'Версия карты устарела, клиент перечитывает карту' })
-  @ApiUnprocessableEntityResponse({ description: 'Операция нарушила правило карты' })
-  @ApiInternalServerErrorResponse({ description: 'Повреждённые данные карты' })
+  @ApiOperation({ summary: 'Edit the map with one operation', description: NO_ACCESS_CHECK })
+  @ApiOkResponse({ description: 'The operation was applied or was a no-op' })
+  @ApiBadRequestResponse({ description: 'Invalid path or body' })
+  @ApiNotFoundResponse({ description: 'Warehouse map was not found' })
+  @ApiConflictResponse({
+    description: 'The map version is stale; the client reads the map again',
+  })
+  @ApiUnprocessableEntityResponse({ description: 'The operation broke a map rule' })
+  @ApiInternalServerErrorResponse({ description: 'Stored map data is corrupted' })
   async edit(
     @Param() params: WarehouseMapPathParamsDto,
     @Body() body: EditWarehouseMapDto,

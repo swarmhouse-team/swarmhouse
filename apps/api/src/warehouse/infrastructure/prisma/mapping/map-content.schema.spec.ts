@@ -3,7 +3,7 @@ import { ZodError } from 'zod';
 
 import { CorruptedMapStateError } from '../../../application/errors/application.errors';
 import { restoreWarehouseMap } from '../../../application/mapping/restore-warehouse-map';
-import { parseMapContent } from './map-content.schema';
+import { parseMapContent, toMapContent } from './map-content.schema';
 
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
 const MAP_ID = '22222222-2222-7111-8111-22222222222b';
@@ -32,6 +32,27 @@ function formatError(content: unknown): CorruptedMapStateError {
   }
   throw new Error('Expected invalid stored format');
 }
+
+describe('toMapContent', () => {
+  it('writes content without id and warehouseId', () => {
+    expect(
+      toMapContent({
+        id: MAP_ID,
+        warehouseId: WAREHOUSE_ID,
+        ...emptyContent(),
+        obstacles: [{ x: 1, y: 1 }],
+        robots: [{ id: ROBOT_ID, name: 'Robot', x: 2, y: 2 }],
+        stations: [{ id: RECEIVING_ID, name: 'Receiving', type: 'receiving', x: 3, y: 3 }],
+      }),
+    ).toEqual({
+      width: 20,
+      height: 20,
+      obstacles: [{ x: 1, y: 1 }],
+      robots: [{ id: ROBOT_ID, name: 'Robot', x: 2, y: 2 }],
+      stations: [{ id: RECEIVING_ID, name: 'Receiving', type: 'receiving', x: 3, y: 3 }],
+    });
+  });
+});
 
 describe('parseMapContent', () => {
   it('reads an empty map and takes ids from the columns', () => {

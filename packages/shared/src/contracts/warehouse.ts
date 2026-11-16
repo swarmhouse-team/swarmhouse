@@ -176,6 +176,10 @@ export const createWarehouseResponseSchema = z.strictObject({
 
 export type CreateWarehouseResponse = z.infer<typeof createWarehouseResponseSchema>;
 
+/**
+ * A rename no-op returns the name observed on read.
+ * A later concurrent rename is allowed.
+ */
 export const renameWarehouseResponseSchema = z.strictObject({
   warehouseId: uuidTextSchema,
   name: z.string(),
@@ -183,6 +187,12 @@ export const renameWarehouseResponseSchema = z.strictObject({
 
 export type RenameWarehouseResponse = z.infer<typeof renameWarehouseResponseSchema>;
 
+/**
+ * When `changed` is false, the map is the consistent snapshot and version of the state that was read.
+ * `expectedVersion` is checked against that read.
+ * A later concurrent change is allowed.
+ * A changing save performs its own atomic version check.
+ */
 export const editWarehouseMapResponseSchema = z.strictObject({
   changed: z.boolean(),
   createdId: uuidTextSchema.optional(),

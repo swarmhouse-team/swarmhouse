@@ -19,6 +19,7 @@ import {
 import type { SaveMapResult } from '../../ports/repositories/warehouse-map.repository';
 import type { IdGenerator } from '../../ports/system/id-generator';
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
+import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
 import type { WarehouseMap as SavedMap } from '../../../domain/entities/warehouse-map';
 import { EditWarehouseMap } from './edit-warehouse-map.use-case';
 import type { EditWarehouseMapInput } from './edit-warehouse-map.types';
@@ -34,6 +35,7 @@ const ABSENT_ID = '88888888-8888-4111-8111-88888888888d';
 interface Harness {
   useCase: EditWarehouseMap;
   calls: string[];
+  logs: LogEntry[];
   saved?: { map: SavedMap; expectedVersion: number };
 }
 
@@ -49,9 +51,11 @@ function createHarness(options?: {
   afterCallback?: () => Promise<void>;
 }): Harness {
   const calls: string[] = [];
+  const { logger, logs } = createRecordingLogger();
   const state: Harness = {
     useCase: undefined as unknown as EditWarehouseMap,
     calls,
+    logs,
   };
   const unitOfWork: UnitOfWork = {
     async execute(work) {
@@ -108,7 +112,7 @@ function createHarness(options?: {
       return options?.nextId ?? ROBOT_ID;
     },
   };
-  state.useCase = new EditWarehouseMap(unitOfWork, ids);
+  state.useCase = new EditWarehouseMap(unitOfWork, ids, logger);
   return state;
 }
 
@@ -155,6 +159,13 @@ describe('EditWarehouseMap addObstacle', () => {
       snapshot: harness.saved?.map.snapshot(),
     });
     expect(stored).toEqual(before);
+    expect(harness.logs).toEqual([
+      {
+        level: 'info',
+        event: 'warehouse.map.updated',
+        context: { mapId: MAP_ID, operationType: 'addObstacle', version: 3 },
+      },
+    ]);
   });
 
   it('does not save when the map is missing', async () => {
@@ -165,6 +176,7 @@ describe('EditWarehouseMap addObstacle', () => {
       details: { mapId: MAP_ID },
     });
     expect(harness.calls).toEqual(['execute', `findById:${MAP_ID}`]);
+    expect(harness.logs).toEqual([]);
   });
 
   it('does not save when the loaded version is stale', async () => {
@@ -177,6 +189,7 @@ describe('EditWarehouseMap addObstacle', () => {
       details: { mapId: MAP_ID, expectedVersion: 1, actualVersion: 4 },
     });
     expect(harness.calls.filter((call) => call === 'save')).toEqual([]);
+    expect(harness.logs).toEqual([]);
   });
 
   it('does not save a corrupted stored snapshot', async () => {
@@ -250,9 +263,10 @@ describe('EditWarehouseMap addObstacle', () => {
     });
 
     await expect(harness.useCase.execute(addObstacle())).rejects.toBe(failure);
+    expect(harness.logs).toEqual([]);
   });
 
-  it('does not settle before unit of work execute settles', async () => {
+  it('logs warehouse.map.updated only after unit of work execute settles', async () => {
     let release: (() => void) | undefined;
     const gate = new Promise<void>((resolve) => {
       release = resolve;
@@ -265,9 +279,17 @@ describe('EditWarehouseMap addObstacle', () => {
 
     await Promise.resolve();
     expect(settled).toBe(false);
+    expect(harness.logs).toEqual([]);
     release?.();
     await pending;
     expect(settled).toBe(true);
+    expect(harness.logs).toEqual([
+      {
+        level: 'info',
+        event: 'warehouse.map.updated',
+        context: { mapId: MAP_ID, operationType: 'addObstacle', version: 1 },
+      },
+    ]);
   });
 });
 
@@ -304,6 +326,13 @@ describe('EditWarehouseMap moveObstacle', () => {
 
     expect(result).toMatchObject({ changed: false, version: 2 });
     expect(harness.calls).not.toContain('save');
+    expect(harness.logs).toEqual([
+      {
+        level: 'debug',
+        event: 'warehouse.map.noop',
+        context: { mapId: MAP_ID, operationType: 'moveObstacle', version: 2 },
+      },
+    ]);
   });
 
   it('does not save a move of a missing obstacle, including the same cell', async () => {
@@ -477,6 +506,18 @@ describe('EditWarehouseMap placeRobot', () => {
       snapshot: saved,
     });
     expect(stored).toEqual(before);
+    expect(harness.logs).toEqual([
+      {
+        level: 'info',
+        event: 'warehouse.map.updated',
+        context: {
+          mapId: MAP_ID,
+          operationType: 'placeRobot',
+          version: 3,
+          createdId: ROBOT_ID,
+        },
+      },
+    ]);
   });
 
   it('does not save an empty robot name', async () => {

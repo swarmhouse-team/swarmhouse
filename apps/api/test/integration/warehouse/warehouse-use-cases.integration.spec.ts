@@ -4,6 +4,7 @@ import { CreateWarehouse } from '../../../src/warehouse/application/commands/cre
 import { DeleteWarehouse } from '../../../src/warehouse/application/commands/delete-warehouse/delete-warehouse.use-case';
 import { EditWarehouseMap } from '../../../src/warehouse/application/commands/edit-warehouse-map/edit-warehouse-map.use-case';
 import type { IdGenerator } from '../../../src/warehouse/application/ports/system/id-generator';
+import type { LoggerPort } from '../../../src/warehouse/application/ports/system/logger.port';
 import { WarehouseMap } from '../../../src/warehouse/domain/entities/warehouse-map';
 import { Warehouse } from '../../../src/warehouse/domain/entities/warehouse';
 import { Position } from '../../../src/warehouse/domain/vo/position';
@@ -17,6 +18,13 @@ const KEPT_WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
 const NEW_WAREHOUSE_ID = '77777777-7777-4111-8111-77777777777a';
 const MAP_ID = '22222222-2222-7111-8111-22222222222b';
 const ROBOT_ID = '33333333-3333-4111-8111-33333333333c';
+
+const silentLogger: LoggerPort = {
+  debug() {},
+  info() {},
+  warn() {},
+  error() {},
+};
 
 function fixedIds(ids: readonly string[]): IdGenerator {
   let index = 0;
@@ -51,7 +59,11 @@ describe('warehouse use cases in PrismaUnitOfWork', () => {
     const map = WarehouseMap.create(MAP_ID, KEPT_WAREHOUSE_ID);
     await warehouses().insert(kept);
     await maps().insert(map);
-    const useCase = new CreateWarehouse(unitOfWork(), fixedIds([NEW_WAREHOUSE_ID, MAP_ID]));
+    const useCase = new CreateWarehouse(
+      unitOfWork(),
+      fixedIds([NEW_WAREHOUSE_ID, MAP_ID]),
+      silentLogger,
+    );
 
     await expect(useCase.execute({ name: 'Side' })).rejects.toBeInstanceOf(Error);
 
@@ -81,7 +93,9 @@ describe('warehouse use cases in PrismaUnitOfWork', () => {
       name: 'Kept',
     });
 
-    await new DeleteWarehouse(unitOfWork()).execute({ warehouseId: KEPT_WAREHOUSE_ID });
+    await new DeleteWarehouse(unitOfWork(), silentLogger).execute({
+      warehouseId: KEPT_WAREHOUSE_ID,
+    });
 
     expect(await warehouses().findById(KEPT_WAREHOUSE_ID)).toBeNull();
     expect(await maps().findByWarehouseId(KEPT_WAREHOUSE_ID)).toBeNull();
@@ -90,7 +104,9 @@ describe('warehouse use cases in PrismaUnitOfWork', () => {
   it('deletes a warehouse that has no map', async () => {
     await warehouses().insert(Warehouse.create(KEPT_WAREHOUSE_ID, 'Kept'));
 
-    await new DeleteWarehouse(unitOfWork()).execute({ warehouseId: KEPT_WAREHOUSE_ID });
+    await new DeleteWarehouse(unitOfWork(), silentLogger).execute({
+      warehouseId: KEPT_WAREHOUSE_ID,
+    });
 
     expect(await warehouses().findById(KEPT_WAREHOUSE_ID)).toBeNull();
   });
@@ -100,7 +116,7 @@ describe('warehouse use cases in PrismaUnitOfWork', () => {
     const map = WarehouseMap.create(MAP_ID, KEPT_WAREHOUSE_ID);
     map.placeRobot(ROBOT_ID, 'Robot', Position.create(2, 2));
     await maps().insert(map);
-    const useCase = new EditWarehouseMap(unitOfWork(), fixedIds([]));
+    const useCase = new EditWarehouseMap(unitOfWork(), fixedIds([]), silentLogger);
 
     const result = await useCase.execute({
       mapId: MAP_ID,
