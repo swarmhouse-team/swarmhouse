@@ -1,2 +1,2 @@
-export * from './map';
 export * from './task';
+export * from './warehouse';

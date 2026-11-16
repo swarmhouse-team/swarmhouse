@@ -1,15 +1,14 @@
 import type { Task } from '../contracts';
 
-import { validWarehouseMap } from './warehouseMap';
-
+const warehouseId = 'wh-1';
 const createdAt = '2026-11-12T10:00:00.000Z';
 const updatedAt = '2026-11-12T10:05:00.000Z';
 
-/** Задания на станции `validWarehouseMap` во всех статусах. */
+/** Задания во всех статусах. `warehouseId` совпадает с прежней fixture карты. */
 export const validTasks = [
   {
     id: 'task-queued',
-    warehouseId: validWarehouseMap.warehouseId,
+    warehouseId,
     fromStationId: 'st-reception',
     toStationId: 'st-shipping',
     status: 'queued',
@@ -19,7 +18,7 @@ export const validTasks = [
   },
   {
     id: 'task-in-progress',
-    warehouseId: validWarehouseMap.warehouseId,
+    warehouseId,
     fromStationId: 'st-reception',
     toStationId: 'st-shipping',
     status: 'in_progress',
@@ -30,7 +29,7 @@ export const validTasks = [
   },
   {
     id: 'task-completed',
-    warehouseId: validWarehouseMap.warehouseId,
+    warehouseId,
     fromStationId: 'st-shipping',
     toStationId: 'st-reception',
     status: 'completed',
@@ -41,7 +40,7 @@ export const validTasks = [
   },
   {
     id: 'task-failed',
-    warehouseId: validWarehouseMap.warehouseId,
+    warehouseId,
     fromStationId: 'st-reception',
     toStationId: 'st-shipping',
     status: 'failed',

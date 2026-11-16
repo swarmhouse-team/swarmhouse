@@ -6,6 +6,7 @@ import { validateEnv } from './config/env';
 import { ExampleModule } from './example/example.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { WarehousePresentationModule } from './warehouse/presentation/warehouse-presentation.module';
 import { RedisModule } from './redis/redis.module';
 
 @Module({
@@ -18,6 +19,7 @@ import { RedisModule } from './redis/redis.module';
       validate: validateEnv,
     }),
     PrismaModule,
+    WarehousePresentationModule,
     RedisModule,
     HealthModule,
     ExampleModule,

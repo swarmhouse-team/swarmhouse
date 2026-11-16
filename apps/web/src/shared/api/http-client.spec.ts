@@ -67,7 +67,46 @@ describe('http', () => {
     const error = await catchError(http('/warehouses/1'));
 
     expect(error).toMatchObject({ status: 404, code: 'NOT_FOUND' });
+    expect((error as HttpError).error.details).toBeUndefined();
     expect(getErrorMessage(error)).toBe('Склад не найден');
+  });
+
+  it('сохраняет code и message конфликта версии', async () => {
+    const message = 'Версия карты устарела. Перечитайте карту и повторите команду.';
+    mockFetch(
+      Response.json({ code: API_ERROR_CODES.MAP_VERSION_CONFLICT, message }, { status: 409 }),
+    );
+
+    const error = await catchError(http('/maps/1/operations', { method: 'POST' }));
+
+    expect(error).toBeInstanceOf(HttpError);
+    expect((error as HttpError).status).toBe(409);
+    expect((error as HttpError).error).toEqual({
+      code: API_ERROR_CODES.MAP_VERSION_CONFLICT,
+      message,
+    });
+  });
+
+  it('сохраняет массив details ошибки валидации', async () => {
+    const details = [{ path: 'name', message: 'Required' }];
+    mockFetch(
+      Response.json(
+        { code: API_ERROR_CODES.VALIDATION_ERROR, message: 'Validation failed', details },
+        { status: 400 },
+      ),
+    );
+
+    const error = await catchError(http('/warehouses', { method: 'POST' }));
+
+    expect((error as HttpError).error.details).toEqual(details);
+  });
+
+  it('некорректное тело ошибки остаётся UNKNOWN_ERROR', async () => {
+    mockFetch(new Response('<html>', { status: 502, statusText: 'Bad Gateway' }));
+
+    const error = await catchError(http('/health'));
+
+    expect(error).toMatchObject({ status: 502, code: API_ERROR_CODES.UNKNOWN_ERROR });
   });
 
   it('сбой сети — HttpError NETWORK_ERROR со статусом 0', async () => {
