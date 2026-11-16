@@ -9,6 +9,7 @@ import { restoreWarehouseMap } from '../../mapping/restore-warehouse-map';
 import type { IdGenerator } from '../../ports/system/id-generator';
 import type { LoggerPort } from '../../ports/system/logger.port';
 import type { UnitOfWork } from '../../ports/system/unit-of-work';
+import type { WarehouseNotifier } from '../../ports/system/warehouse-notifier';
 import type {
   EditWarehouseMapInput,
   EditWarehouseMapResult,
@@ -31,6 +32,7 @@ export class EditWarehouseMap {
     private readonly unitOfWork: UnitOfWork,
     private readonly ids: IdGenerator,
     private readonly logger: LoggerPort,
+    private readonly notifier: WarehouseNotifier,
   ) {}
 
   async execute(input: EditWarehouseMapInput): Promise<EditWarehouseMapResult> {
@@ -80,6 +82,13 @@ export class EditWarehouseMap {
     });
 
     if (result.changed) {
+      await this.notifier.mapChanged({
+        warehouseId: result.snapshot.warehouseId,
+        mapId: result.mapId,
+        version: result.version,
+        operation: publishedOperation(input.operation),
+        ...(result.createdId === undefined ? {} : { createdId: result.createdId }),
+      });
       this.logger.info('warehouse.map.updated', {
         mapId: result.mapId,
         operationType: input.operation.type,
@@ -198,4 +207,17 @@ export class EditWarehouseMap {
 
 function assertNever(value: never): never {
   throw new Error(`Unexpected operation: ${JSON.stringify(value)}`);
+}
+
+function publishedOperation(operation: MapOperation): MapOperation {
+  switch (operation.type) {
+    case 'moveRobot':
+    case 'removeRobot':
+      return { ...operation, robotId: normalizeId(operation.robotId) };
+    case 'moveStation':
+    case 'removeStation':
+      return { ...operation, stationId: normalizeId(operation.stationId) };
+    default:
+      return { ...operation };
+  }
 }

@@ -4,6 +4,7 @@ import { DomainError, type ErrorDetails } from './domain.error';
 import {
   CellOccupiedError,
   DuplicateObjectIdError,
+  DuplicateRobotNameError,
   DuplicateStationNameError,
   MapObjectNotFoundError,
   PositionOutOfBoundsError,
@@ -99,6 +100,14 @@ describe('DomainError', () => {
       code: 'DUPLICATE_OBJECT_ID' as const,
       details: { id: 'rb-1' },
       fields: { id: 'rb-1' },
+    },
+    {
+      create: () => new DuplicateRobotNameError('loader'),
+      name: 'DuplicateRobotNameError',
+      message: 'Robot name is already used',
+      code: 'DUPLICATE_ROBOT_NAME' as const,
+      details: { robotName: 'loader' },
+      fields: { robotName: 'loader' },
     },
     {
       create: () => new DuplicateStationNameError('receiving'),

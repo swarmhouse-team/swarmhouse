@@ -20,7 +20,7 @@ export class HttpError extends Error {
   }
 }
 
-const FALLBACK_MESSAGE = 'Что-то пошло не так. Попробуйте ещё раз.';
+const FALLBACK_MESSAGE = 'Something went wrong. Try again.';
 
 /**
  * Текст ошибки для показа пользователю. Текст берём только из `HttpError`:

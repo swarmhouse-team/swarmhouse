@@ -9,6 +9,7 @@ export class RecordingCache extends CachePort {
   getError?: CacheError;
   setError?: CacheError;
   deleteErrors: CacheError[] = [];
+  unexpectedDeleteError?: Error;
 
   async get(key: string): Promise<CacheValue | null> {
     if (this.getError) {
@@ -25,6 +26,9 @@ export class RecordingCache extends CachePort {
   }
 
   async delete(key: string): Promise<void> {
+    if (this.unexpectedDeleteError) {
+      throw this.unexpectedDeleteError;
+    }
     this.deleted.push(key);
     const error = this.deleteErrors.shift();
     if (error) {

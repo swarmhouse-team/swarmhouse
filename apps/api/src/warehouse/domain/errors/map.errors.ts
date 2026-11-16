@@ -27,6 +27,13 @@ export class DuplicateObjectIdError extends DomainError {
   }
 }
 
+/** Normalized robot name is already used on this map. */
+export class DuplicateRobotNameError extends DomainError {
+  constructor(readonly robotName: string) {
+    super('DUPLICATE_ROBOT_NAME', 'Robot name is already used', { robotName });
+  }
+}
+
 /** Normalized station name is already used on this map. */
 export class DuplicateStationNameError extends DomainError {
   constructor(readonly stationName: string) {

@@ -37,7 +37,7 @@ const emptyMap = {
 
 describe('uuidTextSchema', () => {
   it.each([UUID_V1, UUID_V4, UUID_V7, UUID_V4.toUpperCase()])(
-    'принимает %s без изменений',
+    'accepts %s unchanged',
     (value) => {
       expect(uuidTextSchema.parse(value)).toBe(value);
     },
@@ -57,13 +57,13 @@ describe('uuidTextSchema', () => {
     NIL_UUID.toUpperCase(),
     MAX_UUID,
     MAX_UUID.toUpperCase(),
-  ])('отклоняет %j', (value) => {
+  ])('rejects %j', (value) => {
     expect(uuidTextSchema.safeParse(value).success).toBe(false);
   });
 });
 
-describe('запросы склада', () => {
-  it('принимает создание и переименование', () => {
+describe('warehouse requests', () => {
+  it('accepts create and rename', () => {
     expect(createWarehouseRequestSchema.parse({ name: 'dock' })).toEqual({ name: 'dock' });
     expect(renameWarehouseRequestSchema.parse({ name: 'dock' })).toEqual({ name: 'dock' });
     expect(warehousePathParamsSchema.parse({ warehouseId: UUID_V4 })).toEqual({
@@ -72,12 +72,12 @@ describe('запросы склада', () => {
     expect(warehouseMapPathParamsSchema.parse({ mapId: UUID_V7 })).toEqual({ mapId: UUID_V7 });
   });
 
-  it('пропускает пустое имя: длину проверяет домен', () => {
+  it('accepts an empty name because the domain checks the length', () => {
     expect(createWarehouseRequestSchema.parse({ name: '' })).toEqual({ name: '' });
     expect(renameWarehouseRequestSchema.parse({ name: '   ' })).toEqual({ name: '   ' });
   });
 
-  it('отклоняет неверный тип, отсутствие поля, лишнее поле и coercion', () => {
+  it('rejects a wrong type, a missing field, an extra field, and coercion', () => {
     expect(createWarehouseRequestSchema.safeParse({}).success).toBe(false);
     expect(createWarehouseRequestSchema.safeParse({ name: 1 }).success).toBe(false);
     expect(createWarehouseRequestSchema.safeParse({ name: 'dock', extra: true }).success).toBe(
@@ -89,7 +89,7 @@ describe('запросы склада', () => {
   });
 });
 
-describe('операции карты', () => {
+describe('map operations', () => {
   const operations: EditWarehouseMapRequest[] = [
     {
       expectedVersion: 0,
@@ -134,11 +134,11 @@ describe('операции карты', () => {
     },
   ];
 
-  it.each(operations)('принимает $operation.type', (request) => {
+  it.each(operations)('accepts $operation.type', (request) => {
     expect(editWarehouseMapRequestSchema.parse(request)).toEqual(request);
   });
 
-  it('отклоняет отсутствие поля, неизвестный type, неверный UUID и stationType', () => {
+  it('rejects a missing field, an unknown type, an invalid UUID, and stationType', () => {
     expect(
       editWarehouseMapRequestSchema.safeParse({
         expectedVersion: 0,
@@ -170,7 +170,7 @@ describe('операции карты', () => {
     ).toBe(false);
   });
 
-  it('отклоняет лишнее поле вложенного объекта', () => {
+  it('rejects an extra field on a nested object', () => {
     expect(
       editWarehouseMapRequestSchema.safeParse({
         expectedVersion: 0,
@@ -185,7 +185,7 @@ describe('операции карты', () => {
     ).toBe(false);
   });
 
-  it('отклоняет отрицательную и дробную expectedVersion', () => {
+  it('rejects a negative and a fractional expectedVersion', () => {
     const operation = { type: 'removeObstacle', position: { x: 0, y: 0 } };
 
     expect(
@@ -197,8 +197,8 @@ describe('операции карты', () => {
   });
 });
 
-describe('ответы склада', () => {
-  it('принимает карту с объектами и пустые коллекции', () => {
+describe('warehouse responses', () => {
+  it('accepts a map with objects and empty collections', () => {
     const map = {
       ...emptyMap,
       obstacles: [{ x: 2, y: 3 }],
@@ -210,7 +210,7 @@ describe('ответы склада', () => {
     expect(warehouseMapBodySchema.parse(emptyMap)).toEqual(emptyMap);
   });
 
-  it('принимает создание, переименование и редактирование без createdId', () => {
+  it('accepts create, rename, and an edit without createdId', () => {
     const created = { warehouseId: UUID_V4, name: 'dock', mapId: UUID_V7, version: 0 };
     const renamed = { warehouseId: UUID_V4, name: 'dock' };
     const edited = { changed: false, map: emptyMap };
@@ -249,7 +249,7 @@ describe('ответы склада', () => {
     expect(editWarehouseMapResponseSchema.parse(edited)).toEqual(edited);
   });
 
-  it('сохраняет createdId, когда он есть', () => {
+  it('keeps createdId when it is present', () => {
     const edited = { changed: true, createdId: UUID_V7, map: emptyMap };
 
     expect(editWarehouseMapResponseSchema.parse(edited)).toEqual(edited);
@@ -259,17 +259,17 @@ describe('ответы склада', () => {
 describe('mapVersionConflictErrorSchema', () => {
   const conflict = {
     code: 'MAP_VERSION_CONFLICT',
-    message: 'Версия карты устарела. Перечитайте карту и повторите команду.',
+    message: 'The map version is stale. Read the map again and repeat the command.',
   };
 
-  it('принимает конфликт без details и совместим с apiErrorSchema', () => {
+  it('accepts a conflict without details and matches apiErrorSchema', () => {
     const parsed = mapVersionConflictErrorSchema.parse(conflict);
 
     expect(parsed).toEqual(conflict);
     expect(apiErrorSchema.parse(parsed)).toEqual(parsed);
   });
 
-  it('отклоняет объект details с версиями', () => {
+  it('rejects a details object that contains versions', () => {
     expect(
       mapVersionConflictErrorSchema.safeParse({
         ...conflict,

@@ -11,7 +11,7 @@ const stationTypesMatch: Equal<WarehouseStationType, StationType> = true;
 const operationsMatch: Equal<EditWarehouseMapOperation, MapOperation> = true;
 
 describe('warehouse HTTP contract', () => {
-  it('совпадает со StationType и MapOperation', () => {
+  it('matches StationType and MapOperation', () => {
     expect(stationTypesMatch).toBe(true);
     expect(operationsMatch).toBe(true);
   });

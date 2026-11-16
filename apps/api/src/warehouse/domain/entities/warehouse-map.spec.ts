@@ -4,6 +4,7 @@ import { StationType } from '../enums/station-type';
 import {
   CellOccupiedError,
   DuplicateObjectIdError,
+  DuplicateRobotNameError,
   DuplicateStationNameError,
   MapObjectNotFoundError,
   PositionOutOfBoundsError,
@@ -146,6 +147,27 @@ describe('WarehouseMap', () => {
       DuplicateObjectIdError,
     );
     expect(map.snapshot()).toEqual(before);
+  });
+
+  it('rejects robot names that match after trim regardless of case', () => {
+    const map = createMap();
+    map.placeRobot(ROBOT_ID, 'Приёмка', at(0, 0));
+    const before = map.snapshot();
+
+    expect(() => map.placeRobot(ROBOT_2_ID, ' приёмка ', at(1, 0))).toThrow(
+      DuplicateRobotNameError,
+    );
+    expect(map.snapshot()).toEqual(before);
+  });
+
+  it('allows a robot and a station to share a name', () => {
+    const map = createMap();
+
+    map.placeRobot(ROBOT_ID, 'Dock', at(0, 0));
+    map.placeStation(STATION_ID, 'dock', StationType.Receiving, at(1, 0));
+
+    expect(map.snapshot().robots[0]?.name).toBe('Dock');
+    expect(map.snapshot().stations[0]?.name).toBe('dock');
   });
 
   it('rejects station names that match after trim regardless of case', () => {

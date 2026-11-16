@@ -24,6 +24,7 @@ import { DomainError } from '../../domain/errors/domain.error';
 import {
   CellOccupiedError,
   DuplicateObjectIdError,
+  DuplicateRobotNameError,
   DuplicateStationNameError,
   MapObjectNotFoundError,
   PositionOutOfBoundsError,
@@ -108,7 +109,7 @@ function handled(exception: ApplicationError | DomainError): {
 }
 
 describe('WarehouseHttpExceptionFilter', () => {
-  it('склад не найден → 404 WAREHOUSE_NOT_FOUND', () => {
+  it('missing warehouse → 404 WAREHOUSE_NOT_FOUND', () => {
     const { response, logs } = handled(new WarehouseNotFoundError({ warehouseId: WAREHOUSE_ID }));
 
     expect(response.statusCode).toBe(404);
@@ -121,7 +122,7 @@ describe('WarehouseHttpExceptionFilter', () => {
     expect(logs).toEqual([]);
   });
 
-  it('карта не найдена → 404 MAP_NOT_FOUND', () => {
+  it('missing map → 404 MAP_NOT_FOUND', () => {
     const { response, logs } = handled(new WarehouseMapNotFoundError({ mapId: MAP_ID }));
 
     expect(response.statusCode).toBe(404);
@@ -134,7 +135,7 @@ describe('WarehouseHttpExceptionFilter', () => {
     expect(logs).toEqual([]);
   });
 
-  it('конфликт версии → 409 без версий и внутренних details', () => {
+  it('version conflict → 409 without versions or internal details', () => {
     const { response, logs } = handled(
       new MapVersionConflictError({ mapId: MAP_ID, expectedVersion: 1, actualVersion: 4 }),
     );
@@ -197,6 +198,12 @@ describe('WarehouseHttpExceptionFilter', () => {
       hidden: MAP_ID,
     },
     {
+      error: new DuplicateRobotNameError('loader'),
+      code: 'DUPLICATE_ROBOT_NAME',
+      message: 'Robot name is already used',
+      hidden: 'loader',
+    },
+    {
       error: new DuplicateStationNameError('dock'),
       code: 'DUPLICATE_STATION_NAME',
       message: 'Station name is already used',
@@ -208,7 +215,7 @@ describe('WarehouseHttpExceptionFilter', () => {
       message: 'Map object was not found',
       hidden: 'robot',
     },
-  ])('$code → 422 без внутренних details', ({ error, code, message, hidden }) => {
+  ])('$code → 422 without internal details', ({ error, code, message, hidden }) => {
     const { response, logs } = handled(error);
 
     expect(response.statusCode).toBe(422);
@@ -218,7 +225,7 @@ describe('WarehouseHttpExceptionFilter', () => {
     expect(logs).toEqual([]);
   });
 
-  it('повреждённая карта → 500 без mapId, reason, cause и stack', () => {
+  it('corrupted map → 500 without mapId, reason, cause, or stack', () => {
     const cause = new Error('postgres://user:secret@db');
     const { response, logs } = handled(
       new CorruptedMapStateError(MAP_ID, 'INVALID_STORED_FORMAT', cause),
@@ -252,7 +259,7 @@ describe('WarehouseHttpExceptionFilter', () => {
     expect(JSON.stringify(logs)).not.toContain('postgres');
   });
 
-  it('неизвестная ApplicationError → 500 без исходного сообщения', () => {
+  it('unknown ApplicationError → 500 without the original message', () => {
     const { response, logs } = handled(new UnexpectedWarehouseError());
 
     expect(response.statusCode).toBe(500);

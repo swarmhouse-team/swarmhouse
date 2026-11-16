@@ -1,8 +1,10 @@
 import type { CachePort } from '../../../../cache/application/ports/cache.port';
 import { invalidateWarehouseCache } from '../../cache/invalidate-warehouse-cache';
+import { publishAfterCommit } from '../../cache/publish-after-commit';
 import { WarehouseNotFoundError } from '../../errors/application.errors';
 import type { LoggerPort } from '../../ports/system/logger.port';
 import type { UnitOfWork } from '../../ports/system/unit-of-work';
+import type { WarehouseNotifier } from '../../ports/system/warehouse-notifier';
 import type { DeleteWarehouseInput } from './delete-warehouse.types';
 
 /** Deletes a warehouse and every map that belongs to it in one unit of work. */
@@ -11,6 +13,7 @@ export class DeleteWarehouse {
     private readonly unitOfWork: UnitOfWork,
     private readonly cache: CachePort,
     private readonly logger: LoggerPort,
+    private readonly notifier: WarehouseNotifier,
   ) {}
 
   async execute(input: DeleteWarehouseInput): Promise<void> {
@@ -28,7 +31,10 @@ export class DeleteWarehouse {
       return record.id;
     });
 
-    await invalidateWarehouseCache(this.cache, this.logger, [warehouseId]);
-    this.logger.info('warehouse.deleted', { warehouseId: input.warehouseId });
+    await publishAfterCommit({
+      invalidate: () => invalidateWarehouseCache(this.cache, this.logger, [warehouseId]),
+      publish: () => this.notifier.warehouseDeleted({ warehouseId }),
+    });
+    this.logger.info('warehouse.deleted', { warehouseId });
   }
 }

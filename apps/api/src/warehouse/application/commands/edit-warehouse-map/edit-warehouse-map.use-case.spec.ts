@@ -5,6 +5,7 @@ import { StationType } from '../../../domain/enums/station-type';
 import {
   CellOccupiedError,
   DuplicateObjectIdError,
+  DuplicateRobotNameError,
   DuplicateStationNameError,
   MapObjectNotFoundError,
   PositionOutOfBoundsError,
@@ -20,6 +21,10 @@ import type { SaveMapResult } from '../../ports/repositories/warehouse-map.repos
 import type { IdGenerator } from '../../ports/system/id-generator';
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
 import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
+import {
+  createRecordingNotifier,
+  type WarehouseNotice,
+} from '../../testing/create-recording-notifier';
 import type { WarehouseMap as SavedMap } from '../../../domain/entities/warehouse-map';
 import { EditWarehouseMap } from './edit-warehouse-map.use-case';
 import type { EditWarehouseMapInput } from './edit-warehouse-map.types';
@@ -36,6 +41,7 @@ interface Harness {
   useCase: EditWarehouseMap;
   calls: string[];
   logs: LogEntry[];
+  notices: WarehouseNotice[];
   saved?: { map: SavedMap; expectedVersion: number };
 }
 
@@ -52,10 +58,12 @@ function createHarness(options?: {
 }): Harness {
   const calls: string[] = [];
   const { logger, logs } = createRecordingLogger();
+  const { notifier, notices } = createRecordingNotifier();
   const state: Harness = {
     useCase: undefined as unknown as EditWarehouseMap,
     calls,
     logs,
+    notices,
   };
   const unitOfWork: UnitOfWork = {
     async execute(work) {
@@ -115,7 +123,7 @@ function createHarness(options?: {
       return options?.nextId ?? ROBOT_ID;
     },
   };
-  state.useCase = new EditWarehouseMap(unitOfWork, ids, logger);
+  state.useCase = new EditWarehouseMap(unitOfWork, ids, logger, notifier);
   return state;
 }
 
@@ -167,6 +175,17 @@ describe('EditWarehouseMap addObstacle', () => {
         level: 'info',
         event: 'warehouse.map.updated',
         context: { mapId: MAP_ID, operationType: 'addObstacle', version: 3 },
+      },
+    ]);
+    expect(harness.notices).toEqual([
+      {
+        type: 'mapChanged',
+        notice: {
+          warehouseId: WAREHOUSE_ID,
+          mapId: MAP_ID,
+          version: 3,
+          operation: { type: 'addObstacle', position: { x: 4, y: 5 } },
+        },
       },
     ]);
   });
@@ -267,6 +286,7 @@ describe('EditWarehouseMap addObstacle', () => {
 
     await expect(harness.useCase.execute(addObstacle())).rejects.toBe(failure);
     expect(harness.logs).toEqual([]);
+    expect(harness.notices).toEqual([]);
   });
 
   it('logs warehouse.map.updated only after unit of work execute settles', async () => {
@@ -283,6 +303,7 @@ describe('EditWarehouseMap addObstacle', () => {
     await Promise.resolve();
     expect(settled).toBe(false);
     expect(harness.logs).toEqual([]);
+    expect(harness.notices).toEqual([]);
     release?.();
     await pending;
     expect(settled).toBe(true);
@@ -521,6 +542,34 @@ describe('EditWarehouseMap placeRobot', () => {
         },
       },
     ]);
+    expect(harness.notices).toEqual([
+      {
+        type: 'mapChanged',
+        notice: {
+          warehouseId: WAREHOUSE_ID,
+          mapId: MAP_ID,
+          version: 3,
+          operation: { type: 'placeRobot', name: '  loader  ', position: { x: 3, y: 4 } },
+          createdId: ROBOT_ID,
+        },
+      },
+    ]);
+  });
+
+  it('does not save a robot whose name matches an existing one ignoring case', async () => {
+    const harness = createHarness({
+      found: { snapshot: mapWithRobot(), version: 0 },
+      nextId: '33333333-3333-4111-a111-333333333334',
+    });
+
+    await expect(
+      harness.useCase.execute({
+        mapId: MAP_ID,
+        expectedVersion: 0,
+        operation: { type: 'placeRobot', name: ' LOADER ', position: { x: 2, y: 2 } },
+      }),
+    ).rejects.toBeInstanceOf(DuplicateRobotNameError);
+    expect(harness.calls).not.toContain('save');
   });
 
   it('does not save an empty robot name', async () => {
@@ -1217,8 +1266,67 @@ describe('EditWarehouseMap station save outcomes', () => {
 
     await Promise.resolve();
     expect(settled).toBe(false);
+    expect(harness.notices).toEqual([]);
     release?.();
     await pending;
     expect(settled).toBe(true);
+  });
+});
+
+describe('EditWarehouseMap realtime', () => {
+  it('does not publish a no-op move', async () => {
+    const harness = createHarness({
+      found: { snapshot: mapWithRobot(), version: 4 },
+    });
+
+    const result = await harness.useCase.execute({
+      mapId: MAP_ID,
+      expectedVersion: 4,
+      operation: { type: 'moveRobot', robotId: ROBOT_ID, position: { x: 1, y: 1 } },
+    });
+
+    expect(result.changed).toBe(false);
+    expect(result.version).toBe(4);
+    expect(harness.notices).toEqual([]);
+  });
+
+  it('does not publish a version conflict', async () => {
+    const harness = createHarness({
+      found: { snapshot: emptySnapshot(), version: 2 },
+      saveResult: { status: 'conflict', actualVersion: 9 },
+    });
+
+    await expect(harness.useCase.execute(addObstacle(2))).rejects.toMatchObject({
+      name: 'MapVersionConflictError',
+    });
+    expect(harness.notices).toEqual([]);
+  });
+
+  it('publishes the saved robot id in lowercase without changing the command', async () => {
+    const upperRobotId = ROBOT_ID.toUpperCase();
+    const operation = {
+      type: 'moveRobot' as const,
+      robotId: upperRobotId,
+      position: { x: 2, y: 2 },
+    };
+    const harness = createHarness({
+      found: { snapshot: mapWithRobot(), version: 4 },
+      saveResult: { status: 'saved', version: 5 },
+    });
+
+    await harness.useCase.execute({ mapId: MAP_ID, expectedVersion: 4, operation });
+
+    expect(operation.robotId).toBe(upperRobotId);
+    expect(harness.notices).toEqual([
+      {
+        type: 'mapChanged',
+        notice: {
+          warehouseId: WAREHOUSE_ID,
+          mapId: MAP_ID,
+          version: 5,
+          operation: { type: 'moveRobot', robotId: ROBOT_ID, position: { x: 2, y: 2 } },
+        },
+      },
+    ]);
   });
 });

@@ -2,6 +2,7 @@ import { WAREHOUSE_MAP_HEIGHT, WAREHOUSE_MAP_WIDTH } from '../constants';
 import {
   CellOccupiedError,
   DuplicateObjectIdError,
+  DuplicateRobotNameError,
   DuplicateStationNameError,
   MapObjectNotFoundError,
   PositionOutOfBoundsError,
@@ -118,6 +119,7 @@ export class WarehouseMap {
     this.assertInside(position);
     this.assertFree(position);
     this.assertObjectIdAvailable(robot.id);
+    this.assertRobotNameAvailable(robot.name.value);
     this.robots.push(robot);
   }
 
@@ -228,6 +230,14 @@ export class WarehouseMap {
       this.stations.some((station) => station.id === id);
     if (taken) {
       throw new DuplicateObjectIdError(id);
+    }
+  }
+
+  private assertRobotNameAvailable(name: string): void {
+    const normalized = name.toLocaleLowerCase();
+    const taken = this.robots.some((robot) => robot.name.value.toLocaleLowerCase() === normalized);
+    if (taken) {
+      throw new DuplicateRobotNameError(name);
     }
   }
 

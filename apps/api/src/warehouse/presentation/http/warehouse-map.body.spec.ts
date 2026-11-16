@@ -25,7 +25,7 @@ function snapshot(overrides: Partial<WarehouseMapSnapshot> = {}): WarehouseMapSn
 }
 
 describe('toWarehouseMapBody', () => {
-  it('отдаёт пустые коллекции и идентификаторы снимка', () => {
+  it('returns empty collections and the snapshot ids', () => {
     const source = snapshot();
     const body = toWarehouseMapBody(source, 0);
 
@@ -42,7 +42,7 @@ describe('toWarehouseMapBody', () => {
     expect(warehouseMapBodySchema.parse(body)).toEqual(body);
   });
 
-  it('кладёт препятствие, робота и станции всех типов в плоские поля', () => {
+  it('puts an obstacle, a robot, and every station type into flat fields', () => {
     const source = snapshot({
       obstacles: [{ x: 2, y: 3 }],
       robots: [{ id: ROBOT_ID, name: 'loader', x: 1, y: 1 }],
