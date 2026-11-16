@@ -49,7 +49,7 @@ describe('warehouse HTTP on the test database', () => {
     await disconnectTestPrisma();
   });
 
-  it('создаёт склад и пустую карту версии 0', async () => {
+  it('creates a warehouse and an empty map at version 0', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/warehouses')
       .send({ name: 'dock' });
@@ -72,7 +72,7 @@ describe('warehouse HTTP on the test database', () => {
     });
   });
 
-  it('читает карту склада', async () => {
+  it('reads the warehouse map', async () => {
     const created = await createWarehouse();
 
     const response = await request(app.getHttpServer()).get(
@@ -92,7 +92,7 @@ describe('warehouse HTTP on the test database', () => {
     });
   });
 
-  it('переименовывает склад и не меняет карту', async () => {
+  it('renames the warehouse and leaves the map unchanged', async () => {
     const created = await createWarehouse();
     const before = await storedMap(created.mapId);
 
@@ -112,7 +112,7 @@ describe('warehouse HTTP on the test database', () => {
     expect(await storedMap(created.mapId)).toEqual(before);
   });
 
-  it('добавляет робота, повышает версию и согласует чтение', async () => {
+  it('places a robot, raises the version, and matches a later read', async () => {
     const created = await createWarehouse();
 
     const response = await request(app.getHttpServer())
@@ -146,7 +146,7 @@ describe('warehouse HTTP on the test database', () => {
     expect(warehouseMapBodySchema.parse(read.body)).toEqual(edited.map);
   });
 
-  it('удаляет склад и карту', async () => {
+  it('deletes the warehouse and the map', async () => {
     const created = await createWarehouse();
 
     const response = await request(app.getHttpServer()).delete(
@@ -163,7 +163,7 @@ describe('warehouse HTTP on the test database', () => {
     ).toBeNull();
   });
 
-  it('конфликт версии не меняет карту, а чтение возвращает текущую', async () => {
+  it('a version conflict leaves the map unchanged and a read returns the current one', async () => {
     const created = await createWarehouse();
     const placed = await request(app.getHttpServer())
       .post(`/api/maps/${created.mapId}/operations`)
@@ -199,7 +199,7 @@ describe('warehouse HTTP on the test database', () => {
     expect(warehouseMapBodySchema.parse(read.body)).toEqual(current.map);
   });
 
-  it('перемещение в ту же клетку не меняет версию и content', async () => {
+  it('a move onto the same cell does not change the version or the content', async () => {
     const created = await createWarehouse();
     const placed = await request(app.getHttpServer())
       .post(`/api/maps/${created.mapId}/operations`)
@@ -229,7 +229,7 @@ describe('warehouse HTTP on the test database', () => {
     expect(await storedMap(created.mapId)).toEqual(before);
   });
 
-  it('невалидный вход отвечает 400 и не пишет в БД', async () => {
+  it('invalid input returns 400 and does not write to the database', async () => {
     const unknownOperation = await request(app.getHttpServer())
       .post(`/api/maps/${ABSENT_ID}/operations`)
       .send({ expectedVersion: 0, operation: { type: 'replaceMap' } });
@@ -247,7 +247,7 @@ describe('warehouse HTTP on the test database', () => {
     expect(await getTestPrisma().warehouseMapRecord.count()).toBe(0);
   });
 
-  it('валидный, но отсутствующий склад и карта дают 404', async () => {
+  it('a valid but missing warehouse and map return 404', async () => {
     const map = await request(app.getHttpServer()).get(`/api/warehouses/${ABSENT_ID}/map`);
     const warehouse = await request(app.getHttpServer())
       .patch(`/api/warehouses/${ABSENT_ID}`)
@@ -265,7 +265,7 @@ describe('warehouse HTTP on the test database', () => {
     });
   });
 
-  it('занятая клетка даёт 422 и не меняет карту', async () => {
+  it('an occupied cell returns 422 and does not change the map', async () => {
     const created = await createWarehouse();
     const placed = await request(app.getHttpServer())
       .post(`/api/maps/${created.mapId}/operations`)
@@ -291,7 +291,7 @@ describe('warehouse HTTP on the test database', () => {
     expect(await storedMap(created.mapId)).toEqual(before);
   });
 
-  it('повреждённый content даёт безопасный 500', async () => {
+  it('corrupt content returns a safe 500', async () => {
     const created = await createWarehouse();
     await getTestPrisma().warehouseMapRecord.update({
       where: { id: created.mapId },

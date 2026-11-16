@@ -13,6 +13,10 @@ import type {
 import type { Clock } from '../../ports/system/clock';
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
 import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
+import {
+  createRecordingNotifier,
+  type WarehouseNotice,
+} from '../../testing/create-recording-notifier';
 import { RecordingCache } from '../../testing/recording-cache';
 import {
   WAREHOUSE_LIST_CACHE_KEY,
@@ -28,6 +32,7 @@ interface Harness {
   useCase: UpdateWarehouse;
   calls: string[];
   logs: LogEntry[];
+  notices: WarehouseNotice[];
   cache: RecordingCache;
   nowCalls: number;
   saved?: Warehouse;
@@ -44,6 +49,7 @@ function createHarness(options?: {
   const calls: string[] = [];
   const cache = new RecordingCache();
   const { logger, logs } = createRecordingLogger();
+  const { notifier, notices } = createRecordingNotifier();
   let nowCalls = 0;
   const clock: Clock = {
     now() {
@@ -55,6 +61,7 @@ function createHarness(options?: {
     useCase: undefined as unknown as UpdateWarehouse,
     calls,
     logs,
+    notices,
     cache,
     get nowCalls() {
       return nowCalls;
@@ -121,7 +128,7 @@ function createHarness(options?: {
       return result;
     },
   };
-  state.useCase = new UpdateWarehouse(unitOfWork, clock, cache, logger);
+  state.useCase = new UpdateWarehouse(unitOfWork, clock, cache, logger, notifier);
   return state;
 }
 
@@ -291,6 +298,29 @@ describe('UpdateWarehouse', () => {
         event: 'warehouse.renamed',
         context: { warehouseId: WAREHOUSE_ID },
       },
+    ]);
+    expect(harness.notices).toEqual([
+      { type: 'warehouseUpdated', notice: { warehouseId: WAREHOUSE_ID } },
+    ]);
+  });
+
+  it('does not publish a no-op rename', async () => {
+    const harness = createHarness();
+
+    await harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'Main' });
+
+    expect(harness.notices).toEqual([]);
+  });
+
+  it('publishes when cache invalidation throws a non-cache error', async () => {
+    const harness = createHarness();
+    harness.cache.unexpectedDeleteError = new Error('cache down');
+
+    await expect(
+      harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'North' }),
+    ).rejects.toThrow('cache down');
+    expect(harness.notices).toEqual([
+      { type: 'warehouseUpdated', notice: { warehouseId: WAREHOUSE_ID } },
     ]);
   });
 });

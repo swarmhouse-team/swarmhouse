@@ -148,7 +148,7 @@ function mapBody(version: number) {
   };
 }
 
-describe('HTTP склада', () => {
+describe('warehouse HTTP', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -204,7 +204,7 @@ describe('HTTP склада', () => {
     await app.close();
   });
 
-  it('создаёт склад и передаёт только name', async () => {
+  it('creates a warehouse and passes only name', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/warehouses')
       .send({ name: 'dock' });
@@ -220,7 +220,7 @@ describe('HTTP склада', () => {
     expect(databaseDenied).not.toHaveBeenCalled();
   });
 
-  it('переименовывает склад по path и телу', async () => {
+  it('renames a warehouse from the path and the body', async () => {
     const response = await request(app.getHttpServer())
       .patch(`/api/warehouses/${WAREHOUSE_ID}`)
       .send({ name: 'north' });
@@ -233,7 +233,7 @@ describe('HTTP склада', () => {
     expect(updateExecute).toHaveBeenCalledWith({ warehouseId: WAREHOUSE_ID, name: 'north' });
   });
 
-  it('удаляет склад без тела ответа', async () => {
+  it('deletes a warehouse with an empty response body', async () => {
     const response = await request(app.getHttpServer()).delete(`/api/warehouses/${WAREHOUSE_ID}`);
 
     expect(response.status).toBe(204);
@@ -241,7 +241,7 @@ describe('HTTP склада', () => {
     expect(deleteExecute).toHaveBeenCalledWith({ warehouseId: WAREHOUSE_ID });
   });
 
-  it('читает карту склада как MapBody', async () => {
+  it('reads the warehouse map as MapBody', async () => {
     const response = await request(app.getHttpServer()).get(`/api/warehouses/${WAREHOUSE_ID}/map`);
 
     expect(response.status).toBe(200);
@@ -251,7 +251,7 @@ describe('HTTP склада', () => {
     expect(response.body.obstacles[0]).not.toHaveProperty('id');
   });
 
-  it('передаёт операцию редактирования и не подставляет createdId', async () => {
+  it('passes the edit operation and does not add createdId', async () => {
     const operation = { type: 'addObstacle', position: { x: 4, y: 5 } };
     const response = await request(app.getHttpServer())
       .post(`/api/maps/${MAP_ID}/operations`)
@@ -266,7 +266,7 @@ describe('HTTP склада', () => {
     expect(editExecute).toHaveBeenCalledWith({ mapId: MAP_ID, expectedVersion: 1, operation });
   });
 
-  it('включает createdId, когда use case его вернул', async () => {
+  it('includes createdId when the use case returned it', async () => {
     const operation = { type: 'placeRobot', name: 'loader', position: { x: 1, y: 1 } };
     const response = await request(app.getHttpServer())
       .post(`/api/maps/${MAP_ID}/operations`)
@@ -279,7 +279,7 @@ describe('HTTP склада', () => {
     });
   });
 
-  it('no-op сохраняет changed false и прежнюю version', async () => {
+  it('keeps changed false and the previous version on a no-op', async () => {
     editExecute.mockResolvedValueOnce({
       mapId: MAP_ID,
       version: 3,
@@ -303,17 +303,17 @@ describe('HTTP склада', () => {
 
   it.each([
     {
-      title: 'неверный UUID path',
+      title: 'invalid UUID path',
       call: () => request(app.getHttpServer()).get('/api/warehouses/wh-1/map'),
       called: () => getExecute,
     },
     {
-      title: 'неправильный тип тела',
+      title: 'wrong body type',
       call: () => request(app.getHttpServer()).post('/api/warehouses').send({ name: 1 }),
       called: () => createExecute,
     },
     {
-      title: 'неизвестная операция',
+      title: 'unknown operation',
       call: () =>
         request(app.getHttpServer())
           .post(`/api/maps/${MAP_ID}/operations`)
@@ -321,12 +321,12 @@ describe('HTTP склада', () => {
       called: () => editExecute,
     },
     {
-      title: 'лишнее поле',
+      title: 'extra field',
       call: () =>
         request(app.getHttpServer()).post('/api/warehouses').send({ name: 'dock', extra: true }),
       called: () => createExecute,
     },
-  ])('$title → 400, use case не вызывается', async ({ call, called }) => {
+  ])('$title → 400 and the use case is not called', async ({ call, called }) => {
     const response = await call();
 
     expect(response.status).toBe(400);
@@ -334,7 +334,7 @@ describe('HTTP склада', () => {
     expect(called()).not.toHaveBeenCalled();
   });
 
-  it('возвращает метаданные склада', async () => {
+  it('returns warehouse metadata', async () => {
     const response = await request(app.getHttpServer()).get(`/api/warehouses/${WAREHOUSE_ID}`);
 
     expect(response.status).toBe(200);
@@ -346,7 +346,7 @@ describe('HTTP склада', () => {
     });
   });
 
-  it('возвращает общий список без пагинации, включая неизвестные даты', async () => {
+  it('returns the full list without pagination, including unknown dates', async () => {
     const response = await request(app.getHttpServer()).get('/api/warehouses');
 
     expect(response.status).toBe(200);
@@ -365,7 +365,7 @@ describe('HTTP склада', () => {
     expect(listExecute).toHaveBeenCalledOnce();
   });
 
-  it('пустой список — 200', async () => {
+  it('returns 200 for an empty list', async () => {
     listExecute.mockResolvedValueOnce({ items: [], total: 0 });
 
     const response = await request(app.getHttpServer()).get('/api/warehouses');
@@ -374,7 +374,7 @@ describe('HTTP склада', () => {
     expect(response.body).toEqual({ items: [], total: 0 });
   });
 
-  it('неизвестный склад — 404 без details', async () => {
+  it('returns 404 without details for an unknown warehouse', async () => {
     detailsExecute.mockRejectedValueOnce(new WarehouseNotFoundError({ warehouseId: WAREHOUSE_ID }));
 
     const response = await request(app.getHttpServer()).get(`/api/warehouses/${WAREHOUSE_ID}`);
@@ -387,7 +387,7 @@ describe('HTTP склада', () => {
     expect(response.body.details).toBeUndefined();
   });
 
-  it('неверный UUID склада — 400', async () => {
+  it('returns 400 for an invalid warehouse UUID', async () => {
     const response = await request(app.getHttpServer()).get('/api/warehouses/not-a-uuid');
 
     expect(response.status).toBe(400);
@@ -423,7 +423,7 @@ describe('HTTP склада', () => {
     });
   });
 
-  it('MapVersionConflictError → 409 без версий', async () => {
+  it('MapVersionConflictError → 409 without versions', async () => {
     editExecute.mockRejectedValueOnce(
       new MapVersionConflictError({ mapId: MAP_ID, expectedVersion: 1, actualVersion: 4 }),
     );
@@ -446,7 +446,7 @@ describe('HTTP склада', () => {
     expect(serialized).not.toContain(MAP_ID);
   });
 
-  it('DomainError → 422 без внутренних details', async () => {
+  it('DomainError → 422 without internal details', async () => {
     createExecute.mockRejectedValueOnce(new InvalidNameError('   '));
 
     const response = await request(app.getHttpServer())
@@ -461,7 +461,7 @@ describe('HTTP склада', () => {
     expect(JSON.stringify(response.body)).not.toContain('"value"');
   });
 
-  it('CorruptedMapStateError → безопасный 500', async () => {
+  it('CorruptedMapStateError → a safe 500', async () => {
     getExecute.mockRejectedValueOnce(
       new CorruptedMapStateError(
         MAP_ID,
@@ -484,7 +484,7 @@ describe('HTTP склада', () => {
     expect(serialized).not.toContain('stack');
   });
 
-  it('обычный Error обрабатывает глобальный фильтр без внутренних деталей', async () => {
+  it('lets the global filter handle a plain Error without internal details', async () => {
     deleteExecute.mockRejectedValueOnce(
       new Error('postgres://user:secret@db', { cause: new Error('SQLSTATE 42P01') }),
     );

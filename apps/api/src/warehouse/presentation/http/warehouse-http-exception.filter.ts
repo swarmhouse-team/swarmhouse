@@ -11,11 +11,11 @@ import {
 } from '../../application/errors/application.errors';
 import type { LogContext, LoggerPort } from '../../application/ports/system/logger.port';
 import { DomainError } from '../../domain/errors/domain.error';
+import { MAP_VERSION_CONFLICT_PUBLIC_MESSAGE } from '../realtime/warehouse-client-error';
 import { NestjsWarehouseLogger } from '../../infrastructure/system/nestjs-warehouse-logger';
 
 const INTERNAL_ERROR_MESSAGE = 'Internal server error';
-const MAP_VERSION_CONFLICT_MESSAGE =
-  'The map version is stale. Read the map again and repeat the command.';
+const MAP_VERSION_CONFLICT_MESSAGE = MAP_VERSION_CONFLICT_PUBLIC_MESSAGE;
 const COMPONENT = 'WarehouseHttpExceptionFilter';
 
 type ErrorResponse = { status: number; body: ApiError };

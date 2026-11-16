@@ -6,6 +6,7 @@ import type { WarehouseMapRestoreInput } from './warehouse-map-restore-input';
 import {
   CellOccupiedError,
   DuplicateObjectIdError,
+  DuplicateRobotNameError,
   DuplicateStationNameError,
 } from '../../domain/errors/map.errors';
 import { InvalidIdError } from '../../domain/errors/value.errors';
@@ -16,6 +17,7 @@ import { restoreWarehouseMap } from './restore-warehouse-map';
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
 const MAP_ID = '22222222-2222-7111-8111-22222222222b';
 const ROBOT_ID = '33333333-3333-4111-8111-33333333333c';
+const ROBOT_2_ID = '33333333-3333-4111-a111-333333333334';
 const STATION_ID = '44444444-4444-4111-8111-44444444444e';
 const STATION_2_ID = '44444444-4444-4111-a111-444444444445';
 
@@ -186,6 +188,10 @@ describe('restoreWarehouseMap', () => {
       y: 5,
     });
     expect(causeOf(sameName)).toBeInstanceOf(DuplicateStationNameError);
+
+    const sameRobotName = filledSnapshot();
+    sameRobotName.robots.push({ id: ROBOT_2_ID, name: 'robot', x: 4, y: 4 });
+    expect(causeOf(sameRobotName)).toBeInstanceOf(DuplicateRobotNameError);
 
     const outside = emptySnapshot();
     outside.obstacles.push({ x: 20, y: 0 });

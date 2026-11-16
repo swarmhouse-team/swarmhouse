@@ -8,6 +8,7 @@ import { DeleteWarehouse } from '../../../src/warehouse/application/commands/del
 import { EditWarehouseMap } from '../../../src/warehouse/application/commands/edit-warehouse-map/edit-warehouse-map.use-case';
 import type { IdGenerator } from '../../../src/warehouse/application/ports/system/id-generator';
 import type { LoggerPort } from '../../../src/warehouse/application/ports/system/logger.port';
+import type { WarehouseNotifier } from '../../../src/warehouse/application/ports/system/warehouse-notifier';
 import { WarehouseMap } from '../../../src/warehouse/domain/entities/warehouse-map';
 import { Warehouse } from '../../../src/warehouse/domain/entities/warehouse';
 import { Position } from '../../../src/warehouse/domain/vo/position';
@@ -28,6 +29,12 @@ const silentLogger: LoggerPort = {
   info() {},
   warn() {},
   error() {},
+};
+
+const silentNotifier: WarehouseNotifier = {
+  async mapChanged() {},
+  async warehouseUpdated() {},
+  async warehouseDeleted() {},
 };
 
 function fixedIds(ids: readonly string[]): IdGenerator {
@@ -117,7 +124,12 @@ describe('warehouse use cases in PrismaUnitOfWork', () => {
       updatedAt: RECORDED_AT,
     });
 
-    await new DeleteWarehouse(unitOfWork(), new UnusedCache(), silentLogger).execute({
+    await new DeleteWarehouse(
+      unitOfWork(),
+      new UnusedCache(),
+      silentLogger,
+      silentNotifier,
+    ).execute({
       warehouseId: KEPT_WAREHOUSE_ID,
     });
 
@@ -128,7 +140,12 @@ describe('warehouse use cases in PrismaUnitOfWork', () => {
   it('deletes a warehouse that has no map', async () => {
     await warehouses().insert(Warehouse.create(KEPT_WAREHOUSE_ID, 'Kept'), RECORDED_AT);
 
-    await new DeleteWarehouse(unitOfWork(), new UnusedCache(), silentLogger).execute({
+    await new DeleteWarehouse(
+      unitOfWork(),
+      new UnusedCache(),
+      silentLogger,
+      silentNotifier,
+    ).execute({
       warehouseId: KEPT_WAREHOUSE_ID,
     });
 
@@ -140,7 +157,7 @@ describe('warehouse use cases in PrismaUnitOfWork', () => {
     const map = WarehouseMap.create(MAP_ID, KEPT_WAREHOUSE_ID);
     map.placeRobot(ROBOT_ID, 'Robot', Position.create(2, 2));
     await maps().insert(map);
-    const useCase = new EditWarehouseMap(unitOfWork(), fixedIds([]), silentLogger);
+    const useCase = new EditWarehouseMap(unitOfWork(), fixedIds([]), silentLogger, silentNotifier);
 
     const result = await useCase.execute({
       mapId: MAP_ID,

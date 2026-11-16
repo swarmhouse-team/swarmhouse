@@ -1,11 +1,17 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import type { Express, Request, Response } from 'express';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
 
 import { AppModule } from './app.module';
 import type { Env } from './config/env';
+import { WarehouseIoAdapter } from './warehouse/infrastructure/realtime/warehouse-io.adapter';
+import { readWarehouseSocketOrigins } from './warehouse/infrastructure/realtime/warehouse-socket.options';
 
 const GLOBAL_PREFIX = 'api';
 
@@ -17,6 +23,15 @@ async function bootstrap(): Promise<void> {
 
   app.setGlobalPrefix(GLOBAL_PREFIX);
   app.enableShutdownHooks();
+  app.useWebSocketAdapter(
+    new WarehouseIoAdapter(
+      app,
+      readWarehouseSocketOrigins(
+        config.get('NODE_ENV', { infer: true }),
+        process.env.WAREHOUSE_SOCKET_ORIGINS,
+      ),
+    ),
+  );
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Robots API')
@@ -25,6 +40,7 @@ async function bootstrap(): Promise<void> {
     .build();
   const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, swaggerConfig));
   SwaggerModule.setup(`${GLOBAL_PREFIX}/docs`, app, document);
+  const playgroundPath = mountLocalWarehousePlayground(app);
 
   const port = config.get('API_PORT', { infer: true });
   await app.listen(port);
@@ -32,6 +48,32 @@ async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
   logger.log(`API: http://localhost:${port}/${GLOBAL_PREFIX}`);
   logger.log(`Swagger: http://localhost:${port}/${GLOBAL_PREFIX}/docs`);
+  if (playgroundPath) {
+    logger.log(`Warehouse playground: http://localhost:${port}${playgroundPath}`);
+  }
+}
+
+/** Serves a gitignored HTML page. Absent in production and when the file is not on disk. */
+function mountLocalWarehousePlayground(app: {
+  getHttpAdapter: () => { getInstance: () => Express };
+}): string | undefined {
+  if (process.env.NODE_ENV === 'production') {
+    return undefined;
+  }
+
+  const file = join(process.cwd(), 'local', 'warehouse-playground.html');
+  if (!existsSync(file)) {
+    return undefined;
+  }
+
+  const path = `/${GLOBAL_PREFIX}/warehouse-playground`;
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .get(path, (_request: Request, response: Response) => {
+      response.sendFile(file);
+    });
+  return path;
 }
 
 // Явно завершаемся с кодом 1: не полагаемся на поведение Node по умолчанию для необработанных
