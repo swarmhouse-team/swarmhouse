@@ -1,5 +1,13 @@
 import { InvalidIdError } from '../errors/value.errors';
-import { MAX_UUID, NIL_UUID, UUID_TEXT } from '../constants';
+
+/** Text form of a UUID: 8-4-4-4-12 hex groups, any version, any letter case. */
+const UUID_TEXT = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+/** Canonical lowercase nil UUID. Not an identity of a real entity. */
+const NIL_UUID = '00000000-0000-0000-0000-000000000000';
+
+/** Canonical lowercase max UUID. Not an identity of a real entity. */
+const MAX_UUID = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 
 /**
  * Checks the shared UUID text form for a warehouse, map, robot, and station.

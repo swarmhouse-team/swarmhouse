@@ -20,7 +20,14 @@ export class GridSize {
   }
 
   contains(x: number, y: number): boolean {
-    return x < this.width && y < this.height;
+    return (
+      Number.isSafeInteger(x) &&
+      Number.isSafeInteger(y) &&
+      x >= 0 &&
+      y >= 0 &&
+      x < this.width &&
+      y < this.height
+    );
   }
 }
 

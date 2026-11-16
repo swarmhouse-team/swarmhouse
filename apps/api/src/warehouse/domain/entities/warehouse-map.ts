@@ -7,6 +7,7 @@ import {
   MapObjectNotFoundError,
   PositionOutOfBoundsError,
 } from '../errors/map.errors';
+import { InvalidPositionError } from '../errors/value.errors';
 import type { StationType } from '../enums/station-type';
 import { GridSize } from '../vo/grid-size';
 import { normalizeId } from '../vo/id';
@@ -14,12 +15,12 @@ import { Position } from '../vo/position';
 import { Robot } from './robot';
 import { Station } from './station';
 
-export interface ObstacleSnapshot {
+interface ObstacleSnapshot {
   x: number;
   y: number;
 }
 
-export interface RobotSnapshot {
+interface RobotSnapshot {
   id: string;
   name: string;
   x: number;
@@ -54,9 +55,9 @@ export class WarehouseMap {
   readonly warehouseId: string;
   readonly size: GridSize;
 
-  private readonly robots: Robot[] = [];
-  private readonly stations: Station[] = [];
-  private readonly obstacles: Position[] = [];
+  readonly #robots: Robot[] = [];
+  readonly #stations: Station[] = [];
+  readonly #obstacles: Position[] = [];
 
   private constructor(id: string, warehouseId: string, size: GridSize) {
     this.id = id;
@@ -74,15 +75,15 @@ export class WarehouseMap {
   }
 
   getRobots(): readonly Robot[] {
-    return [...this.robots];
+    return [...this.#robots];
   }
 
   getStations(): readonly Station[] {
-    return [...this.stations];
+    return [...this.#stations];
   }
 
   getObstacles(): readonly Position[] {
-    return [...this.obstacles];
+    return [...this.#obstacles];
   }
 
   snapshot(): WarehouseMapSnapshot {
@@ -91,15 +92,15 @@ export class WarehouseMap {
       warehouseId: this.warehouseId,
       width: this.size.width,
       height: this.size.height,
-      obstacles: this.obstacles.map((position) => ({ x: position.x, y: position.y })),
-      stations: this.stations.map((station) => ({
+      obstacles: this.#obstacles.map((position) => ({ x: position.x, y: position.y })),
+      stations: this.#stations.map((station) => ({
         id: station.id,
         name: station.name.value,
         type: station.type,
         x: station.position.x,
         y: station.position.y,
       })),
-      robots: this.robots.map((robot) => ({
+      robots: this.#robots.map((robot) => ({
         id: robot.id,
         name: robot.name.value,
         x: robot.position.x,
@@ -109,34 +110,46 @@ export class WarehouseMap {
   }
 
   addObstacle(position: Position): void {
+    this.requirePosition(position);
     this.assertInside(position);
     this.assertFree(position);
-    this.obstacles.push(position);
+    this.#obstacles.push(position);
   }
 
   placeRobot(id: string, name: string, position: Position): void {
+    this.requirePosition(position);
     const robot = Robot.create(id, name, position);
     this.assertInside(position);
     this.assertFree(position);
     this.assertObjectIdAvailable(robot.id);
-    this.assertRobotNameAvailable(robot.name.value);
-    this.robots.push(robot);
+    this.assertNameAvailable(
+      robot.name.value,
+      this.#robots.map((item) => item.name.value),
+      DuplicateRobotNameError,
+    );
+    this.#robots.push(robot);
   }
 
   placeStation(id: string, name: string, type: StationType, position: Position): void {
+    this.requirePosition(position);
     const station = Station.create(id, name, type, position);
     this.assertInside(position);
     this.assertFree(position);
     this.assertObjectIdAvailable(station.id);
-    this.assertStationNameAvailable(station.name.value);
-    this.stations.push(station);
+    this.assertNameAvailable(
+      station.name.value,
+      this.#stations.map((item) => item.name.value),
+      DuplicateStationNameError,
+    );
+    this.#stations.push(station);
   }
 
   moveRobot(id: string, position: Position): void {
+    this.requirePosition(position);
     const robotId = normalizeId(id);
-    const index = this.robots.findIndex((robot) => robot.id === robotId);
-    const current = this.robots[index];
-    if (index === -1 || !current) {
+    const index = this.#robots.findIndex((robot) => robot.id === robotId);
+    const current = this.#robots[index];
+    if (!current) {
       throw new MapObjectNotFoundError('robot');
     }
     if (current.position.equals(position)) {
@@ -145,14 +158,15 @@ export class WarehouseMap {
 
     this.assertInside(position);
     this.assertFree(position);
-    this.robots[index] = current.withPosition(position);
+    this.#robots[index] = current.withPosition(position);
   }
 
   moveStation(id: string, position: Position): void {
+    this.requirePosition(position);
     const stationId = normalizeId(id);
-    const index = this.stations.findIndex((station) => station.id === stationId);
-    const current = this.stations[index];
-    if (index === -1 || !current) {
+    const index = this.#stations.findIndex((station) => station.id === stationId);
+    const current = this.#stations[index];
+    if (!current) {
       throw new MapObjectNotFoundError('station');
     }
     if (current.position.equals(position)) {
@@ -161,11 +175,13 @@ export class WarehouseMap {
 
     this.assertInside(position);
     this.assertFree(position);
-    this.stations[index] = current.withPosition(position);
+    this.#stations[index] = current.withPosition(position);
   }
 
   moveObstacle(from: Position, to: Position): void {
-    const index = this.obstacles.findIndex((position) => position.equals(from));
+    this.requirePosition(from);
+    this.requirePosition(to);
+    const index = this.#obstacles.findIndex((position) => position.equals(from));
     if (index === -1) {
       throw new MapObjectNotFoundError('obstacle');
     }
@@ -175,33 +191,34 @@ export class WarehouseMap {
 
     this.assertInside(to);
     this.assertFree(to);
-    this.obstacles[index] = to;
+    this.#obstacles[index] = to;
   }
 
   removeRobot(id: string): void {
     const robotId = normalizeId(id);
-    const index = this.robots.findIndex((robot) => robot.id === robotId);
+    const index = this.#robots.findIndex((robot) => robot.id === robotId);
     if (index === -1) {
       throw new MapObjectNotFoundError('robot');
     }
-    this.robots.splice(index, 1);
+    this.#robots.splice(index, 1);
   }
 
   removeStation(id: string): void {
     const stationId = normalizeId(id);
-    const index = this.stations.findIndex((station) => station.id === stationId);
+    const index = this.#stations.findIndex((station) => station.id === stationId);
     if (index === -1) {
       throw new MapObjectNotFoundError('station');
     }
-    this.stations.splice(index, 1);
+    this.#stations.splice(index, 1);
   }
 
   removeObstacle(position: Position): void {
-    const index = this.obstacles.findIndex((obstacle) => obstacle.equals(position));
+    this.requirePosition(position);
+    const index = this.#obstacles.findIndex((obstacle) => obstacle.equals(position));
     if (index === -1) {
       throw new MapObjectNotFoundError('obstacle');
     }
-    this.obstacles.splice(index, 1);
+    this.#obstacles.splice(index, 1);
   }
 
   private assertInside(position: Position): void {
@@ -218,36 +235,40 @@ export class WarehouseMap {
 
   private isOccupied(position: Position): boolean {
     return (
-      this.obstacles.some((obstacle) => obstacle.equals(position)) ||
-      this.robots.some((robot) => robot.position.equals(position)) ||
-      this.stations.some((station) => station.position.equals(position))
+      this.#obstacles.some((obstacle) => obstacle.equals(position)) ||
+      this.#robots.some((robot) => robot.position.equals(position)) ||
+      this.#stations.some((station) => station.position.equals(position))
     );
   }
 
   private assertObjectIdAvailable(id: string): void {
     const taken =
-      this.robots.some((robot) => robot.id === id) ||
-      this.stations.some((station) => station.id === id);
+      this.#robots.some((robot) => robot.id === id) ||
+      this.#stations.some((station) => station.id === id);
     if (taken) {
       throw new DuplicateObjectIdError(id);
     }
   }
 
-  private assertRobotNameAvailable(name: string): void {
-    const normalized = name.toLocaleLowerCase();
-    const taken = this.robots.some((robot) => robot.name.value.toLocaleLowerCase() === normalized);
+  /**
+   * Compares names with `toLowerCase`.
+   * Full Unicode case folding is not supported.
+   */
+  private assertNameAvailable(
+    name: string,
+    names: readonly string[],
+    DuplicateName: new (name: string) => DuplicateRobotNameError | DuplicateStationNameError,
+  ): void {
+    const normalized = name.toLowerCase();
+    const taken = names.some((current) => current.toLowerCase() === normalized);
     if (taken) {
-      throw new DuplicateRobotNameError(name);
+      throw new DuplicateName(name);
     }
   }
 
-  private assertStationNameAvailable(name: string): void {
-    const normalized = name.toLocaleLowerCase();
-    const taken = this.stations.some(
-      (station) => station.name.value.toLocaleLowerCase() === normalized,
-    );
-    if (taken) {
-      throw new DuplicateStationNameError(name);
+  private requirePosition(position: Position): void {
+    if (!(position instanceof Position)) {
+      throw new InvalidPositionError(Number.NaN, Number.NaN);
     }
   }
 }
