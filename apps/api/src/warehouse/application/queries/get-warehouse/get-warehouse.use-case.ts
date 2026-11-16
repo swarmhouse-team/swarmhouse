@@ -5,7 +5,7 @@ import { readWarehouseCache, writeWarehouseCache } from '../../cache/read-wareho
 import { WarehouseNotFoundError } from '../../errors/application.errors';
 import type { WarehouseRepository } from '../../ports/repositories/warehouse.repository';
 import { normalizeId } from '../../../domain/vo/id';
-import { toWarehouseDetails, warehouseDetailsCacheValue } from '../warehouse-details';
+import { toWarehouseDetails } from '../warehouse-details';
 import { WAREHOUSE_DETAILS_TTL_MS, warehouseDetailsCacheKey } from '../warehouse-cache.policy';
 
 /**
@@ -35,12 +35,7 @@ export class GetWarehouse {
       throw new WarehouseNotFoundError({ warehouseId });
     }
     const details = toWarehouseDetails(record);
-    await writeWarehouseCache(
-      this.cache,
-      key,
-      warehouseDetailsCacheValue(details),
-      WAREHOUSE_DETAILS_TTL_MS,
-    );
+    await writeWarehouseCache(this.cache, key, details, WAREHOUSE_DETAILS_TTL_MS);
     return details;
   }
 }

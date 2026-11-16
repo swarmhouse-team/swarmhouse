@@ -137,6 +137,26 @@ describe('CreateWarehouse', () => {
     ]);
   });
 
+  it('returns the created warehouse when cache delete throws an unexpected error', async () => {
+    const harness = createHarness();
+    harness.cache.unexpectedDeleteError = new Error('redis://secret');
+
+    await expect(harness.useCase.execute({ name: 'Main' })).resolves.toEqual({
+      warehouseId: WAREHOUSE_ID,
+      name: 'Main',
+      mapId: MAP_ID,
+      version: 0,
+    });
+    expect(harness.cache.deleted).toEqual([WAREHOUSE_LIST_CACHE_KEY]);
+    expect(harness.logs[0]).toEqual({
+      level: 'error',
+      event: 'warehouse.cache.invalidate_failed',
+      context: { errorClass: 'Error' },
+    });
+    expect(harness.logs.map((entry) => entry.event)).toContain('warehouse.created');
+    expect(JSON.stringify(harness.logs)).not.toContain('redis://secret');
+  });
+
   it('creates a warehouse and an empty 20x20 map inside one execute', async () => {
     const harness = createHarness();
 

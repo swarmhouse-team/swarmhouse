@@ -1,11 +1,8 @@
 import type { ServerOptions } from 'socket.io';
 
-import {
-  WAREHOUSE_SOCKET_MAX_PAYLOAD_BYTES,
-  WAREHOUSE_SOCKET_PATH,
-} from './warehouse-socket.constants';
+import { SOCKET_ENGINE_PATH, SOCKET_MAX_HTTP_BUFFER_BYTES } from './socket.constants';
 
-export function readWarehouseSocketOrigins(
+export function readSocketAllowedOrigins(
   nodeEnv: string,
   raw: string | undefined,
 ): readonly string[] {
@@ -21,7 +18,7 @@ export function readWarehouseSocketOrigins(
   return ['http://localhost:3000', 'http://localhost:3001'];
 }
 
-export function originHeader(value: string | string[] | undefined): string | undefined {
+function originHeader(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) {
     return value[0];
   }
@@ -29,7 +26,7 @@ export function originHeader(value: string | string[] | undefined): string | und
 }
 
 /** Exact match against the configured list. `*` is not a wildcard. A missing origin is rejected. */
-export function isWarehouseOriginAllowed(
+export function isSocketOriginAllowed(
   origin: string | undefined,
   allowedOrigins: readonly string[],
 ): boolean {
@@ -39,13 +36,13 @@ export function isWarehouseOriginAllowed(
   return allowedOrigins.includes(origin);
 }
 
-export function warehouseServerOptions(allowedOrigins: readonly string[]): Partial<ServerOptions> {
+export function appSocketServerOptions(allowedOrigins: readonly string[]): Partial<ServerOptions> {
   return {
-    path: WAREHOUSE_SOCKET_PATH,
-    maxHttpBufferSize: WAREHOUSE_SOCKET_MAX_PAYLOAD_BYTES,
+    path: SOCKET_ENGINE_PATH,
+    maxHttpBufferSize: SOCKET_MAX_HTTP_BUFFER_BYTES,
     cors: {
       origin: (origin, callback) => {
-        if (!isWarehouseOriginAllowed(origin, allowedOrigins)) {
+        if (!isSocketOriginAllowed(origin, allowedOrigins)) {
           callback(new Error('Origin is not allowed'), false);
           return;
         }
@@ -54,7 +51,7 @@ export function warehouseServerOptions(allowedOrigins: readonly string[]): Parti
     },
     allowRequest: (request, callback) => {
       const origin = originHeader(request.headers.origin);
-      if (!isWarehouseOriginAllowed(origin, allowedOrigins)) {
+      if (!isSocketOriginAllowed(origin, allowedOrigins)) {
         callback('Origin is not allowed', false);
         return;
       }

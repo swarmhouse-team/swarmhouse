@@ -7,7 +7,8 @@ import type { CachePort } from '../../../cache/application/ports/cache.port';
 /**
  * Reads one cache entry. A `CacheError`, a missing key, or a payload that fails
  * `schema` is a miss. Any other error is rethrown.
- * A rejected payload is deleted when that delete itself fails with `CacheError`.
+ * A rejected payload is deleted. A `CacheError` from that delete is ignored.
+ * Any other delete error is rethrown.
  */
 export async function readWarehouseCache<T>(
   cache: CachePort,
@@ -52,7 +53,7 @@ export async function writeWarehouseCache(
   }
 }
 
-export async function forgetWarehouseCacheKey(cache: CachePort, key: string): Promise<void> {
+async function forgetWarehouseCacheKey(cache: CachePort, key: string): Promise<void> {
   try {
     await cache.delete(key);
   } catch (error) {

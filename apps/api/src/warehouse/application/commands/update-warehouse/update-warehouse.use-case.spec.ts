@@ -37,6 +37,7 @@ interface Harness {
   nowCalls: number;
   saved?: Warehouse;
   savedAt?: Date;
+  failNotifier: (error: Error) => void;
 }
 
 function createHarness(options?: {
@@ -49,7 +50,7 @@ function createHarness(options?: {
   const calls: string[] = [];
   const cache = new RecordingCache();
   const { logger, logs } = createRecordingLogger();
-  const { notifier, notices } = createRecordingNotifier();
+  const { notifier, notices, failWith } = createRecordingNotifier();
   let nowCalls = 0;
   const clock: Clock = {
     now() {
@@ -66,6 +67,7 @@ function createHarness(options?: {
     get nowCalls() {
       return nowCalls;
     },
+    failNotifier: failWith,
   };
   const unitOfWork: UnitOfWork = {
     async execute(work) {
@@ -312,15 +314,69 @@ describe('UpdateWarehouse', () => {
     expect(harness.notices).toEqual([]);
   });
 
-  it('publishes when cache invalidation throws a non-cache error', async () => {
+  it('deletes the list key and publishes when the details delete throws', async () => {
     const harness = createHarness();
-    harness.cache.unexpectedDeleteError = new Error('cache down');
+    harness.cache.unexpectedDeleteError = new Error('redis://secret');
 
     await expect(
       harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'North' }),
-    ).rejects.toThrow('cache down');
+    ).resolves.toEqual({ warehouseId: WAREHOUSE_ID, name: 'North' });
+    expect(harness.cache.deleted).toEqual([
+      warehouseDetailsCacheKey(WAREHOUSE_ID),
+      WAREHOUSE_LIST_CACHE_KEY,
+    ]);
     expect(harness.notices).toEqual([
       { type: 'warehouseUpdated', notice: { warehouseId: WAREHOUSE_ID } },
     ]);
+    expect(harness.logs.filter((entry) => entry.level === 'error')).toEqual([
+      {
+        level: 'error',
+        event: 'warehouse.cache.invalidate_failed',
+        context: { errorClass: 'Error' },
+      },
+      {
+        level: 'error',
+        event: 'warehouse.cache.invalidate_failed',
+        context: { errorClass: 'Error' },
+      },
+    ]);
+    expect(JSON.stringify(harness.logs)).not.toContain('redis://secret');
+  });
+
+  it('returns the rename when the notifier throws', async () => {
+    const harness = createHarness();
+    harness.failNotifier(new Error('socket down'));
+
+    await expect(
+      harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'North' }),
+    ).resolves.toEqual({ warehouseId: WAREHOUSE_ID, name: 'North' });
+    expect(harness.notices).toEqual([
+      { type: 'warehouseUpdated', notice: { warehouseId: WAREHOUSE_ID } },
+    ]);
+    expect(harness.logs).toContainEqual({
+      level: 'error',
+      event: 'warehouse.realtime.publish_failed',
+      context: { errorClass: 'Error' },
+    });
+    expect(JSON.stringify(harness.logs)).not.toContain('socket down');
+  });
+
+  it('returns the rename when cache and notifier both throw', async () => {
+    const harness = createHarness();
+    harness.cache.unexpectedDeleteError = new Error('redis://secret');
+    harness.failNotifier(new Error('socket down'));
+
+    await expect(
+      harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: 'North' }),
+    ).resolves.toEqual({ warehouseId: WAREHOUSE_ID, name: 'North' });
+    expect(harness.cache.deleted).toEqual([
+      warehouseDetailsCacheKey(WAREHOUSE_ID),
+      WAREHOUSE_LIST_CACHE_KEY,
+    ]);
+    expect(harness.notices).toEqual([
+      { type: 'warehouseUpdated', notice: { warehouseId: WAREHOUSE_ID } },
+    ]);
+    expect(JSON.stringify(harness.logs)).not.toContain('redis://secret');
+    expect(JSON.stringify(harness.logs)).not.toContain('socket down');
   });
 });

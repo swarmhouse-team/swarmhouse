@@ -8,7 +8,8 @@ import {
 
 /**
  * Deletes cache keys after a committed warehouse change.
- * One failed delete does not stop the next. `CacheError` does not change the command result.
+ * Each delete is isolated: a failure is logged and the next key is still attempted.
+ * Neither a `CacheError` nor any other delete error changes the command result.
  * A successful delete does not mean the next read already sees the new row.
  */
 export async function invalidateWarehouseCache(
@@ -24,13 +25,20 @@ export async function invalidateWarehouseCache(
     try {
       await cache.delete(key);
     } catch (error) {
-      if (!(error instanceof CacheError)) {
-        throw error;
+      if (error instanceof CacheError) {
+        logger.warn('warehouse.cache.invalidate_failed', {
+          errorClass: error.name,
+          kind: error.kind,
+        });
+        continue;
       }
-      logger.warn('warehouse.cache.invalidate_failed', {
-        errorClass: error.name,
-        kind: error.kind,
+      logger.error('warehouse.cache.invalidate_failed', {
+        errorClass: errorClass(error),
       });
     }
   }
+}
+
+function errorClass(error: unknown): string {
+  return error instanceof Error && error.name.length > 0 ? error.name : 'UnknownError';
 }

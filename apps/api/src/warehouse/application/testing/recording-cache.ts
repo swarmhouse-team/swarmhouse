@@ -26,10 +26,10 @@ export class RecordingCache extends CachePort {
   }
 
   async delete(key: string): Promise<void> {
+    this.deleted.push(key);
     if (this.unexpectedDeleteError) {
       throw this.unexpectedDeleteError;
     }
-    this.deleted.push(key);
     const error = this.deleteErrors.shift();
     if (error) {
       throw error;

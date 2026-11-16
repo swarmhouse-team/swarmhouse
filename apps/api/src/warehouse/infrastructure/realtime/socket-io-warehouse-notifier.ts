@@ -16,6 +16,7 @@ import { WarehouseSubscriptionBook } from './warehouse-subscription.book';
  * Delivers warehouse events on the `/warehouse` namespace.
  * The gateway attaches that namespace once. This class does not depend on the gateway.
  * Before attach and after detach, a publish logs and returns. Emit errors are logged once.
+ * A resolved publish is not a client acknowledgement. Room leave is attempted even when emit throws.
  */
 @Injectable()
 export class SocketIoWarehouseNotifier implements WarehouseNotifier {
@@ -50,13 +51,15 @@ export class SocketIoWarehouseNotifier implements WarehouseNotifier {
   }
 
   async warehouseDeleted(notice: WarehouseDeletedNotice): Promise<void> {
-    await this.emit(
+    const left = await this.emit(
       'warehouse.deleted',
       notice,
       { event: 'warehouse.deleted', warehouseId: notice.warehouseId },
       true,
     );
-    this.subscriptions.forgetWarehouse(notice.warehouseId);
+    if (left) {
+      this.subscriptions.forgetWarehouse(notice.warehouseId);
+    }
   }
 
   private async emit(
@@ -64,22 +67,31 @@ export class SocketIoWarehouseNotifier implements WarehouseNotifier {
     payload: object,
     context: { event: string; warehouseId: string; mapId?: string },
     leaveRoom = false,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const namespace = this.namespace;
     if (!namespace) {
       this.logger.error('warehouse.realtime.not_ready', context);
-      return;
+      return true;
     }
 
     const room = warehouseRoom(context.warehouseId);
     try {
       namespace.to(room).emit(event, payload);
-      if (leaveRoom) {
-        namespace.in(room).socketsLeave(room);
-      }
     } catch {
       this.logger.error('warehouse.realtime.publish_failed', context);
     }
+
+    if (!leaveRoom) {
+      return true;
+    }
+
+    try {
+      namespace.in(room).socketsLeave(room);
+    } catch {
+      this.logger.error('warehouse.realtime.leave_failed', context);
+      return false;
+    }
+    return true;
   }
 }
 

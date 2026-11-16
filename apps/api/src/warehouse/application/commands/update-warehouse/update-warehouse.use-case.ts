@@ -51,7 +51,7 @@ export class UpdateWarehouse {
 
     if (outcome.changed) {
       const warehouseId = outcome.result.warehouseId;
-      await publishAfterCommit({
+      await publishAfterCommit(this.logger, {
         invalidate: () => invalidateWarehouseCache(this.cache, this.logger, [warehouseId]),
         publish: () => this.notifier.warehouseUpdated({ warehouseId }),
       });

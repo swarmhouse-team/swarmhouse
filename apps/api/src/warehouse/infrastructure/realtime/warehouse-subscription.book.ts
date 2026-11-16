@@ -1,4 +1,9 @@
-import { API_ERROR_CODES, type ApiError, type WarehouseAck } from '@robots/shared';
+import {
+  API_ERROR_CODES,
+  WAREHOUSE_HTTP_ERROR_CODES,
+  type ApiError,
+  type WarehouseAck,
+} from '@robots/shared';
 
 import { WAREHOUSE_SOCKET_MAX_SUBSCRIPTIONS } from './warehouse-socket.constants';
 
@@ -7,14 +12,19 @@ interface SocketState {
   joined: Set<string>;
   pending: Set<string>;
   tails: Map<string, Promise<void>>;
-  inflight: Map<string, Promise<WarehouseAck>>;
+  inflight: Map<string, Flight>;
 }
 
-export interface SubscriptionLoad {
+interface Flight {
+  cancelled: boolean;
+  promise: Promise<WarehouseAck>;
+}
+
+interface SubscriptionLoad {
   ok: true;
 }
 
-export interface SubscriptionDenied {
+interface SubscriptionDenied {
   ok: false;
   error: ApiError;
 }
@@ -45,6 +55,10 @@ export class WarehouseSubscriptionBook {
 
   forgetWarehouse(warehouseId: string): void {
     for (const state of this.sockets.values()) {
+      const flight = state.inflight.get(warehouseId);
+      if (flight) {
+        flight.cancelled = true;
+      }
       state.joined.delete(warehouseId);
       state.pending.delete(warehouseId);
     }
@@ -65,7 +79,7 @@ export class WarehouseSubscriptionBook {
 
     const existing = state.inflight.get(warehouseId);
     if (existing) {
-      return existing;
+      return existing.promise;
     }
 
     if (!state.joined.has(warehouseId)) {
@@ -75,16 +89,20 @@ export class WarehouseSubscriptionBook {
       state.pending.add(warehouseId);
     }
 
-    const promise = this.serial(state, warehouseId, () =>
-      this.finish(state, warehouseId, load, join, leave, isOpen),
+    const flight: Flight = {
+      cancelled: false,
+      promise: Promise.resolve(okAck()),
+    };
+    flight.promise = this.serial(state, warehouseId, () =>
+      this.finish(state, warehouseId, flight, load, join, leave, isOpen),
     );
-    state.inflight.set(warehouseId, promise);
-    void promise.finally(() => {
-      if (state.inflight.get(warehouseId) === promise) {
+    state.inflight.set(warehouseId, flight);
+    void flight.promise.finally(() => {
+      if (state.inflight.get(warehouseId) === flight) {
         state.inflight.delete(warehouseId);
       }
     });
-    return promise;
+    return flight.promise;
   }
 
   unsubscribe(
@@ -131,19 +149,23 @@ export class WarehouseSubscriptionBook {
   ): Promise<WarehouseAck> {
     const previous = state.tails.get(warehouseId) ?? Promise.resolve();
     const current = previous.then(task, task);
-    state.tails.set(
-      warehouseId,
-      current.then(
-        () => undefined,
-        () => undefined,
-      ),
+    const tail = current.then(
+      () => undefined,
+      () => undefined,
     );
+    state.tails.set(warehouseId, tail);
+    void tail.finally(() => {
+      if (state.tails.get(warehouseId) === tail) {
+        state.tails.delete(warehouseId);
+      }
+    });
     return current;
   }
 
   private async finish(
     state: SocketState,
     warehouseId: string,
+    flight: Flight,
     load: () => Promise<SubscriptionLoad | SubscriptionDenied>,
     join: () => Promise<void>,
     leave: () => Promise<void>,
@@ -161,14 +183,31 @@ export class WarehouseSubscriptionBook {
       if (state.closed || !isOpen()) {
         return closedAck();
       }
+      if (flight.cancelled) {
+        return missingAck();
+      }
       if (!loaded.ok) {
         return { ok: false, error: loaded.error };
       }
 
       await join();
-      if (state.closed || !isOpen()) {
-        await leave();
-        return closedAck();
+      try {
+        if (state.closed || !isOpen()) {
+          await leave();
+          return closedAck();
+        }
+        if (flight.cancelled) {
+          await leave();
+          return missingAck();
+        }
+      } catch {
+        if (!state.closed) {
+          state.joined.add(warehouseId);
+        }
+        return {
+          ok: false,
+          error: { code: API_ERROR_CODES.INTERNAL_ERROR, message: 'Internal server error' },
+        };
       }
       state.joined.add(warehouseId);
       return okAck();
@@ -189,6 +228,16 @@ function okAck(): WarehouseAck {
 
 function closedAck(): WarehouseAck {
   return { ok: false, error: { code: API_ERROR_CODES.BAD_REQUEST, message: 'Socket is closed' } };
+}
+
+function missingAck(): WarehouseAck {
+  return {
+    ok: false,
+    error: {
+      code: WAREHOUSE_HTTP_ERROR_CODES.WAREHOUSE_NOT_FOUND,
+      message: 'Warehouse was not found',
+    },
+  };
 }
 
 function limitAck(): WarehouseAck {

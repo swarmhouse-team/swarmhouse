@@ -5,7 +5,6 @@ import {
   type WarehouseDetails,
 } from '@robots/shared';
 
-import type { CacheValue } from '../../../cache/application/cache-value';
 import type { StoredWarehouse } from '../ports/repositories/warehouse.repository';
 
 /** Maps a stored row to the public DTO. An invalid row is not treated as a cache miss. */
@@ -34,14 +33,6 @@ export function parseWarehouseList(value: ListWarehousesResponse): ListWarehouse
     throw new Error('Warehouse list mapping is invalid');
   }
   return parsed.data;
-}
-
-export function warehouseDetailsCacheValue(details: WarehouseDetails): CacheValue {
-  return parseWarehouseDetails(details);
-}
-
-export function warehouseListCacheValue(list: ListWarehousesResponse): CacheValue {
-  return parseWarehouseList(list);
 }
 
 function toIso(value: Date | null): string | null {

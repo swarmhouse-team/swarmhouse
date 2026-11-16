@@ -43,6 +43,7 @@ interface Harness {
   logs: LogEntry[];
   notices: WarehouseNotice[];
   saved?: { map: SavedMap; expectedVersion: number };
+  failNotifier: (error: Error) => void;
 }
 
 function emptySnapshot(): WarehouseMapSnapshot {
@@ -58,12 +59,13 @@ function createHarness(options?: {
 }): Harness {
   const calls: string[] = [];
   const { logger, logs } = createRecordingLogger();
-  const { notifier, notices } = createRecordingNotifier();
+  const { notifier, notices, failWith } = createRecordingNotifier();
   const state: Harness = {
     useCase: undefined as unknown as EditWarehouseMap,
     calls,
     logs,
     notices,
+    failNotifier: failWith,
   };
   const unitOfWork: UnitOfWork = {
     async execute(work) {
@@ -1328,5 +1330,26 @@ describe('EditWarehouseMap realtime', () => {
         },
       },
     ]);
+  });
+
+  it('returns the saved edit when the notifier throws', async () => {
+    const harness = createHarness({
+      found: { snapshot: emptySnapshot(), version: 0 },
+      saveResult: { status: 'saved', version: 1 },
+    });
+    harness.failNotifier(new Error('socket down'));
+
+    const result = await harness.useCase.execute(addObstacle());
+
+    expect(result.changed).toBe(true);
+    expect(result.version).toBe(1);
+    expect(harness.notices).toHaveLength(1);
+    expect(harness.logs).toContainEqual({
+      level: 'error',
+      event: 'warehouse.realtime.publish_failed',
+      context: { errorClass: 'Error' },
+    });
+    expect(harness.logs.map((entry) => entry.event)).toContain('warehouse.map.updated');
+    expect(JSON.stringify(harness.logs)).not.toContain('socket down');
   });
 });

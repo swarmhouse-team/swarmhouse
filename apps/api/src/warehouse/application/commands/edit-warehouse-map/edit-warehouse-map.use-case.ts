@@ -1,6 +1,7 @@
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { normalizeId } from '../../../domain/vo/id';
 import { Position } from '../../../domain/vo/position';
+import { publishAfterCommit } from '../../cache/publish-after-commit';
 import {
   MapVersionConflictError,
   WarehouseMapNotFoundError,
@@ -82,12 +83,15 @@ export class EditWarehouseMap {
     });
 
     if (result.changed) {
-      await this.notifier.mapChanged({
-        warehouseId: result.snapshot.warehouseId,
-        mapId: result.mapId,
-        version: result.version,
-        operation: publishedOperation(input.operation),
-        ...(result.createdId === undefined ? {} : { createdId: result.createdId }),
+      await publishAfterCommit(this.logger, {
+        publish: () =>
+          this.notifier.mapChanged({
+            warehouseId: result.snapshot.warehouseId,
+            mapId: result.mapId,
+            version: result.version,
+            operation: publishedOperation(input.operation),
+            ...(result.createdId === undefined ? {} : { createdId: result.createdId }),
+          }),
       });
       this.logger.info('warehouse.map.updated', {
         mapId: result.mapId,

@@ -31,7 +31,7 @@ export class DeleteWarehouse {
       return record.id;
     });
 
-    await publishAfterCommit({
+    await publishAfterCommit(this.logger, {
       invalidate: () => invalidateWarehouseCache(this.cache, this.logger, [warehouseId]),
       publish: () => this.notifier.warehouseDeleted({ warehouseId }),
     });
