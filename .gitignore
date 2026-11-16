@@ -28,3 +28,6 @@ pnpm-debug.log*
 .vscode/*
 !.vscode/extensions.json
 .DS_Store
+
+# Claude Code: локальный конфиг превью dev-сервера
+.claude/launch.json

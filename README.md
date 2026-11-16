@@ -1,4 +1,4 @@
-# RobotsProject
+# Swarmhouse
 
 Платформа управления роботами на симулируемом складе: 2D-карта, роботы, очередь заданий, диспетчерская в real time. Полное ТЗ — [docs/SPEC.md](docs/SPEC.md).
 
@@ -19,7 +19,7 @@ pnpm dev               # shared (watch) + api + web; Postgres поднимает
 
 `pnpm dev` и `pnpm db:migrate` сами поднимают Postgres из `docker-compose.yml` (`predev`/`predb:migrate` → `pnpm docker:up`) и ждут, пока контейнер станет healthy — вручную `docker compose up -d` не нужен. Остановить инфраструктуру: `pnpm docker:down`.
 
-- Фронтенд: http://localhost:3000 — на странице должно быть `health: ok`.
+- Frontend: http://localhost:3000
 - API: http://localhost:3001/api, Swagger: http://localhost:3001/api/docs.
 
 ## Структура

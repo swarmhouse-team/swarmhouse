@@ -2,7 +2,7 @@
 import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 
-import { HomePage } from '@/pages/home';
+import { LandingPage } from '@/pages/landing';
 import { routing } from '@/shared/i18n';
 
 export default async function Page({ params }: PageProps<'/[locale]'>) {
@@ -11,5 +11,5 @@ export default async function Page({ params }: PageProps<'/[locale]'>) {
     setRequestLocale(locale);
   }
 
-  return <HomePage />;
+  return <LandingPage />;
 }

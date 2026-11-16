@@ -1,15 +1,108 @@
 {
   "metadata": {
-    "title": "Robots — warehouse control room",
+    "title": "Swarmhouse — warehouse control room",
     "description": "Platform for managing robots in a simulated warehouse"
   },
-  "home": {
-    "title": "Robots",
-    "description": "Project skeleton: web → /api → api → PostgreSQL",
-    "healthPending": "health: …",
-    "healthStatus": "health: {status}",
-    "healthError": "health: {message}",
-    "refresh": "Check again"
+  "landing": {
+    "header": {
+      "homeLabel": "Swarmhouse — home",
+      "brand": "Swarmhouse",
+      "logo": "S",
+      "navLabel": "Home page navigation",
+      "signIn": "Sign in"
+    },
+    "nav": {
+      "howItWorks": "How it works",
+      "features": "Features"
+    },
+    "hero": {
+      "eyebrow": "Warehouse simulation in your browser",
+      "title": "Build a warehouse and watch robots deliver the goods",
+      "lead": "Draw a map, place stations and robots, and create delivery tasks. The simulation runs on the server, and the whole team sees changes in real time.",
+      "start": "Get started",
+      "howItWorks": "How it works"
+    },
+    "preview": {
+      "warehouse": "Warehouse #1",
+      "status": "Simulation running",
+      "robotCount": "{count, plural, one {# robot} other {# robots}}",
+      "robots": {
+        "r1": {
+          "status": "Carrying cargo",
+          "route": "Receiving → Station 4"
+        },
+        "r2": {
+          "status": "Idle",
+          "route": "Waiting for a new task"
+        },
+        "r3": {
+          "status": "Waiting for passage",
+          "route": "Station 2 → Packing"
+        }
+      }
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "subtitle": "Four steps from an empty map to the first delivery.",
+      "step": "Step {number}",
+      "steps": {
+        "buildMap": {
+          "title": "Build the map",
+          "description": "Place walls, aisles, loading stations and delivery points."
+        },
+        "addRobots": {
+          "title": "Add robots",
+          "description": "Set up the warehouse fleet and assign the robots their starting positions."
+        },
+        "createTasks": {
+          "title": "Create tasks",
+          "description": "Specify the cargo, the pickup station and the route's destination."
+        },
+        "observe": {
+          "title": "Watch",
+          "description": "Follow robot movement, the task queue and the warehouse state."
+        }
+      }
+    },
+    "features": {
+      "title": "Features",
+      "subtitle": "Everything you need to run the simulation and work together.",
+      "items": {
+        "realtime": {
+          "title": "Real-time control room",
+          "description": "The map, robots and tasks update for the whole team at once."
+        },
+        "idleReasons": {
+          "title": "Clear idle reasons",
+          "description": "See right away why a robot stopped, is waiting for a route or cannot continue."
+        },
+        "collaboration": {
+          "title": "Collaboration",
+          "description": "The owner manages the warehouse while observers follow the simulation."
+        },
+        "aiAssistant": {
+          "title": "AI assistant",
+          "description": "Helps prepare tasks and quickly understand the state of the warehouse."
+        },
+        "telegram": {
+          "title": "Telegram notifications",
+          "description": "Reports a finished task, an error or a robot that has been stuck for a long time."
+        },
+        "serverSide": {
+          "title": "Keeps running after you close the tab",
+          "description": "The simulation runs on the server and does not depend on an open browser."
+        }
+      },
+      "cta": {
+        "title": "Your first warehouse in minutes",
+        "description": "Add a station, one robot and your first delivery task.",
+        "action": "Sign in to create a warehouse"
+      }
+    },
+    "footer": {
+      "project": "Swarmhouse · a team study project",
+      "tagline": "Warehouse logistics simulation"
+    }
   },
   "switchLocale": {
     "label": "Interface language",
