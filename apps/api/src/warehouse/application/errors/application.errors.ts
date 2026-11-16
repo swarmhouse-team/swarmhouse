@@ -34,7 +34,12 @@ export class MapVersionConflictError extends ApplicationError {
  * A cause is kept when one is given, whether it is a domain error or a parse error.
  */
 export class CorruptedMapStateError extends ApplicationError {
+  readonly mapId: string;
+  readonly reason: CorruptedMapReason;
+
   constructor(mapId: string, reason: CorruptedMapReason, cause?: Error) {
     super('CORRUPTED_MAP_STATE', 'Stored warehouse map is corrupted', { mapId, reason }, cause);
+    this.mapId = mapId;
+    this.reason = reason;
   }
 }

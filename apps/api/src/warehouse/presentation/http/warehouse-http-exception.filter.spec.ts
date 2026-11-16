@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common';
 import type {
   ArgumentsHost,
   ContextType,
@@ -7,7 +6,12 @@ import type {
   WsArgumentsHost,
 } from '@nestjs/common/interfaces';
 import { apiErrorSchema, mapVersionConflictErrorSchema } from '@robots/shared';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
+import {
+  createRecordingLogger,
+  type LogEntry,
+} from '../../application/testing/create-recording-logger';
 
 import { ApplicationError } from '../../application/errors/application.error';
 import {
@@ -93,20 +97,19 @@ class UnexpectedWarehouseError extends ApplicationError {
   }
 }
 
-function handled(exception: ApplicationError | DomainError): CapturedResponse {
+function handled(exception: ApplicationError | DomainError): {
+  response: CapturedResponse;
+  logs: LogEntry[];
+} {
+  const { logger, logs } = createRecordingLogger();
   const response = new CapturedResponse();
-  new WarehouseHttpExceptionFilter().catch(exception, new HttpHost(response));
-  return response;
+  new WarehouseHttpExceptionFilter(logger).catch(exception, new HttpHost(response));
+  return { response, logs };
 }
 
 describe('WarehouseHttpExceptionFilter', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it('склад не найден → 404 WAREHOUSE_NOT_FOUND', () => {
-    const log = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    const response = handled(new WarehouseNotFoundError({ warehouseId: WAREHOUSE_ID }));
+    const { response, logs } = handled(new WarehouseNotFoundError({ warehouseId: WAREHOUSE_ID }));
 
     expect(response.statusCode).toBe(404);
     expect(response.body).toEqual({
@@ -115,11 +118,11 @@ describe('WarehouseHttpExceptionFilter', () => {
     });
     expect(apiErrorSchema.parse(response.body)).toEqual(response.body);
     expect(JSON.stringify(response.body)).not.toContain(WAREHOUSE_ID);
-    expect(log).not.toHaveBeenCalled();
+    expect(logs).toEqual([]);
   });
 
   it('карта не найдена → 404 MAP_NOT_FOUND', () => {
-    const response = handled(new WarehouseMapNotFoundError({ mapId: MAP_ID }));
+    const { response, logs } = handled(new WarehouseMapNotFoundError({ mapId: MAP_ID }));
 
     expect(response.statusCode).toBe(404);
     expect(response.body).toEqual({
@@ -128,11 +131,11 @@ describe('WarehouseHttpExceptionFilter', () => {
     });
     expect(apiErrorSchema.parse(response.body)).toEqual(response.body);
     expect(JSON.stringify(response.body)).not.toContain(MAP_ID);
+    expect(logs).toEqual([]);
   });
 
   it('конфликт версии → 409 без версий и внутренних details', () => {
-    const log = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    const response = handled(
+    const { response, logs } = handled(
       new MapVersionConflictError({ mapId: MAP_ID, expectedVersion: 1, actualVersion: 4 }),
     );
 
@@ -147,7 +150,7 @@ describe('WarehouseHttpExceptionFilter', () => {
     expect(serialized).not.toContain('expectedVersion');
     expect(serialized).not.toContain('actualVersion');
     expect(serialized).not.toContain(MAP_ID);
-    expect(log).not.toHaveBeenCalled();
+    expect(logs).toEqual([]);
   });
 
   it.each([
@@ -206,20 +209,20 @@ describe('WarehouseHttpExceptionFilter', () => {
       hidden: 'robot',
     },
   ])('$code → 422 без внутренних details', ({ error, code, message, hidden }) => {
-    const log = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    const response = handled(error);
+    const { response, logs } = handled(error);
 
     expect(response.statusCode).toBe(422);
     expect(response.body).toEqual({ code, message });
     expect(apiErrorSchema.parse(response.body)).toEqual(response.body);
     expect(JSON.stringify(response.body)).not.toContain(hidden);
-    expect(log).not.toHaveBeenCalled();
+    expect(logs).toEqual([]);
   });
 
   it('повреждённая карта → 500 без mapId, reason, cause и stack', () => {
-    const log = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     const cause = new Error('postgres://user:secret@db');
-    const response = handled(new CorruptedMapStateError(MAP_ID, 'INVALID_STORED_FORMAT', cause));
+    const { response, logs } = handled(
+      new CorruptedMapStateError(MAP_ID, 'INVALID_STORED_FORMAT', cause),
+    );
 
     expect(response.statusCode).toBe(500);
     expect(response.body).toEqual({
@@ -232,16 +235,25 @@ describe('WarehouseHttpExceptionFilter', () => {
     expect(serialized).not.toContain('INVALID_STORED_FORMAT');
     expect(serialized).not.toContain('secret');
     expect(serialized).not.toContain('stack');
-    expect(log).toHaveBeenCalledTimes(1);
-    const logged = String(log.mock.calls[0]?.[0]);
-    expect(logged).toContain(MAP_ID);
-    expect(logged).toContain('INVALID_STORED_FORMAT');
-    expect(logged).not.toContain('secret');
+    expect(logs).toEqual([
+      {
+        level: 'error',
+        event: 'warehouse.http.corrupted_map',
+        context: {
+          component: 'WarehouseHttpExceptionFilter',
+          code: 'INTERNAL_ERROR',
+          errorClass: 'CorruptedMapStateError',
+          mapId: MAP_ID,
+          reason: 'INVALID_STORED_FORMAT',
+        },
+      },
+    ]);
+    expect(JSON.stringify(logs)).not.toContain('secret');
+    expect(JSON.stringify(logs)).not.toContain('postgres');
   });
 
   it('неизвестная ApplicationError → 500 без исходного сообщения', () => {
-    const log = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    const response = handled(new UnexpectedWarehouseError());
+    const { response, logs } = handled(new UnexpectedWarehouseError());
 
     expect(response.statusCode).toBe(500);
     expect(response.body).toEqual({
@@ -251,6 +263,19 @@ describe('WarehouseHttpExceptionFilter', () => {
     expect(apiErrorSchema.parse(response.body)).toEqual(response.body);
     expect(JSON.stringify(response.body)).not.toContain('secret');
     expect(JSON.stringify(response.body)).not.toContain(WAREHOUSE_ID);
-    expect(log).toHaveBeenCalledWith('postgres://user:secret@db', expect.any(String));
+    expect(logs).toEqual([
+      {
+        level: 'error',
+        event: 'warehouse.http.unexpected',
+        context: {
+          component: 'WarehouseHttpExceptionFilter',
+          code: 'INTERNAL_ERROR',
+          errorClass: 'UnexpectedWarehouseError',
+        },
+      },
+    ]);
+    expect(JSON.stringify(logs)).not.toContain('secret');
+    expect(JSON.stringify(logs)).not.toContain(WAREHOUSE_ID);
+    expect(JSON.stringify(logs)).not.toContain('postgres');
   });
 });
