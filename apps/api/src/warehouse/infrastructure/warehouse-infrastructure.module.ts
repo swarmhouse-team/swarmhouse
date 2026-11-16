@@ -72,6 +72,13 @@ import { UuidV7IdGenerator } from './system/uuid-v7-id-generator';
         new DeleteWarehouse(unitOfWork, logger),
     },
   ],
-  exports: [CreateWarehouse, GetWarehouseMap, EditWarehouseMap, UpdateWarehouse, DeleteWarehouse],
+  exports: [
+    CreateWarehouse,
+    GetWarehouseMap,
+    EditWarehouseMap,
+    UpdateWarehouse,
+    DeleteWarehouse,
+    NestjsWarehouseLogger,
+  ],
 })
 export class WarehouseInfrastructureModule {}

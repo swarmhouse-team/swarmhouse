@@ -1,4 +1,4 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Logger } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Inject } from '@nestjs/common';
 import { WAREHOUSE_HTTP_ERROR_CODES, type ApiError } from '@robots/shared';
 import type { Response } from 'express';
 
@@ -9,18 +9,27 @@ import {
   WarehouseMapNotFoundError,
   WarehouseNotFoundError,
 } from '../../application/errors/application.errors';
+import type { LogContext, LoggerPort } from '../../application/ports/system/logger.port';
 import { DomainError } from '../../domain/errors/domain.error';
+import { NestjsWarehouseLogger } from '../../infrastructure/system/nestjs-warehouse-logger';
 
 const INTERNAL_ERROR_MESSAGE = 'Internal server error';
 const MAP_VERSION_CONFLICT_MESSAGE =
   'The map version is stale. Read the map again and repeat the command.';
+const COMPONENT = 'WarehouseHttpExceptionFilter';
 
 type ErrorResponse = { status: number; body: ApiError };
 
-/** Maps warehouse errors to `ApiError`. Other exceptions are not passed here. */
+/**
+ * Maps warehouse errors to `ApiError`.
+ * This filter is the last owner of the errors it catches.
+ * It logs only the failures it finishes itself, through `LoggerPort`.
+ * The adapter swallows a logging failure, so the HTTP response is still sent.
+ * There is no sanitizer for `Error.message` or stack, so those values are not logged.
+ */
 @Catch(ApplicationError, DomainError)
 export class WarehouseHttpExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(WarehouseHttpExceptionFilter.name);
+  constructor(@Inject(NestjsWarehouseLogger) private readonly logger: LoggerPort) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
@@ -52,17 +61,24 @@ export class WarehouseHttpExceptionFilter implements ExceptionFilter {
       );
     }
     if (exception instanceof CorruptedMapStateError) {
-      return this.internalFailure(this.corruptedMessage(exception));
+      this.logger.error('warehouse.http.corrupted_map', {
+        component: COMPONENT,
+        code: WAREHOUSE_HTTP_ERROR_CODES.INTERNAL_ERROR,
+        errorClass: exception.name,
+        mapId: exception.mapId,
+        reason: exception.reason,
+      });
+      return this.internalFailure();
     }
     if (exception instanceof DomainError) {
       return this.clientError(HttpStatus.UNPROCESSABLE_ENTITY, exception.code, exception.message);
     }
     if (exception instanceof ApplicationError) {
-      this.logger.error(exception.message, exception.stack);
+      this.logger.error('warehouse.http.unexpected', this.unexpectedContext(exception.name));
       return this.internalFailure();
     }
 
-    this.logger.error('Unhandled warehouse exception', String(exception));
+    this.logger.error('warehouse.http.unexpected', this.unexpectedContext('UnknownException'));
     return this.internalFailure();
   }
 
@@ -70,11 +86,7 @@ export class WarehouseHttpExceptionFilter implements ExceptionFilter {
     return { status, body: { code, message } };
   }
 
-  private internalFailure(logMessage?: string): ErrorResponse {
-    if (logMessage !== undefined) {
-      this.logger.error(logMessage);
-    }
-
+  private internalFailure(): ErrorResponse {
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
       body: {
@@ -84,12 +96,11 @@ export class WarehouseHttpExceptionFilter implements ExceptionFilter {
     };
   }
 
-  private corruptedMessage(exception: CorruptedMapStateError): string {
-    const mapId = exception.details?.mapId;
-    const reason = exception.details?.reason;
-
-    return `Stored warehouse map is corrupted: mapId=${
-      typeof mapId === 'string' ? mapId : 'unknown'
-    } reason=${typeof reason === 'string' ? reason : 'unknown'}`;
+  private unexpectedContext(errorClass: string): LogContext {
+    return {
+      component: COMPONENT,
+      code: WAREHOUSE_HTTP_ERROR_CODES.INTERNAL_ERROR,
+      errorClass,
+    };
   }
 }
