@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(import.meta.dirname, 'src'),
+      '@locales': resolve(import.meta.dirname, 'locales'),
     },
   },
   test: {

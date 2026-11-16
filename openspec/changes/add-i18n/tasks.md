@@ -4,7 +4,7 @@
 
 - [x] 1.1 Прочитать `node_modules/next/dist/docs` (internationalization, proxy) и доки next-intl по маршрутизации с префиксом; установить в `apps/web` `next-intl` (с поддержкой Next 16) и dev-зависимость `eslint-plugin-i18next` — проверка: `pnpm install` без предупреждений о peer-зависимостях
 - [x] 1.2 Добавить в `eslint.config.mjs` правило `i18next/no-literal-string` (`jsx-only`, `apps/web/src/**`, без `*.spec.*` и `*.stories.*`) в режиме `warn` — проверка: `pnpm lint` выводит предупреждения на строки в `home-page.tsx`
-- [x] 1.3 Создать в `src/shared/i18n` файлы `config.ts`, `routing.ts`, `navigation.ts`, `request.ts`, `next-intl.d.ts`, словари `messages/{ru,en}.json` и `index.ts`; подключить плагин next-intl в `next.config.ts` — проверка: опечатка в ключе `t()` даёт ошибку `tsc`, `lint:fsd` проходит
+- [x] 1.3 Создать `src/shared/config/i18n/` (константы), в `src/shared/i18n` — `routing.ts`, `navigation.ts`, `request.ts`, `next-intl.d.ts`, `index.ts`; словари `apps/web/locales/{ru,en}.json` (alias `@locales`); подключить плагин next-intl в `next.config.ts` — проверка: опечатка в ключе `t()` даёт ошибку `tsc`, `lint:fsd` проходит
 
 ## 2. Маршруты с префиксом языка
 

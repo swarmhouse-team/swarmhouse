@@ -2,7 +2,7 @@ import { createTranslator } from 'next-intl';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import type { Locale } from '../config';
+import type { Locale } from '@/shared/config';
 import { messages } from '../messages';
 import { createZodErrorMap, type ValidationTranslator } from './zod-error-map';
 

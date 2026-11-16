@@ -3,7 +3,7 @@
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 
-import { DEFAULT_LOCALE, type Locale, TIME_ZONE } from '../config';
+import { DEFAULT_LOCALE, type Locale, TIME_ZONE } from '@/shared/config';
 import { messages } from '../messages';
 
 type LocalIntlProviderProps = {

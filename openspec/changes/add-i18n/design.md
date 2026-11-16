@@ -45,17 +45,21 @@
 - `NotFoundPage` — клиентский компонент: граница 404 рендерится вне `setRequestLocale`, и серверный `getTranslations` там сделал бы все страницы динамическими. Корневой 404 получает словарь через `LocalIntlProvider`.
 - Ограничение Next 16: ответ 404 отдаётся оболочкой `__next_error__`, и `lang` у `<html>` появляется только после гидрации.
 
-### 3. Сегмент `src/shared/i18n`
+### 3. Сегмент `src/shared/i18n`, константы в `shared/config`, словари в `apps/web/locales`
 
 ```
-config.ts            LOCALES, DEFAULT_LOCALE, LOCALE_COOKIE
+apps/web/locales/    ru.json (эталон для типов), en.json; alias `@locales/*` в tsconfig и vitest
+shared/config/i18n/  config.ts + index.ts: LOCALES, DEFAULT_LOCALE, LOCALE_COOKIE, TIME_ZONE, тип Locale
+shared/i18n/
 next-intl.d.ts       AppConfig { Locale; Messages: typeof ru }
 routing/             routing.ts, navigation.ts, request.ts
 provider/            local-intl-provider.tsx
-messages/            ru.json (эталон для типов), en.json, index.ts
+messages/            index.ts (подключает словари, тип Messages), messages.spec.ts
 validation/          zod-error-map.ts, use-zod-resolver.ts, api-validation-errors.ts
 index.ts, README.md
 ```
+
+Константы вынесены в стандартный сегмент `shared/config`, в отдельную папку `i18n/` (у каждой области конфигурации — своя папка; наружу всё отдаётся через `shared/config/index.ts`, как требует `fsd/public-api`): их можно импортировать без зависимости от next-intl (например, для `Accept-Language` в `shared/api`). Словари лежат вне `src`, в корне приложения, как в документации next-intl: это данные для переводчиков и IDE-плагинов, а не код слоёв. Разбивка на папки `locales/<код>/<неймспейс>.json` — когда словари вырастут.
 
 Ключи группируются по неймспейсам, соответствующим месту использования (`metadata`, `home`, `switchLocale` и далее по слайсам), плюс общие `common`, `errors` и `validation`. Коды ошибок входят в ключ как есть: `errors.api.SERVICE_UNAVAILABLE`, `validation.too_small.string`.
 
@@ -110,4 +114,4 @@ index.ts, README.md
 
 ## Open Questions
 
-- Часовой пояс: пока одна константа `TIME_ZONE = 'Europe/Moscow'` (`shared/i18n/config.ts`) на сервере и клиенте. Показывать ли пояс склада или пользователя, решим вместе с первыми датами в интерфейсе.
+- Часовой пояс: пока одна константа `TIME_ZONE = 'Europe/Moscow'` (`shared/config/i18n/config.ts`) на сервере и клиенте. Показывать ли пояс склада или пользователя, решим вместе с первыми датами в интерфейсе.

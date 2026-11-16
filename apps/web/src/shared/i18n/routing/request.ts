@@ -1,7 +1,7 @@
 import { hasLocale } from 'next-intl';
 import { getRequestConfig } from 'next-intl/server';
 
-import { TIME_ZONE } from '../config';
+import { TIME_ZONE } from '@/shared/config';
 import { messages } from '../messages';
 import { routing } from './routing';
 

@@ -1,4 +1,4 @@
-import type { Locale } from './config';
+import type { Locale } from '@/shared/config';
 import type { Messages } from './messages';
 
 declare module 'next-intl' {

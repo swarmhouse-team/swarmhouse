@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { LOCALES } from '../config';
+import { LOCALES } from '@/shared/config';
 import { messages } from './index';
 
 type Tree = { [key: string]: string | Tree };

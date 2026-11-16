@@ -4,7 +4,8 @@ import { Button } from '@robots/ui';
 import { useLocale, useTranslations } from 'next-intl';
 import { useTransition } from 'react';
 
-import { LOCALES, type Locale, usePathname, useRouter } from '@/shared/i18n';
+import { type Locale, LOCALES } from '@/shared/config';
+import { usePathname, useRouter } from '@/shared/i18n';
 
 /**
  * Переключает язык: открывает ту же страницу с другим префиксом. Cookie `NEXT_LOCALE`

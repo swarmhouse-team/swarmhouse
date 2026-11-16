@@ -1,6 +1,6 @@
 import { defineRouting } from 'next-intl/routing';
 
-import { DEFAULT_LOCALE, LOCALE_COOKIE, LOCALES } from '../config';
+import { DEFAULT_LOCALE, LOCALE_COOKIE, LOCALES } from '@/shared/config';
 
 const ONE_YEAR_IN_SECONDS = 60 * 60 * 24 * 365;
 

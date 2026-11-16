@@ -1,6 +1,6 @@
-import type { Locale } from '../config';
-import en from './en.json';
-import ru from './ru.json';
+import type { Locale } from '@/shared/config';
+import en from '@locales/en.json';
+import ru from '@locales/ru.json';
 
 /** `ru` — эталон: по нему типизированы ключи `t()`. */
 export type Messages = typeof ru;

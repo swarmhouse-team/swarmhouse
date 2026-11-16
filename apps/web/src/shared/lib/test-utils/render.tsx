@@ -3,7 +3,8 @@ import { render, type RenderOptions } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 
 import { useQueryClientWithI18n } from '@/shared/api';
-import { LocalIntlProvider, type Locale } from '@/shared/i18n';
+import { type Locale } from '@/shared/config';
+import { LocalIntlProvider } from '@/shared/i18n';
 
 type RenderWithProvidersOptions = Omit<RenderOptions, 'wrapper'> & {
   /** Язык интерфейса, по умолчанию `ru`. */

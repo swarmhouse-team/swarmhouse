@@ -5,8 +5,12 @@
 ## Структура
 
 ```
-config.ts             LOCALES, DEFAULT_LOCALE, LOCALE_COOKIE, TIME_ZONE
-next-intl.d.ts        типизация ключей t() по messages/ru.json
+apps/web/locales/       словари (вне src: это данные, а не код)
+  ru.json, en.json        ru.json — эталон для типов; импорт через alias `@locales/*`
+src/shared/config/       публичный API — index.ts, импорт только из `@/shared/config`
+  i18n/                   config.ts, index.ts: LOCALES, DEFAULT_LOCALE, LOCALE_COOKIE, TIME_ZONE, тип Locale
+src/shared/i18n/
+next-intl.d.ts        типизация ключей t() по locales/ru.json
 routing/               язык как префикс URL
   routing.ts            список языков, префикс, параметры cookie
   navigation.ts         Link, useRouter, usePathname, redirect с учётом языка
@@ -14,8 +18,8 @@ routing/               язык как префикс URL
 provider/
   local-intl-provider.tsx   провайдер со словарём из бандла (без серверной конфигурации)
 messages/
-  ru.json, en.json       словари; ru.json — эталон для типов
-  index.ts, messages.spec.ts
+  index.ts               подключает словари из `@locales`, тип Messages
+  messages.spec.ts       одинаковые ключи во всех словарях
 validation/            перевод ошибок форм и API по коду
   zod-error-map.ts, use-zod-resolver.ts, api-validation-errors.ts
 ```
@@ -24,9 +28,10 @@ validation/            перевод ошибок форм и API по коду
 
 - Язык — префикс URL: `/ru/...`, `/en/...`. Маршруты лежат в `app/[locale]/`.
 - `proxy.ts` (в корне `apps/web`) перенаправляет адрес без префикса: cookie `NEXT_LOCALE` → `Accept-Language` → `ru`.
-- `routing/routing.ts` — список языков, префикс, параметры cookie. `config.ts` — константы.
+- `routing/routing.ts` — список языков, префикс, параметры cookie. Константы — в
+  `@/shared/config` (папка `config/i18n/`).
 - `routing/request.ts` — конфигурация next-intl для серверных компонентов (подключена в `next.config.ts`).
-- `messages/ru.json` — эталон: по нему типизированы ключи `t()`, опечатка в ключе — ошибка `tsc`.
+- `locales/ru.json` — эталон: по нему типизированы ключи `t()`, опечатка в ключе — ошибка `tsc`.
 
 ## Тексты
 
@@ -45,13 +50,13 @@ validation/            перевод ошибок форм и API по коду
 
 ### Как добавить строку
 
-1. Добавьте ключ в `messages/ru.json` и `messages/en.json`.
+1. Добавьте ключ в `locales/ru.json` и `locales/en.json` (в корне `apps/web`).
 2. `messages.spec.ts` (входит в `pnpm test`) упадёт, если ключ есть только в одном словаре
    или значение пустое.
 
 ### Как добавить язык
 
-1. Добавьте код в `LOCALES` (`config.ts`) и словарь `messages/<код>.json`.
+1. Добавьте код в `LOCALES` (`shared/config/i18n/config.ts`) и словарь `locales/<код>.json`.
 2. Подключите его в `messages/index.ts` и подпись в `switchLocale.languages` во всех словарях.
 
 ## Навигация
@@ -98,7 +103,8 @@ Storybook ещё не подключён. Когда появится, деко�
 ```tsx
 import type { Preview } from '@storybook/nextjs-vite';
 
-import { LocalIntlProvider, LOCALES } from '@/shared/i18n';
+import { LOCALES } from '@/shared/config';
+import { LocalIntlProvider } from '@/shared/i18n';
 
 const preview: Preview = {
   globalTypes: {
