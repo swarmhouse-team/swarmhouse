@@ -14,8 +14,8 @@ import { createRecordingLogger } from '../../application/testing/create-recordin
 import { WarehouseMap } from '../../domain/entities/warehouse-map';
 import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
 import { WAREHOUSE_EXISTENCE } from '../../infrastructure/realtime/warehouse-existence';
-import { WarehouseIoAdapter } from '../../infrastructure/realtime/warehouse-io.adapter';
-import { WAREHOUSE_SOCKET_PATH } from '../../infrastructure/realtime/warehouse-socket.constants';
+import { AppSocketIoAdapter } from '../../../common/socket/app-socket-io.adapter';
+import { SOCKET_ENGINE_PATH } from '../../../common/socket/socket.constants';
 import { WarehouseSubscriptionBook } from '../../infrastructure/realtime/warehouse-subscription.book';
 import { NestjsWarehouseLogger } from '../../infrastructure/system/nestjs-warehouse-logger';
 import { WarehouseGateway } from './warehouse.gateway';
@@ -83,7 +83,7 @@ describe('warehouse socket transport', () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
-    app.useWebSocketAdapter(new WarehouseIoAdapter(app, [ALLOWED]));
+    app.useWebSocketAdapter(new AppSocketIoAdapter(app, [ALLOWED]));
     await app.listen(0);
     const address = app.getHttpServer().address();
     if (address === null || typeof address === 'string') {
@@ -104,7 +104,7 @@ describe('warehouse socket transport', () => {
     transport: 'polling' | 'websocket',
   ): Promise<Socket> {
     const socket = io(`http://127.0.0.1:${port}/warehouse`, {
-      path: WAREHOUSE_SOCKET_PATH,
+      path: SOCKET_ENGINE_PATH,
       transports: [transport],
       upgrade: false,
       reconnection: false,

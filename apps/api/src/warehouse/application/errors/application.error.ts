@@ -1,7 +1,5 @@
 import type { ApplicationErrorCode } from './application-error-code';
 
-export type { ApplicationErrorCode } from './application-error-code';
-
 export type ErrorDetails = Readonly<Record<string, string | number | boolean | null>>;
 
 export abstract class ApplicationError extends Error {

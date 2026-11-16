@@ -20,6 +20,7 @@ import {
 import type { Namespace, Server, Socket } from 'socket.io';
 import { ZodError } from 'zod';
 
+import { SOCKET_MAX_HTTP_BUFFER_BYTES } from '../../../common/socket/socket.constants';
 import { EditWarehouseMap } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.use-case';
 import { WarehouseNotFoundError } from '../../application/errors/application.errors';
 import type { LoggerPort } from '../../application/ports/system/logger.port';
@@ -30,7 +31,6 @@ import {
   type WarehouseExistenceReader,
 } from '../../infrastructure/realtime/warehouse-existence';
 import {
-  WAREHOUSE_SOCKET_MAX_PAYLOAD_BYTES,
   WAREHOUSE_SOCKET_NAMESPACE,
   warehousePayloadBytes,
   warehouseRoom,
@@ -174,7 +174,7 @@ export class WarehouseGateway implements OnGatewayInit, OnGatewayDisconnect {
     schema: { parse: (value: unknown) => T },
   ): { ok: true; value: T } | { ok: false; ack: { ok: false; error: ApiError } } {
     try {
-      if (warehousePayloadBytes(payload) > WAREHOUSE_SOCKET_MAX_PAYLOAD_BYTES) {
+      if (warehousePayloadBytes(payload) > SOCKET_MAX_HTTP_BUFFER_BYTES) {
         return {
           ok: false,
           ack: {
