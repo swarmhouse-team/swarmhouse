@@ -1,11 +1,7 @@
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
-
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import type { Express, Request, Response } from 'express';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
 
 import { AppModule } from './app.module';
