@@ -8,5 +8,11 @@
     "sourceMap": true,
     "outDir": "./dist"
   },
-  "include": ["src", "test", "prisma.config.ts", "vitest.config.mts", "vitest.integration.config.mts"]
+  "include": [
+    "src",
+    "test",
+    "prisma.config.ts",
+    "vitest.config.mts",
+    "vitest.integration.config.mts"
+  ]
 }

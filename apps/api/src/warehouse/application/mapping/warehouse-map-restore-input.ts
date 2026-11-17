@@ -1,7 +1,4 @@
-import type {
-  StationSnapshot,
-  WarehouseMapSnapshot,
-} from '../../domain/entities/warehouse-map';
+import type { StationSnapshot, WarehouseMapSnapshot } from '../../domain/entities/warehouse-map';
 
 /** A station taken from storage before its type is checked. */
 export interface StationRestoreInput extends Omit<StationSnapshot, 'type'> {

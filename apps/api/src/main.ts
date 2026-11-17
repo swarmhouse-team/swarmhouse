@@ -37,16 +37,13 @@ async function bootstrap(): Promise<void> {
   const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, swaggerConfig));
   SwaggerModule.setup(`${GLOBAL_PREFIX}/docs`, app, document);
 
-
   const port = config.get('API_PORT', { infer: true });
   await app.listen(port);
 
   const logger = new Logger('Bootstrap');
   logger.log(`API: http://localhost:${port}/${GLOBAL_PREFIX}`);
   logger.log(`Swagger: http://localhost:${port}/${GLOBAL_PREFIX}/docs`);
-
 }
-
 
 // Явно завершаемся с кодом 1: не полагаемся на поведение Node по умолчанию для необработанных
 // отказов промисов (с --unhandled-rejections=warn процесс выходил бы с кодом 0).

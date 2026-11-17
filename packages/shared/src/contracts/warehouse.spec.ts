@@ -36,12 +36,9 @@ const emptyMap = {
 };
 
 describe('uuidTextSchema', () => {
-  it.each([UUID_V1, UUID_V4, UUID_V7, UUID_V4.toUpperCase()])(
-    'accepts %s unchanged',
-    (value) => {
-      expect(uuidTextSchema.parse(value)).toBe(value);
-    },
-  );
+  it.each([UUID_V1, UUID_V4, UUID_V7, UUID_V4.toUpperCase()])('accepts %s unchanged', (value) => {
+    expect(uuidTextSchema.parse(value)).toBe(value);
+  });
 
   it.each([
     '',
