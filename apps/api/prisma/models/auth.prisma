@@ -1,0 +1,21 @@
+enum Role {
+  OWNER
+  VIEWER
+}
+
+model User {
+  id           String           @id @default(uuid())
+  email        String           @unique
+  passwordHash String
+  name         String
+  role         Role             @default(VIEWER)
+  sessions     RefreshSession[]
+}
+
+model RefreshSession {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
