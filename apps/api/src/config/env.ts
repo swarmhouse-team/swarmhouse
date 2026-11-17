@@ -4,6 +4,10 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   API_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
   DATABASE_URL: z.string().regex(/^postgres(ql)?:\/\//, 'должен начинаться с postgresql://'),
+  /** Секрет подписи JWT. */
+  JWT_ACCESS_SECRET: z.string().min(1),
+  /** Время жизни access-токена (формат ms: 15m, 1h, ...). */
+  JWT_ACCESS_TTL: z.string().min(1).default('15m'),
 });
 
 export type Env = z.infer<typeof envSchema>;

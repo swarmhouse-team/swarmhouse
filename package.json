@@ -19,7 +19,8 @@
     "format:check": "prettier --check .",
     "db:migrate": "pnpm --filter @robots/api db:migrate",
     "db:generate": "pnpm --filter @robots/api db:generate",
-    "db:studio": "pnpm --filter @robots/api db:studio"
+    "db:studio": "pnpm --filter @robots/api db:studio",
+    "db:setup": "docker compose up -d --wait postgres && pnpm --filter @robots/api db:setup"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
