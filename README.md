@@ -1,4 +1,4 @@
-# RobotsProject
+# Swarmhouse
 
 Платформа управления роботами на симулируемом складе: 2D-карта, роботы, очередь заданий, диспетчерская в real time. Полное ТЗ — [docs/SPEC.md](docs/SPEC.md).
 
@@ -18,7 +18,6 @@ pnpm db:migrate        # миграции
 pnpm dev               # shared (watch) + api + web
 ```
 
-- Фронтенд: http://localhost:3000 — на странице должно быть `health: ok`.
 - API: http://localhost:3001/api, Swagger: http://localhost:3001/api/docs.
 
 ## Структура
