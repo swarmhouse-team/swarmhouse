@@ -7,6 +7,18 @@ import {
   uuidTextSchema,
 } from './warehouse';
 
+/** Socket.IO namespace for warehouse commands. The client does not choose the room. */
+export const WAREHOUSE_SOCKET_NAMESPACE = '/warehouse';
+
+/** Engine path of the one process Socket.IO server. Nest's HTTP prefix does not apply. */
+export const SOCKET_ENGINE_PATH = '/api/socket.io';
+
+/** Transport frame limit for every Socket.IO namespace in this process. */
+export const SOCKET_MAX_HTTP_BUFFER_BYTES = 16 * 1024;
+
+/** Subscriptions one warehouse socket may hold, including a join that is still in flight. */
+export const WAREHOUSE_SOCKET_MAX_SUBSCRIPTIONS = 20;
+
 /**
  * Socket.IO events for one warehouse process.
  * `warehouse.map.edit` repeats the HTTP body: one `operation`, not a list.

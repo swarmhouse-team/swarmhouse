@@ -1,6 +1,5 @@
+import { SOCKET_ENGINE_PATH, SOCKET_MAX_HTTP_BUFFER_BYTES } from '@robots/shared';
 import type { ServerOptions } from 'socket.io';
-
-import { SOCKET_ENGINE_PATH, SOCKET_MAX_HTTP_BUFFER_BYTES } from './socket.constants';
 
 export function readSocketAllowedOrigins(
   nodeEnv: string,

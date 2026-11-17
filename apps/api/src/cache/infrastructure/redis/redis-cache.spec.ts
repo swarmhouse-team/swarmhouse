@@ -13,6 +13,7 @@ class FakeRedis implements RedisCacheClient {
   setError: unknown;
   deleteError: unknown;
   connectError: unknown;
+  pingError: unknown;
   readonly quit = vi.fn(() => Promise.resolve());
   readonly disconnect = vi.fn();
   readonly listeners: ((error: Error) => void)[] = [];
@@ -41,6 +42,13 @@ class FakeRedis implements RedisCacheClient {
     }
     const removed = this.store.delete(key);
     return Promise.resolve(removed ? 1 : 0);
+  }
+
+  ping(): Promise<unknown> {
+    if (this.pingError !== undefined) {
+      return Promise.reject(toError(this.pingError));
+    }
+    return Promise.resolve('PONG');
   }
 
   connect(): Promise<void> {
@@ -165,6 +173,16 @@ describe('RedisCache', () => {
       expect(error.kind).toBe('unavailable');
       expect(error.message).not.toContain('10.0.0.8');
     }
+  });
+
+  it('pings the open client and does not connect or close it', async () => {
+    const client = new FakeRedis();
+    const cache = new RedisCache('robots:', client);
+
+    await cache.ping();
+
+    expect(client.quit).not.toHaveBeenCalled();
+    expect(client.disconnect).not.toHaveBeenCalled();
   });
 
   it('closes the client when startup fails and does not log the client error', async () => {

@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  SOCKET_ENGINE_PATH,
+  SOCKET_MAX_HTTP_BUFFER_BYTES,
   WAREHOUSE_REALTIME_EVENTS,
+  WAREHOUSE_SOCKET_MAX_SUBSCRIPTIONS,
+  WAREHOUSE_SOCKET_NAMESPACE,
   warehouseAckSchema,
   warehouseMapChangedEventSchema,
   warehouseMapEditAckSchema,
@@ -25,6 +29,13 @@ const emptyMap = {
 };
 
 describe('warehouse realtime contracts', () => {
+  it('publishes one connection target', () => {
+    expect(WAREHOUSE_SOCKET_NAMESPACE).toBe('/warehouse');
+    expect(SOCKET_ENGINE_PATH).toBe('/api/socket.io');
+    expect(SOCKET_MAX_HTTP_BUFFER_BYTES).toBe(16 * 1024);
+    expect(WAREHOUSE_SOCKET_MAX_SUBSCRIPTIONS).toBe(20);
+  });
+
   it('accepts one operation and rejects a nil uuid', () => {
     expect(WAREHOUSE_REALTIME_EVENTS.mapEdit).toBe('warehouse.map.edit');
     expect(

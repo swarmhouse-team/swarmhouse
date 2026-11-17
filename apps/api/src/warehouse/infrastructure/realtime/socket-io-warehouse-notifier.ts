@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { WAREHOUSE_SOCKET_NAMESPACE } from '@robots/shared';
 import type { Namespace, Server } from 'socket.io';
 
 import type { LoggerPort } from '../../application/ports/system/logger.port';
@@ -9,7 +10,7 @@ import type {
   WarehouseUpdatedNotice,
 } from '../../application/ports/system/warehouse-notifier';
 import { NestjsWarehouseLogger } from '../system/nestjs-warehouse-logger';
-import { WAREHOUSE_SOCKET_NAMESPACE, warehouseRoom } from './warehouse-socket.constants';
+import { warehouseRoom } from './warehouse-socket.constants';
 import { WarehouseSubscriptionBook } from './warehouse-subscription.book';
 
 /**

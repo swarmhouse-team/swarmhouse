@@ -1,3 +1,4 @@
+import { WAREHOUSE_SOCKET_MAX_SUBSCRIPTIONS } from '@robots/shared';
 import { describe, expect, it } from 'vitest';
 import type { Socket } from 'socket.io';
 
@@ -8,10 +9,7 @@ import { createRecordingLogger } from '../../application/testing/create-recordin
 import { WarehouseMap } from '../../domain/entities/warehouse-map';
 import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
 import type { WarehouseExistenceReader } from '../../infrastructure/realtime/warehouse-existence';
-import {
-  WAREHOUSE_SOCKET_MAX_SUBSCRIPTIONS,
-  warehouseRoom,
-} from '../../infrastructure/realtime/warehouse-socket.constants';
+import { warehouseRoom } from '../../infrastructure/realtime/warehouse-socket.constants';
 import { WarehouseSubscriptionBook } from '../../infrastructure/realtime/warehouse-subscription.book';
 import { WarehouseGateway } from './warehouse.gateway';
 

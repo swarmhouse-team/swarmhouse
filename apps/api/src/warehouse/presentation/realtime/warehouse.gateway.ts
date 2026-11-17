@@ -9,8 +9,10 @@ import {
 } from '@nestjs/websockets';
 import {
   API_ERROR_CODES,
+  SOCKET_MAX_HTTP_BUFFER_BYTES,
   WAREHOUSE_HTTP_ERROR_CODES,
   WAREHOUSE_REALTIME_EVENTS,
+  WAREHOUSE_SOCKET_NAMESPACE,
   warehouseMapEditPayloadSchema,
   warehouseSubscribePayloadSchema,
   type ApiError,
@@ -20,7 +22,6 @@ import {
 import type { Namespace, Server, Socket } from 'socket.io';
 import { ZodError } from 'zod';
 
-import { SOCKET_MAX_HTTP_BUFFER_BYTES } from '../../../common/socket/socket.constants';
 import { EditWarehouseMap } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.use-case';
 import { WarehouseNotFoundError } from '../../application/errors/application.errors';
 import type { LoggerPort } from '../../application/ports/system/logger.port';
@@ -31,7 +32,6 @@ import {
   type WarehouseExistenceReader,
 } from '../../infrastructure/realtime/warehouse-existence';
 import {
-  WAREHOUSE_SOCKET_NAMESPACE,
   warehousePayloadBytes,
   warehouseRoom,
 } from '../../infrastructure/realtime/warehouse-socket.constants';

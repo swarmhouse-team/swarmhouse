@@ -1,11 +1,10 @@
 import {
   API_ERROR_CODES,
   WAREHOUSE_HTTP_ERROR_CODES,
+  WAREHOUSE_SOCKET_MAX_SUBSCRIPTIONS,
   type ApiError,
   type WarehouseAck,
 } from '@robots/shared';
-
-import { WAREHOUSE_SOCKET_MAX_SUBSCRIPTIONS } from './warehouse-socket.constants';
 
 interface SocketState {
   closed: boolean;

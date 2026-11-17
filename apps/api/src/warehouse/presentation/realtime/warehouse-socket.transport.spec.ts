@@ -1,6 +1,10 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { WAREHOUSE_REALTIME_EVENTS, type WarehouseMapChangedEvent } from '@robots/shared';
+import {
+  SOCKET_ENGINE_PATH,
+  WAREHOUSE_REALTIME_EVENTS,
+  type WarehouseMapChangedEvent,
+} from '@robots/shared';
 import { io, type Socket } from 'socket.io-client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -15,7 +19,6 @@ import { WarehouseMap } from '../../domain/entities/warehouse-map';
 import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
 import { WAREHOUSE_EXISTENCE } from '../../infrastructure/realtime/warehouse-existence';
 import { AppSocketIoAdapter } from '../../../common/socket/app-socket-io.adapter';
-import { SOCKET_ENGINE_PATH } from '../../../common/socket/socket.constants';
 import { WarehouseSubscriptionBook } from '../../infrastructure/realtime/warehouse-subscription.book';
 import { NestjsWarehouseLogger } from '../../infrastructure/system/nestjs-warehouse-logger';
 import { WarehouseGateway } from './warehouse.gateway';

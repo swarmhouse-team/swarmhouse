@@ -1,12 +1,39 @@
-# Realtime склада
+# Склад: HTTP и realtime
 
-Один процесс API. Namespace Socket.IO: `/warehouse`. Engine path: `/api/socket.io`. Комната только серверная: `warehouse:{lowercaseWarehouseId}`. Redis adapter нет: второй инстанс подписчиков не видит.
+Один процесс API, один сервер Socket.IO. Глобальный префикс HTTP — `/api`. Engine path — `/api/socket.io`. Namespace — `/warehouse`. Path, namespace, лимит 20 подписок и кадр 16 КиБ заданы в `packages/shared`. Комната `warehouse:{lowercaseWarehouseId}` собирается только на сервере, клиент её не шлёт. Redis-адаптера сокетов нет: второй инстанс подписчиков не видит.
 
-Доступ не проверяется. Это режим dev/MVP, не production для приватных данных. Проверка Origin задаётся `WAREHOUSE_SOCKET_ORIGINS` (список через запятую). В production пустой список ничего не разрешает. Запрос без заголовка Origin отклоняется. Origin не заменяет права на склад.
+Доступ не проверяется ни в HTTP, ни в сокете. Это режим dev/MVP, не production для приватных данных. Origin сокета задаётся `WAREHOUSE_SOCKET_ORIGINS` (точный список через запятую, `*` не wildcard). Запрос без Origin отклоняется. Если переменная не задана, production не разрешает никого; development разрешает `http://localhost:3000` и `http://localhost:3001`. Origin не заменяет права на склад.
 
-Публикация at-most-once, после commit. Падение процесса между commit и emit теряет событие. Outbox нет. `warehouse.map.changed` несёт `warehouseId`, `mapId`, сохранённую `version`, одну `operation` и `createdId` у `placeRobot` и `placeStation`. Снимка карты в событии нет. Если локальная version ровно на единицу меньше, клиент применяет `operation` и записывает эту version. Если version не выше локальной, событие игнорируется: свой ack уже содержит полную карту, повтор той же version инициатор не применяет. Скачок version или потерянное событие закрывается `GET /api/warehouses/:warehouseId/map`. No-op и конфликт версии событие не шлют. Ошибка отправки не отменяет commit.
+## HTTP
 
-Клиент карты:
+| Метод    | Путь                               | Что делает                                            |
+| -------- | ---------------------------------- | ----------------------------------------------------- |
+| `GET`    | `/api/warehouses`                  | Список метаданных, без карты. Кэш 30 с.               |
+| `POST`   | `/api/warehouses`                  | Создаёт склад и пустую карту.                         |
+| `GET`    | `/api/warehouses/:warehouseId`     | Метаданные одного склада, без карты. Кэш 30 с.        |
+| `PATCH`  | `/api/warehouses/:warehouseId`     | Переименование.                                       |
+| `DELETE` | `/api/warehouses/:warehouseId`     | Удаление, тело ответа пустое.                         |
+| `GET`    | `/api/warehouses/:warehouseId/map` | Снимок карты. В кэш не кладётся.                      |
+| `POST`   | `/api/maps/:mapId/operations`      | Одна операция. Тело: `expectedVersion` и `operation`. |
+
+Правка карты по HTTP и по сокету вызывает один и тот же use case. Успех HTTP — полная карта в теле. Конфликт версии — `409`: клиент снова читает карту. No-op — `changed: false`, события подписчикам нет.
+
+## Сокет
+
+Комната только серверная: `warehouse:{lowercaseWarehouseId}`. Клиент её имя не присылает. На одно соединение не больше 20 подписок. Кадр больше 16 КиБ — отказ, без выполнения команды.
+
+Клиент шлёт и ждёт ack:
+
+- `warehouse.subscribe` / `warehouse.unsubscribe` — `{ warehouseId }`. Успех: `{ ok: true }`. Склад не найден или ошибка: `{ ok: false, error }`.
+- `warehouse.map.edit` — `{ mapId, expectedVersion, operation }`. Успех: `{ ok: true, data }` с тем же смыслом, что ответ HTTP-правки, включая полную карту в `data`.
+
+Сервер публикует в комнату после commit, at-most-once. Падение между commit и emit теряет событие. Outbox нет. Ошибка отправки commit не отменяет.
+
+- `warehouse.map.changed` — `warehouseId`, `mapId`, сохранённая `version`, одна `operation`, `createdId` у `placeRobot` и `placeStation`. Снимка карты нет. No-op и конфликт версии это событие не шлют.
+- `warehouse.updated` — `{ warehouseId }` после переименования.
+- `warehouse.deleted` — `{ warehouseId }`. После него сокеты выводятся из комнаты.
+
+## Клиент карты
 
 1. Подписать обработчики.
 2. `warehouse.subscribe` и дождаться `{ ok: true }`.
@@ -20,6 +47,6 @@
 10. После reconnect — новая подписка и новое чтение.
 11. Периодическая сверка карты — 15 с. Она не связана с TTL метаданных.
 
-`warehouse.updated` не гарантирует, что следующий `GetWarehouse` свежий: удаление кэша может не пройти, а конкурентное чтение может записать прежний payload. Верхней границы наблюдаемой задержки нет. TTL 30 с ограничивает жизнь записи в кэше и не обещает свежесть у клиента. Клиент делает обычный GET и периодически перечитывает метаданные.
+`warehouse.updated` не гарантирует, что следующий `GET /api/warehouses/:warehouseId` свежий: удаление кэша может не пройти, а конкурентное чтение может записать прежний payload. Верхней границы наблюдаемой задержки нет. TTL 30 с ограничивает жизнь записи метаданных и списка и не обещает свежесть у клиента. Карта этим TTL не кэшируется.
 
-Изменяющую команду клиент сам не ретраит. Timeout или обрыв после отправки — неизвестный результат: заново подписаться и прочитать карту по HTTP. `expectedVersion` не заменяет дедупликацию.
+Изменяющую команду клиент сам не ретраит ни по HTTP, ни по сокету. Timeout или обрыв после отправки — неизвестный результат: заново подписаться и прочитать карту по HTTP. `expectedVersion` не заменяет дедупликацию.

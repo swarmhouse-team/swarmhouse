@@ -31,6 +31,7 @@ export interface RedisCacheClient {
   get(key: string): Promise<string | null>;
   set(key: string, value: string, expiryMode: 'PX', ttlMs: number): Promise<unknown>;
   del(key: string): Promise<number>;
+  ping(): Promise<unknown>;
   connect(): Promise<void>;
   quit(): Promise<void>;
   disconnect(): void;
@@ -142,6 +143,11 @@ export class RedisCache extends CachePort {
     await this.run(() => this.client.del(this.namespaced(key)));
   }
 
+  /** Checks the client this adapter already opened. Does not connect or close it. */
+  async ping(): Promise<void> {
+    await this.run(() => this.client.ping());
+  }
+
   private namespaced(key: string): string {
     return `${this.keyPrefix}${key}`;
   }
@@ -165,6 +171,7 @@ function wrap(client: Redis): RedisCacheClient {
     get: (key) => client.get(key),
     set: (key, value, expiryMode, ttlMs) => client.set(key, value, expiryMode, ttlMs),
     del: (key) => client.del(key),
+    ping: () => client.ping(),
     connect: () => client.connect(),
     quit: async () => {
       await client.quit();

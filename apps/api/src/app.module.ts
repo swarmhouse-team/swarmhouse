@@ -7,7 +7,6 @@ import { ExampleModule } from './example/example.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { WarehousePresentationModule } from './warehouse/presentation/warehouse-presentation.module';
-import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -20,7 +19,6 @@ import { RedisModule } from './redis/redis.module';
     }),
     PrismaModule,
     WarehousePresentationModule,
-    RedisModule,
     HealthModule,
     ExampleModule,
   ],
