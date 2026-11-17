@@ -3,6 +3,7 @@ import { ApiOkResponse, ApiServiceUnavailableResponse, ApiTags } from '@nestjs/s
 import { healthResponseSchema, type HealthResponse } from '@robots/shared';
 import { createZodDto } from 'nestjs-zod';
 
+import { Public } from '../common/auth/public.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 
 class HealthResponseDto extends createZodDto(healthResponseSchema) {}
@@ -14,6 +15,7 @@ export class HealthController {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  @Public()
   @Get()
   @ApiOkResponse({ type: HealthResponseDto })
   @ApiServiceUnavailableResponse({ description: 'База данных недоступна' })
