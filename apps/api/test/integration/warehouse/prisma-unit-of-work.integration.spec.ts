@@ -7,7 +7,7 @@ import type { SaveMapResult } from '../../../src/modules/warehouse/application/p
 import type { WarehouseRepository } from '../../../src/modules/warehouse/application/ports/repositories/warehouse.repository';
 import { WarehouseMap } from '../../../src/modules/warehouse/domain/entities/warehouse-map';
 import { Warehouse } from '../../../src/modules/warehouse/domain/entities/warehouse';
-import { Position } from '../../../src/modules/warehouse/domain/vo/position';
+import { Position } from '../../../src/common/domain/position';
 import { PrismaUnitOfWork } from '../../../src/modules/warehouse/infrastructure/prisma/transaction/prisma-unit-of-work';
 import { PrismaWarehouseMapRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse-map.repository';
 import { PrismaWarehouseRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse.repository';

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { InvalidIdError } from '../errors/value.errors';
 import { InvalidNameError } from '../errors/value.errors';
-import { Position } from '../vo/position';
+import { Position } from '../../../../common/domain/position';
 import { Robot } from './robot';
 
 const ROBOT_ID = '33333333-3333-4111-8111-33333333333c';

@@ -9,7 +9,7 @@ import {
   PositionOutOfBoundsError,
 } from '../errors/map.errors';
 import { InvalidIdError, InvalidPositionError } from '../errors/value.errors';
-import { Position } from '../vo/position';
+import { Position } from '../../../../common/domain/position';
 import { Robot } from './robot';
 import { Station } from './station';
 import { WarehouseMap, type WarehouseMapSnapshot } from './warehouse-map';

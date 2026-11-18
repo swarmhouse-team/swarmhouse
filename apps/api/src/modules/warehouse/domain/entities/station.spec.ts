@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { InvalidIdError, InvalidNameError } from '../errors/value.errors';
-import { Position } from '../vo/position';
+import { Position } from '../../../../common/domain/position';
 import { Station } from './station';
 
 const STATION_ID = '44444444-4444-4111-8111-44444444444e';

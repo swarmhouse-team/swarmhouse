@@ -10,7 +10,7 @@ import {
   PositionOutOfBoundsError,
 } from '../../../domain/errors/map.errors';
 import { InvalidNameError, InvalidPositionError } from '../../../domain/errors/value.errors';
-import { Position } from '../../../domain/vo/position';
+import { Position } from '../../../../../common/domain/position';
 import {
   CorruptedMapStateError,
   MapVersionConflictError,

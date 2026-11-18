@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { InvalidGridSizeError } from '../errors/value.errors';
+import { InvalidGridSizeError } from '../../modules/warehouse/domain/errors/value.errors';
 import { GridSize } from './grid-size';
 
 describe('GridSize', () => {

@@ -2,7 +2,7 @@ import type { EditWarehouseMapOperation } from '@robots/shared';
 
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { normalizeId } from '../../../domain/vo/id';
-import { Position } from '../../../domain/vo/position';
+import { Position } from '../../../../../common/domain/position';
 import { publishAfterCommit } from '../../cache/publish-after-commit';
 import {
   MapVersionConflictError,

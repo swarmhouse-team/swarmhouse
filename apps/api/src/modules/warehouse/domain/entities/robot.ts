@@ -1,6 +1,6 @@
 import { normalizeId } from '../vo/id';
 import { Name } from '../vo/name';
-import { Position } from '../vo/position';
+import { Position } from '../../../../common/domain/position';
 
 /** A robot on the map. The instance is immutable: a move creates a new object. */
 export class Robot {

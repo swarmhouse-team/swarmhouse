@@ -7,7 +7,7 @@ import { GetWarehouseMap } from '../../../src/modules/warehouse/application/quer
 import { CorruptedMapStateError } from '../../../src/modules/warehouse/application/errors/application.errors';
 import { WarehouseMap } from '../../../src/modules/warehouse/domain/entities/warehouse-map';
 import { Warehouse } from '../../../src/modules/warehouse/domain/entities/warehouse';
-import { Position } from '../../../src/modules/warehouse/domain/vo/position';
+import { Position } from '../../../src/common/domain/position';
 import { PrismaWarehouseMapRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse-map.repository';
 import { PrismaWarehouseRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse.repository';
 import { disconnectTestPrisma, getTestPrisma } from '../support/test-database';

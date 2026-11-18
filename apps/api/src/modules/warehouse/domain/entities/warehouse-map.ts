@@ -8,9 +8,9 @@ import {
   PositionOutOfBoundsError,
 } from '../errors/map.errors';
 import { InvalidPositionError } from '../errors/value.errors';
-import { GridSize } from '../vo/grid-size';
+import { GridSize } from '../../../../common/domain/grid-size';
+import { Position } from '../../../../common/domain/position';
 import { normalizeId } from '../vo/id';
-import { Position } from '../vo/position';
 import { Robot } from './robot';
 import { Station } from './station';
 

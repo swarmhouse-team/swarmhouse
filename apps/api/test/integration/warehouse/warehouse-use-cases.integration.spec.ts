@@ -11,7 +11,7 @@ import type { LoggerPort } from '../../../src/modules/warehouse/application/port
 import type { WarehouseNotifier } from '../../../src/modules/warehouse/application/ports/system/warehouse-notifier';
 import { WarehouseMap } from '../../../src/modules/warehouse/domain/entities/warehouse-map';
 import { Warehouse } from '../../../src/modules/warehouse/domain/entities/warehouse';
-import { Position } from '../../../src/modules/warehouse/domain/vo/position';
+import { Position } from '../../../src/common/domain/position';
 import { PrismaUnitOfWork } from '../../../src/modules/warehouse/infrastructure/prisma/transaction/prisma-unit-of-work';
 import { PrismaWarehouseMapRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse-map.repository';
 import { SystemClock } from '../../../src/modules/warehouse/infrastructure/system/system-clock';

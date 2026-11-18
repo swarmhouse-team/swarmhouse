@@ -9,7 +9,7 @@ import {
   DuplicateStationNameError,
 } from '../../domain/errors/map.errors';
 import { InvalidIdError } from '../../domain/errors/value.errors';
-import { Position } from '../../domain/vo/position';
+import { Position } from '../../../../common/domain/position';
 import { CorruptedMapStateError } from '../errors/application.errors';
 import { restoreWarehouseMap } from './restore-warehouse-map';
 
