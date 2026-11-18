@@ -80,6 +80,6 @@ async function parseApiError(response: Response): Promise<ApiError> {
 
   return {
     code: API_ERROR_CODES.UNKNOWN_ERROR,
-    message: response.statusText || `Request failed (${response.status})`,
+    message: response.statusText || `Request failed with status ${response.status}`,
   };
 }

@@ -12,4 +12,10 @@ export default defineConfig([
     files: ['./src/app/**'],
     rules: { 'fsd/segments-by-purpose': 'off' },
   },
+  {
+    // Пока переключатель стоит только в шапке лендинга; понадобится и в шапке приложения,
+    // поэтому остаётся отдельной фичей. Убрать исключение, когда появится второе место.
+    files: ['./src/features/switch-locale/**'],
+    rules: { 'fsd/insignificant-slice': 'off' },
+  },
 ]);

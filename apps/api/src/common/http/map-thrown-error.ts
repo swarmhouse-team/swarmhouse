@@ -54,6 +54,7 @@ function validation(issues: readonly ZodIssue[]): ThrownErrorMapping {
       message: 'Validation failed',
       details: issues.map((issue) => ({
         path: issue.path.join('.'),
+        code: issue.code,
         message: issue.message,
       })),
     },
