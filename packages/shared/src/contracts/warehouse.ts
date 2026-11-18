@@ -1,0 +1,254 @@
+import { z } from 'zod';
+
+import { API_ERROR_CODES, apiErrorSchema } from '../api-error';
+
+/** Совпадает с доменным `MAX_NAME_LENGTH`. Длина считается после trim. */
+const MAX_WAREHOUSE_NAME_LENGTH = 100;
+
+const warehouseNameSchema = z.string().trim().min(1).max(MAX_WAREHOUSE_NAME_LENGTH);
+
+const uuidSchema = z.uuid();
+
+const nonnegativeIntegerSchema = z.int().nonnegative();
+const positiveIntegerSchema = z.int().positive();
+
+/** Координаты команды. Границы клетки проверяет домен. */
+const warehouseCommandCellSchema = z.strictObject({
+  x: z.int(),
+  y: z.int(),
+});
+
+const addObstacleOperationSchema = z.strictObject({
+  type: z.literal('addObstacle'),
+  position: warehouseCommandCellSchema,
+});
+
+const moveObstacleOperationSchema = z.strictObject({
+  type: z.literal('moveObstacle'),
+  from: warehouseCommandCellSchema,
+  to: warehouseCommandCellSchema,
+});
+
+const removeObstacleOperationSchema = z.strictObject({
+  type: z.literal('removeObstacle'),
+  position: warehouseCommandCellSchema,
+});
+
+const placeRobotOperationSchema = z.strictObject({
+  type: z.literal('placeRobot'),
+  name: warehouseNameSchema,
+  position: warehouseCommandCellSchema,
+});
+
+const moveRobotOperationSchema = z.strictObject({
+  type: z.literal('moveRobot'),
+  robotId: uuidSchema,
+  position: warehouseCommandCellSchema,
+});
+
+const removeRobotOperationSchema = z.strictObject({
+  type: z.literal('removeRobot'),
+  robotId: uuidSchema,
+});
+
+const placeStationOperationSchema = z.strictObject({
+  type: z.literal('placeStation'),
+  name: warehouseNameSchema,
+  position: warehouseCommandCellSchema,
+});
+
+const moveStationOperationSchema = z.strictObject({
+  type: z.literal('moveStation'),
+  stationId: uuidSchema,
+  position: warehouseCommandCellSchema,
+});
+
+const removeStationOperationSchema = z.strictObject({
+  type: z.literal('removeStation'),
+  stationId: uuidSchema,
+});
+
+export const editWarehouseMapOperationSchema = z.discriminatedUnion('type', [
+  addObstacleOperationSchema,
+  moveObstacleOperationSchema,
+  removeObstacleOperationSchema,
+  placeRobotOperationSchema,
+  moveRobotOperationSchema,
+  removeRobotOperationSchema,
+  placeStationOperationSchema,
+  moveStationOperationSchema,
+  removeStationOperationSchema,
+]);
+
+export type EditWarehouseMapOperation = z.infer<typeof editWarehouseMapOperationSchema>;
+
+export const createWarehouseRequestSchema = z.strictObject({
+  name: warehouseNameSchema,
+});
+
+export type CreateWarehouseRequest = z.infer<typeof createWarehouseRequestSchema>;
+
+export const renameWarehouseRequestSchema = z.strictObject({
+  name: warehouseNameSchema,
+});
+
+export type RenameWarehouseRequest = z.infer<typeof renameWarehouseRequestSchema>;
+
+export const warehousePathParamsSchema = z.strictObject({
+  warehouseId: uuidSchema,
+});
+
+export type WarehousePathParams = z.infer<typeof warehousePathParamsSchema>;
+
+export const warehouseMapPathParamsSchema = z.strictObject({
+  mapId: uuidSchema,
+});
+
+export type WarehouseMapPathParams = z.infer<typeof warehouseMapPathParamsSchema>;
+
+export const editWarehouseMapRequestSchema = z.strictObject({
+  expectedVersion: nonnegativeIntegerSchema,
+  operation: editWarehouseMapOperationSchema,
+});
+
+export type EditWarehouseMapRequest = z.infer<typeof editWarehouseMapRequestSchema>;
+
+const warehouseMapCellSchema = z.strictObject({
+  x: nonnegativeIntegerSchema,
+  y: nonnegativeIntegerSchema,
+});
+
+export const warehouseMapBodySchema = z.strictObject({
+  mapId: uuidSchema,
+  warehouseId: uuidSchema,
+  version: nonnegativeIntegerSchema,
+  width: positiveIntegerSchema,
+  height: positiveIntegerSchema,
+  obstacles: z.array(warehouseMapCellSchema),
+  robots: z.array(
+    z.strictObject({
+      id: uuidSchema,
+      name: warehouseNameSchema,
+      x: nonnegativeIntegerSchema,
+      y: nonnegativeIntegerSchema,
+    }),
+  ),
+  stations: z.array(
+    z.strictObject({
+      id: uuidSchema,
+      name: warehouseNameSchema,
+      x: nonnegativeIntegerSchema,
+      y: nonnegativeIntegerSchema,
+    }),
+  ),
+});
+
+export type WarehouseMapBody = z.infer<typeof warehouseMapBodySchema>;
+
+export const getWarehouseMapResponseSchema = warehouseMapBodySchema;
+
+export type GetWarehouseMapResponse = z.infer<typeof getWarehouseMapResponseSchema>;
+
+/**
+ * Public warehouse metadata.
+ * `createdAt` and `updatedAt` are required and are either an ISO UTC instant or `null`.
+ * `null` means the instant was not recorded. It is not replaced with a guessed time.
+ */
+export const warehouseDetailsSchema = z.strictObject({
+  warehouseId: uuidSchema,
+  name: warehouseNameSchema,
+  createdAt: z.iso.datetime().nullable(),
+  updatedAt: z.iso.datetime().nullable(),
+});
+
+export type WarehouseDetails = z.infer<typeof warehouseDetailsSchema>;
+
+export const getWarehouseResponseSchema = warehouseDetailsSchema;
+
+export type GetWarehouseResponse = z.infer<typeof getWarehouseResponseSchema>;
+
+/**
+ * Temporary stage contract: every warehouse, not the warehouses a user can access.
+ * There is no pagination. `total` is the number of returned items.
+ */
+export const listWarehousesResponseSchema = z
+  .strictObject({
+    items: z.array(warehouseDetailsSchema),
+    total: z.int().nonnegative(),
+  })
+  .refine((list) => list.total === list.items.length, {
+    path: ['total'],
+    message: 'total must equal items.length',
+  });
+
+export type ListWarehousesResponse = z.infer<typeof listWarehousesResponseSchema>;
+
+export const createWarehouseResponseSchema = z.strictObject({
+  warehouseId: uuidSchema,
+  name: warehouseNameSchema,
+  mapId: uuidSchema,
+  version: nonnegativeIntegerSchema,
+});
+
+export type CreateWarehouseResponse = z.infer<typeof createWarehouseResponseSchema>;
+
+/**
+ * A rename no-op returns the name observed on read.
+ * A later concurrent rename is allowed.
+ */
+export const renameWarehouseResponseSchema = z.strictObject({
+  warehouseId: uuidSchema,
+  name: warehouseNameSchema,
+});
+
+export type RenameWarehouseResponse = z.infer<typeof renameWarehouseResponseSchema>;
+
+/**
+ * When `changed` is false, the map is the consistent snapshot and version of the state that was read.
+ * `expectedVersion` is checked against that read.
+ * A later concurrent change is allowed.
+ * A changing save performs its own atomic version check.
+ */
+export const editWarehouseMapResponseSchema = z.strictObject({
+  changed: z.boolean(),
+  createdId: uuidSchema.optional(),
+  map: warehouseMapBodySchema,
+});
+
+export type EditWarehouseMapResponse = z.infer<typeof editWarehouseMapResponseSchema>;
+
+/**
+ * Публичное тело 409. Версии остаются во внутренней ошибке приложения.
+ * Клиент узнаёт конфликт по коду и перечитывает карту.
+ */
+export const mapVersionConflictErrorSchema = apiErrorSchema.extend({
+  code: z.literal(API_ERROR_CODES.MAP_VERSION_CONFLICT),
+});
+
+export type MapVersionConflictError = z.infer<typeof mapVersionConflictErrorSchema>;
+
+/**
+ * Коды, которые HTTP склада отдаёт клиенту.
+ * Повреждённое состояние карты наружу не выходит: клиент получает `INTERNAL_ERROR`.
+ */
+export const WAREHOUSE_HTTP_ERROR_CODES = {
+  VALIDATION_ERROR: API_ERROR_CODES.VALIDATION_ERROR,
+  BAD_REQUEST: API_ERROR_CODES.BAD_REQUEST,
+  WAREHOUSE_NOT_FOUND: 'WAREHOUSE_NOT_FOUND',
+  MAP_NOT_FOUND: 'MAP_NOT_FOUND',
+  MAP_VERSION_CONFLICT: API_ERROR_CODES.MAP_VERSION_CONFLICT,
+  INVALID_ID: 'INVALID_ID',
+  INVALID_POSITION: 'INVALID_POSITION',
+  INVALID_GRID_SIZE: 'INVALID_GRID_SIZE',
+  INVALID_NAME: 'INVALID_NAME',
+  POSITION_OUT_OF_BOUNDS: 'POSITION_OUT_OF_BOUNDS',
+  CELL_OCCUPIED: 'CELL_OCCUPIED',
+  DUPLICATE_OBJECT_ID: 'DUPLICATE_OBJECT_ID',
+  DUPLICATE_ROBOT_NAME: 'DUPLICATE_ROBOT_NAME',
+  DUPLICATE_STATION_NAME: 'DUPLICATE_STATION_NAME',
+  MAP_OBJECT_NOT_FOUND: 'MAP_OBJECT_NOT_FOUND',
+  INTERNAL_ERROR: API_ERROR_CODES.INTERNAL_ERROR,
+} as const;
+
+export type WarehouseHttpErrorCode =
+  (typeof WAREHOUSE_HTTP_ERROR_CODES)[keyof typeof WAREHOUSE_HTTP_ERROR_CODES];

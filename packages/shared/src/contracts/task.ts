@@ -64,15 +64,15 @@ export type CreateTaskResponse = z.infer<typeof createTaskResponseSchema>;
 
 export const listTasksQuerySchema = z.object({
   status: taskStatusSchema.optional(),
-  limit: z.number().int().min(1).max(100),
-  offset: z.number().int().min(0),
+  limit: z.int().min(1).max(100),
+  offset: z.int().min(0),
 });
 
 export type ListTasksQuery = z.infer<typeof listTasksQuerySchema>;
 
 export const listTasksResponseSchema = z.object({
   items: z.array(taskSchema),
-  total: z.number().int().min(0),
+  total: z.int().min(0),
 });
 
 export type ListTasksResponse = z.infer<typeof listTasksResponseSchema>;

@@ -6,6 +6,8 @@ import { cleanupOpenApiDoc } from 'nestjs-zod';
 
 import { AppModule } from './app.module';
 import type { Env } from './config/env';
+import { AppSocketIoAdapter } from './common/socket/app-socket-io.adapter';
+import { readSocketAllowedOrigins } from './common/socket/socket-server.options';
 
 const GLOBAL_PREFIX = 'api';
 
@@ -17,6 +19,15 @@ async function bootstrap(): Promise<void> {
 
   app.setGlobalPrefix(GLOBAL_PREFIX);
   app.enableShutdownHooks();
+  app.useWebSocketAdapter(
+    new AppSocketIoAdapter(
+      app,
+      readSocketAllowedOrigins(
+        config.get('NODE_ENV', { infer: true }),
+        process.env.WAREHOUSE_SOCKET_ORIGINS,
+      ),
+    ),
+  );
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Robots API')

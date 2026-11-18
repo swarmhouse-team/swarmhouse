@@ -43,8 +43,7 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
     }
     throw new HttpError(0, {
       code: API_ERROR_CODES.NETWORK_ERROR,
-      // Технический текст для логов; пользователю показывается перевод по коду.
-      message: 'Network request failed',
+      message: 'Cannot reach the server',
     });
   }
 
@@ -63,7 +62,7 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
   } catch (cause) {
     throw new HttpError(
       response.status,
-      { code: API_ERROR_CODES.UNKNOWN_ERROR, message: 'Invalid response body' },
+      { code: API_ERROR_CODES.UNKNOWN_ERROR, message: 'The server returned an invalid response' },
       { cause },
     );
   }
