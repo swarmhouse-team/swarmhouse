@@ -7,3 +7,27 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+/// Persistence row of the warehouse aggregate. The id is assigned by the application.
+model WarehouseRecord {
+  id        String    @id @db.Uuid
+  name      String
+  createdAt DateTime? @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime? @map("updated_at") @db.Timestamptz(3)
+
+  map WarehouseMapRecord?
+
+  @@map("warehouses")
+}
+
+/// Persistence row of one map aggregate. `content` holds the map body; id and warehouse live in columns.
+model WarehouseMapRecord {
+  id          String @id @db.Uuid
+  warehouseId String @unique @map("warehouse_id") @db.Uuid
+  version     Int    @default(0)
+  content     Json   @db.JsonB
+
+  warehouse WarehouseRecord @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+
+  @@map("warehouse_maps")
+}
