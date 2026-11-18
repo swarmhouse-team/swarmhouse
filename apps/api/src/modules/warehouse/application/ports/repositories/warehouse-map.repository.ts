@@ -3,7 +3,7 @@ import type { WarehouseMapRestoreInput } from '../../mapping/warehouse-map-resto
 
 /**
  * A stored map record. `snapshot` is structural data that still has to pass
- * `restoreWarehouseMap`. `version` belongs to the same committed write.
+ * `WarehouseMap.restore`. `version` belongs to the same committed write.
  * A valid aggregate snapshot is a valid value of this field.
  */
 export interface StoredWarehouseMap {

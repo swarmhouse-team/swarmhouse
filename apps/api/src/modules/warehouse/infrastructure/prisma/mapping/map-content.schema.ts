@@ -44,7 +44,7 @@ export function toMapContent(snapshot: WarehouseMapSnapshot): Prisma.InputJsonOb
   };
 }
 
-/** Reads stored map JSON into the restore input. Domain rules stay in `restoreWarehouseMap`. */
+/** Reads stored map JSON into the restore input. Domain rules stay in `WarehouseMap.restore`. */
 export function parseMapContent(
   id: string,
   warehouseId: string,

@@ -7,7 +7,7 @@ import {
   MapObjectNotFoundError,
   PositionOutOfBoundsError,
 } from '../errors/map.errors';
-import { InvalidPositionError } from '../errors/value.errors';
+import { InvalidGridSizeError, InvalidNameError, InvalidPositionError } from '../errors/value.errors';
 import { GridSize } from '../../../../common/domain/grid-size';
 import { Position } from '../../../../common/domain/position';
 import { normalizeId } from '../vo/id';
@@ -70,6 +70,31 @@ export class WarehouseMap {
       normalizeId(warehouseId),
       GridSize.create(WAREHOUSE_MAP_WIDTH, WAREHOUSE_MAP_HEIGHT),
     );
+  }
+
+  /** Rebuilds a map from stored data. A stored name is not trimmed and a bad cell is not moved. */
+  static restore(input: WarehouseMapSnapshot): WarehouseMap {
+    if (input.width !== WAREHOUSE_MAP_WIDTH || input.height !== WAREHOUSE_MAP_HEIGHT) {
+      throw new InvalidGridSizeError(input.width, input.height);
+    }
+
+    for (const named of [...input.robots, ...input.stations]) {
+      if (named.name !== named.name.trim()) {
+        throw new InvalidNameError(named.name);
+      }
+    }
+
+    const map = WarehouseMap.create(input.id, input.warehouseId);
+    for (const obstacle of input.obstacles) {
+      map.addObstacle(Position.create(obstacle.x, obstacle.y));
+    }
+    for (const robot of input.robots) {
+      map.placeRobot(robot.id, robot.name, Position.create(robot.x, robot.y));
+    }
+    for (const station of input.stations) {
+      map.placeStation(station.id, station.name, Position.create(station.x, station.y));
+    }
+    return map;
   }
 
   getRobots(): readonly Robot[] {

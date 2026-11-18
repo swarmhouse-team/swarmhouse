@@ -1,5 +1,5 @@
 import { WarehouseMapNotFoundError } from '../../errors/application.errors';
-import { restoreWarehouseMap } from '../../mapping/restore-warehouse-map';
+import { restoreStoredWarehouseMap } from '../../mapping/restore-stored-warehouse-map';
 import type { WarehouseMapRepository } from '../../ports/repositories/warehouse-map.repository';
 import type { GetWarehouseMapInput, GetWarehouseMapResult } from './get-warehouse-map.types';
 
@@ -19,7 +19,7 @@ export class GetWarehouseMap {
     }
 
     return {
-      snapshot: restoreWarehouseMap(record.snapshot).snapshot(),
+      snapshot: restoreStoredWarehouseMap(record.snapshot).snapshot(),
       version: record.version,
     };
   }

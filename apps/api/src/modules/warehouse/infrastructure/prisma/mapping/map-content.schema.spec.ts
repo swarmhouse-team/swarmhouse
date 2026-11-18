@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
 
 import { CorruptedMapStateError } from '../../../application/errors/application.errors';
-import { restoreWarehouseMap } from '../../../application/mapping/restore-warehouse-map';
+import { restoreStoredWarehouseMap } from '../../../application/mapping/restore-stored-warehouse-map';
 import { parseMapContent, toMapContent } from './map-content.schema';
 
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
@@ -136,7 +136,7 @@ describe('parseMapContent', () => {
 
 function restoreReason(input: ReturnType<typeof parseMapContent>): string | undefined {
   try {
-    restoreWarehouseMap(input);
+    restoreStoredWarehouseMap(input);
   } catch (error) {
     const reason = error instanceof CorruptedMapStateError ? error.details?.reason : undefined;
     return typeof reason === 'string' ? reason : undefined;

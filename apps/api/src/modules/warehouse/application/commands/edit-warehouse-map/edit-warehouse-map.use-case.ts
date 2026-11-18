@@ -10,7 +10,7 @@ import {
   MapVersionConflictError,
   WarehouseMapNotFoundError,
 } from '../../errors/application.errors';
-import { restoreWarehouseMap } from '../../mapping/restore-warehouse-map';
+import { restoreStoredWarehouseMap } from '../../mapping/restore-stored-warehouse-map';
 import type { UnitOfWork } from '../../ports/system/unit-of-work';
 import type { WarehouseNotifier } from '../../ports/system/warehouse-notifier';
 import type { EditWarehouseMapInput, EditWarehouseMapResult } from './edit-warehouse-map.types';
@@ -48,7 +48,7 @@ export class EditWarehouseMap {
         });
       }
 
-      const map = restoreWarehouseMap(record.snapshot);
+      const map = restoreStoredWarehouseMap(record.snapshot);
       const applied = this.apply(map, input.operation);
       if (!applied.changed) {
         return {

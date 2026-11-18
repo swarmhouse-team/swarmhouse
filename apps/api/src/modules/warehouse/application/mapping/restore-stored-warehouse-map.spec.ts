@@ -11,7 +11,7 @@ import {
 import { InvalidIdError } from '../../domain/errors/value.errors';
 import { Position } from '../../../../common/domain/position';
 import { CorruptedMapStateError } from '../errors/application.errors';
-import { restoreWarehouseMap } from './restore-warehouse-map';
+import { restoreStoredWarehouseMap } from './restore-stored-warehouse-map';
 
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
 const MAP_ID = '22222222-2222-7111-8111-22222222222b';
@@ -22,7 +22,7 @@ const STATION_2_ID = '44444444-4444-4111-a111-444444444445';
 
 function causeOf(input: WarehouseMapRestoreInput): unknown {
   try {
-    restoreWarehouseMap(input);
+    restoreStoredWarehouseMap(input);
   } catch (error) {
     return (error as CorruptedMapStateError).cause;
   }
@@ -41,12 +41,12 @@ function filledSnapshot(): WarehouseMapSnapshot {
   return map.snapshot();
 }
 
-describe('restoreWarehouseMap', () => {
+describe('restoreStoredWarehouseMap', () => {
   it('restores an empty map and does not change the source snapshot', () => {
     const snapshot = emptySnapshot();
     const before = structuredClone(snapshot);
 
-    const restored = restoreWarehouseMap(snapshot);
+    const restored = restoreStoredWarehouseMap(snapshot);
     restored.addObstacle(Position.create(4, 4));
 
     expect(restored.snapshot()).toMatchObject({
@@ -66,7 +66,7 @@ describe('restoreWarehouseMap', () => {
     const before = structuredClone(snapshot);
     const input: WarehouseMapRestoreInput = snapshot;
 
-    expect(restoreWarehouseMap(input).snapshot()).toEqual(snapshot);
+    expect(restoreStoredWarehouseMap(input).snapshot()).toEqual(snapshot);
     expect(snapshot).toEqual(before);
   });
 
@@ -75,7 +75,7 @@ describe('restoreWarehouseMap', () => {
     snapshot.width = 10;
 
     try {
-      restoreWarehouseMap(snapshot);
+      restoreStoredWarehouseMap(snapshot);
       throw new Error('Expected corrupted state');
     } catch (error) {
       expect(error).toBeInstanceOf(CorruptedMapStateError);
@@ -96,7 +96,7 @@ describe('restoreWarehouseMap', () => {
     robot.name = ' Robot';
 
     try {
-      restoreWarehouseMap(snapshot);
+      restoreStoredWarehouseMap(snapshot);
       throw new Error('Expected corrupted state');
     } catch (error) {
       expect(error).toBeInstanceOf(CorruptedMapStateError);
@@ -113,7 +113,7 @@ describe('restoreWarehouseMap', () => {
     snapshot.id = ' map';
 
     try {
-      restoreWarehouseMap(snapshot);
+      restoreStoredWarehouseMap(snapshot);
       throw new Error('Expected corrupted state');
     } catch (error) {
       expect(error).toBeInstanceOf(CorruptedMapStateError);
@@ -135,7 +135,7 @@ describe('restoreWarehouseMap', () => {
     robot.y = obstacle.y;
 
     try {
-      restoreWarehouseMap(snapshot);
+      restoreStoredWarehouseMap(snapshot);
       throw new Error('Expected corrupted state');
     } catch (error) {
       expect((error as CorruptedMapStateError).details).toMatchObject({
@@ -171,7 +171,7 @@ describe('restoreWarehouseMap', () => {
     const outside = emptySnapshot();
     outside.obstacles.push({ x: 20, y: 0 });
     try {
-      restoreWarehouseMap(outside);
+      restoreStoredWarehouseMap(outside);
       throw new Error('Expected corrupted state');
     } catch (error) {
       expect((error as CorruptedMapStateError).cause).toBeInstanceOf(Error);
@@ -185,7 +185,7 @@ describe('restoreWarehouseMap', () => {
     const snapshot = emptySnapshot();
     snapshot.robots = [{ id: ROBOT_ID.toUpperCase(), name: 'Robot', x: 2, y: 2 }];
 
-    const map = restoreWarehouseMap(snapshot);
+    const map = restoreStoredWarehouseMap(snapshot);
     map.moveRobot(ROBOT_ID, Position.create(4, 4));
 
     expect(map.snapshot().robots).toEqual([{ id: ROBOT_ID, name: 'Robot', x: 4, y: 4 }]);
