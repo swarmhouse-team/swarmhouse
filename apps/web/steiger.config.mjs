@@ -12,4 +12,17 @@ export default defineConfig([
     files: ['./src/app/**'],
     rules: { 'fsd/segments-by-purpose': 'off' },
   },
+  {
+    // Эти слайсы выделены отдельно согласно архитектуре страницы складов.
+    // Пока они используются одной страницей, но остаются самостоятельными частями интерфейса.
+    files: [
+      './src/entities/warehouse/**',
+      './src/features/warehouse-delete/**',
+      './src/features/warehouse-settings/**',
+      './src/widgets/warehouse-list/**',
+    ],
+    rules: {
+      'fsd/insignificant-slice': 'off',
+    },
+  },
 ]);

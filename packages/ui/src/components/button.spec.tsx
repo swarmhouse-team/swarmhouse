@@ -14,7 +14,7 @@ describe('Button', () => {
   it('с asChild рендерит дочерний элемент вместо button', () => {
     render(
       <Button asChild>
-        <a href="/warehouses">Склады</a>
+        <a href="https://example.com">Склады</a>
       </Button>,
     );
 
