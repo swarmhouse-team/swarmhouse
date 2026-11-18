@@ -1,4 +1,4 @@
-import type { LogContext, LoggerPort } from '../../../../common/application/logger.port';
+import type { LogContext, LoggerPort } from '../application/logger.port';
 
 export type LogEntry = {
   level: 'debug' | 'info' | 'warn' | 'error';

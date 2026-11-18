@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { WarehouseMap, type WarehouseMapSnapshot } from '../../../domain/entities/warehouse-map';
 import { CorruptedMapStateError, WarehouseMapNotFoundError } from '../../errors/application.errors';
 import type { WarehouseMapRepository } from '../../ports/repositories/warehouse-map.repository';
+import { stubMaps } from '../../testing/stub-unit-of-work';
 import { GetWarehouseMap } from './get-warehouse-map.use-case';
 
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
@@ -17,7 +18,7 @@ function repository(
   failure?: Error,
 ): { maps: WarehouseMapRepository; calls: string[] } {
   const calls: string[] = [];
-  const maps: WarehouseMapRepository = {
+  const maps: WarehouseMapRepository = stubMaps({
     async insert() {
       calls.push('insert');
     },
@@ -39,10 +40,7 @@ function repository(
       calls.push('save');
       return { status: 'not_found' };
     },
-    async deleteByWarehouseId() {
-      throw new Error('deleteByWarehouseId must not be used');
-    },
-  };
+  });
   return { maps, calls };
 }
 

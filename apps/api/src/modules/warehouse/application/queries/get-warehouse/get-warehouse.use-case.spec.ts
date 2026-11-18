@@ -7,7 +7,8 @@ import type {
   StoredWarehouse,
   WarehouseRepository,
 } from '../../ports/repositories/warehouse.repository';
-import { RecordingCache } from '../../testing/recording-cache';
+import { stubWarehouses } from '../../testing/stub-unit-of-work';
+import { RecordingCache } from '../../../../../common/testing/recording-cache';
 import { WAREHOUSE_DETAILS_TTL_MS, warehouseDetailsCacheKey } from '../warehouse-cache.policy';
 import { GetWarehouse } from './get-warehouse.use-case';
 
@@ -30,10 +31,7 @@ function repository(
   const calls: string[] = [];
   return {
     calls,
-    maps: {
-      async insert() {
-        throw new Error('insert must not be used');
-      },
+    maps: stubWarehouses({
       async findById(warehouseId) {
         calls.push(warehouseId);
         if (failure) {
@@ -41,16 +39,7 @@ function repository(
         }
         return found;
       },
-      async save() {
-        throw new Error('save must not be used');
-      },
-      async list() {
-        throw new Error('list must not be used');
-      },
-      async delete() {
-        throw new Error('delete must not be used');
-      },
-    },
+    }),
   };
 }
 

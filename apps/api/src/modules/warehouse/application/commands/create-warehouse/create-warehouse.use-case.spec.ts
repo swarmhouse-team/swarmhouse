@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { CacheError } from '../../../../../cache/application/errors/cache.error';
-import type { Clock } from '../../../../../common/application/clock';
-import type { IdGenerator } from '../../../../../common/application/id-generator';
+import { fixedClock } from '../../../../../common/testing/fixed-clock';
+import { createRecordingLogger, type LogEntry } from '../../../../../common/testing/create-recording-logger';
+import { RecordingCache } from '../../../../../common/testing/recording-cache';
+import { scriptedIds } from '../../../../../common/testing/scripted-ids';
 import type { Warehouse } from '../../../domain/entities/warehouse';
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { InvalidNameError } from '../../../domain/errors/value.errors';
-import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
-import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
-import { RecordingCache } from '../../testing/recording-cache';
+import { stubUnitOfWork } from '../../testing/stub-unit-of-work';
+import type { UnitOfWork } from '../../ports/system/unit-of-work';
 import { WAREHOUSE_LIST_CACHE_KEY } from '../../queries/warehouse-cache.policy';
 import { CreateWarehouse } from './create-warehouse.use-case';
 
@@ -23,6 +24,7 @@ interface Harness {
   calls: string[];
   logs: LogEntry[];
   cache: RecordingCache;
+  inserts: { count: number };
   nowCalls: number;
   executeCount: number;
 }
@@ -37,83 +39,55 @@ function createHarness(options?: {
   const calls: string[] = [];
   const cache = new RecordingCache();
   const { logger, logs } = createRecordingLogger();
-  let nowCalls = 0;
-  const clock: Clock = {
-    now() {
-      nowCalls += 1;
-      return RECORDED_AT;
-    },
-  };
-  const ids = [...(options?.ids ?? [WAREHOUSE_ID, MAP_ID])];
+  const recorded = fixedClock(RECORDED_AT);
+  const inserts = { count: 0 };
   let executeCount = 0;
+  const inner = stubUnitOfWork({
+    calls,
+    inserts,
+    after: options?.afterCallback,
+    warehouses: {
+      async insert(warehouse, recordedAt) {
+        calls.push('insert-warehouse');
+        await options?.onInsertWarehouse?.();
+        inserted.warehouse = warehouse;
+        inserted.recordedAt = recordedAt;
+      },
+    },
+    maps: {
+      async insert(map) {
+        calls.push('insert-map');
+        await options?.onInsertMap?.();
+        inserted.map = map;
+      },
+      async findById() {
+        return null;
+      },
+      async findByWarehouseId() {
+        return null;
+      },
+      async save() {
+        return { status: 'not_found' };
+      },
+    },
+  });
   const unitOfWork: UnitOfWork = {
-    async execute(work) {
+    execute(work) {
       executeCount += 1;
-      calls.push('execute');
-      const tx: TransactionContext = {
-        warehouses: {
-          async insert(warehouse, recordedAt) {
-            calls.push('insert-warehouse');
-            await options?.onInsertWarehouse?.();
-            inserted.warehouse = warehouse;
-            inserted.recordedAt = recordedAt;
-          },
-          async findById() {
-            throw new Error('findById must not be used');
-          },
-          async list() {
-            throw new Error('list must not be used');
-          },
-          async save() {
-            throw new Error('save must not be used');
-          },
-          async delete() {
-            throw new Error('delete must not be used');
-          },
-        },
-        maps: {
-          async insert(map) {
-            calls.push('insert-map');
-            await options?.onInsertMap?.();
-            inserted.map = map;
-          },
-          async findById() {
-            return null;
-          },
-          async findByWarehouseId() {
-            return null;
-          },
-          async save() {
-            return { status: 'not_found' };
-          },
-          async deleteByWarehouseId() {
-            throw new Error('deleteByWarehouseId must not be used');
-          },
-        },
-      };
-      const result = await work(tx);
-      await options?.afterCallback?.();
-      return result;
+      return inner.execute(work);
     },
   };
-  const idGenerator: IdGenerator = {
-    next: () => {
-      const id = ids.shift();
-      if (!id) {
-        throw new Error('No more ids');
-      }
-      return id;
-    },
-  };
+  const idGenerator = scriptedIds(options?.ids ?? [WAREHOUSE_ID, MAP_ID]);
 
   return {
-    useCase: new CreateWarehouse(unitOfWork, idGenerator, clock, cache, logger),
+    useCase: new CreateWarehouse(unitOfWork, idGenerator, recorded.clock, cache, logger),
     inserted,
     calls,
     logs,
     cache,
+    inserts,
     get nowCalls() {
-      return nowCalls;
+      return recorded.nowCalls();
     },
     get executeCount() {
       return executeCount;
@@ -163,6 +137,7 @@ describe('CreateWarehouse', () => {
 
     expect(harness.executeCount).toBe(1);
     expect(harness.calls).toEqual(['execute', 'insert-warehouse', 'insert-map']);
+    expect(harness.inserts.count).toBe(2);
     expect(harness.nowCalls).toBe(1);
     expect(harness.inserted.recordedAt).toBe(RECORDED_AT);
     expect(harness.cache.deleted).toEqual([WAREHOUSE_LIST_CACHE_KEY]);

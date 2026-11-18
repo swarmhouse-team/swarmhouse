@@ -16,7 +16,7 @@ import type {
   EditWarehouseMapResult,
 } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.types';
 import { MapVersionConflictError } from '../../application/errors/application.errors';
-import { createRecordingLogger } from '../../application/testing/create-recording-logger';
+import { createRecordingLogger } from '../../../../common/testing/create-recording-logger';
 import { WarehouseMap } from '../../domain/entities/warehouse-map';
 import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
 import { WAREHOUSE_EXISTENCE } from '../../infrastructure/realtime/warehouse-existence';

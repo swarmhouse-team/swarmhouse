@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Namespace } from 'socket.io';
 
-import { createRecordingLogger } from '../../application/testing/create-recording-logger';
+import { createRecordingLogger } from '../../../../common/testing/create-recording-logger';
 import { SocketIoWarehouseNotifier } from './socket-io-warehouse-notifier';
 import { warehouseRoom } from './warehouse-socket.constants';
 import { WarehouseSubscriptionBook } from './warehouse-subscription.book';

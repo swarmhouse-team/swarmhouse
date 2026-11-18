@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import { WarehouseNotFoundError } from '../../errors/application.errors';
 import { CacheError } from '../../../../../cache/application/errors/cache.error';
+import { WarehouseNotFoundError } from '../../errors/application.errors';
 import type {
   DeleteWarehouseResult,
   StoredWarehouse,
 } from '../../ports/repositories/warehouse.repository';
-import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
-import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
+import { createRecordingLogger, type LogEntry } from '../../../../../common/testing/create-recording-logger';
 import {
   createRecordingNotifier,
   type WarehouseNotice,
 } from '../../testing/create-recording-notifier';
-import { RecordingCache } from '../../testing/recording-cache';
+import { RecordingCache } from '../../../../../common/testing/recording-cache';
+import { stubUnitOfWork } from '../../testing/stub-unit-of-work';
 import {
   WAREHOUSE_LIST_CACHE_KEY,
   warehouseDetailsCacheKey,
@@ -25,6 +25,7 @@ interface Harness {
   logs: LogEntry[];
   notices: WarehouseNotice[];
   cache: RecordingCache;
+  inserts: { count: number };
   failNotifier: (error: Error) => void;
 }
 
@@ -39,66 +40,42 @@ function createHarness(options?: {
   const cache = new RecordingCache();
   const { logger, logs } = createRecordingLogger();
   const { notifier, notices, failWith } = createRecordingNotifier();
-  const unitOfWork: UnitOfWork = {
-    async execute(work) {
-      calls.push('execute');
-      const tx: TransactionContext = {
-        warehouses: {
-          async insert() {
-            throw new Error('insert must not be used');
-          },
-          async findById(warehouseId) {
-            calls.push(`findById:${warehouseId}`);
-            return options?.found === undefined
-              ? { id: 'wh-1', name: 'Main', createdAt: null, updatedAt: null }
-              : options.found;
-          },
-          async list() {
-            throw new Error('list must not be used');
-          },
-          async save() {
-            throw new Error('save must not be used');
-          },
-          async delete(warehouseId) {
-            calls.push(`delete-warehouse:${warehouseId}`);
-            if (options?.deleteWarehouseError) {
-              throw options.deleteWarehouseError;
-            }
-            return options?.deleteResult ?? { status: 'deleted' };
-          },
-        },
-        maps: {
-          async insert() {
-            throw new Error('map insert must not be used');
-          },
-          async findById() {
-            throw new Error('map find must not be used');
-          },
-          async findByWarehouseId() {
-            throw new Error('map find must not be used');
-          },
-          async save() {
-            throw new Error('map save must not be used');
-          },
-          async deleteByWarehouseId(warehouseId) {
-            calls.push(`delete-maps:${warehouseId}`);
-            if (options?.deleteMapsError) {
-              throw options.deleteMapsError;
-            }
-          },
-        },
-      };
-      const result = await work(tx);
-      await options?.afterCallback?.();
-      return result;
+  const inserts = { count: 0 };
+  const unitOfWork = stubUnitOfWork({
+    calls,
+    inserts,
+    after: options?.afterCallback,
+    warehouses: {
+      async findById(warehouseId) {
+        calls.push(`findById:${warehouseId}`);
+        return options?.found === undefined
+          ? { id: 'wh-1', name: 'Main', createdAt: null, updatedAt: null }
+          : options.found;
+      },
+      async delete(warehouseId) {
+        calls.push(`delete-warehouse:${warehouseId}`);
+        if (options?.deleteWarehouseError) {
+          throw options.deleteWarehouseError;
+        }
+        return options?.deleteResult ?? { status: 'deleted' };
+      },
     },
-  };
+    maps: {
+      async deleteByWarehouseId(warehouseId) {
+        calls.push(`delete-maps:${warehouseId}`);
+        if (options?.deleteMapsError) {
+          throw options.deleteMapsError;
+        }
+      },
+    },
+  });
   return {
     useCase: new DeleteWarehouse(unitOfWork, cache, logger, notifier),
     calls,
     logs,
     notices,
     cache,
+    inserts,
     failNotifier: failWith,
   };
 }
@@ -115,6 +92,7 @@ describe('DeleteWarehouse', () => {
       'delete-maps:wh-1',
       'delete-warehouse:wh-1',
     ]);
+    expect(harness.inserts.count).toBe(0);
     expect(harness.cache.deleted).toEqual([
       warehouseDetailsCacheKey('wh-1'),
       WAREHOUSE_LIST_CACHE_KEY,

@@ -1,6 +1,6 @@
-import { CacheError } from '../../../../cache/application/errors/cache.error';
-import type { CacheValue } from '../../../../cache/application/cache-value';
-import { CachePort } from '../../../../cache/application/ports/cache.port';
+import { CacheError } from '../../cache/application/errors/cache.error';
+import type { CacheValue } from '../../cache/application/cache-value';
+import { CachePort } from '../../cache/application/ports/cache.port';
 
 /** In-memory cache double. It records keys and can fail one operation with `CacheError`. */
 export class RecordingCache extends CachePort {

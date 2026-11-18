@@ -5,7 +5,7 @@ import type { Socket } from 'socket.io';
 import { EditWarehouseMap } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.use-case';
 import type { EditWarehouseMapInput } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.types';
 import { MapVersionConflictError } from '../../application/errors/application.errors';
-import { createRecordingLogger } from '../../application/testing/create-recording-logger';
+import { createRecordingLogger } from '../../../../common/testing/create-recording-logger';
 import { WarehouseMap } from '../../domain/entities/warehouse-map';
 import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
 import type { WarehouseExistenceReader } from '../../infrastructure/realtime/warehouse-existence';

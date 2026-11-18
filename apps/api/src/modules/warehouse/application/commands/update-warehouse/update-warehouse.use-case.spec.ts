@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { CacheError } from '../../../../../cache/application/errors/cache.error';
-import type { Clock } from '../../../../../common/application/clock';
+import { fixedClock } from '../../../../../common/testing/fixed-clock';
+import { createRecordingLogger, type LogEntry } from '../../../../../common/testing/create-recording-logger';
+import { RecordingCache } from '../../../../../common/testing/recording-cache';
 import { MAX_NAME_LENGTH } from '../../../domain/constants';
 import type { Warehouse } from '../../../domain/entities/warehouse';
 import { InvalidNameError } from '../../../domain/errors/value.errors';
@@ -10,13 +12,11 @@ import type {
   SaveWarehouseResult,
   StoredWarehouse,
 } from '../../ports/repositories/warehouse.repository';
-import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
-import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
+import { stubUnitOfWork } from '../../testing/stub-unit-of-work';
 import {
   createRecordingNotifier,
   type WarehouseNotice,
 } from '../../testing/create-recording-notifier';
-import { RecordingCache } from '../../testing/recording-cache';
 import {
   WAREHOUSE_LIST_CACHE_KEY,
   warehouseDetailsCacheKey,
@@ -50,13 +50,7 @@ function createHarness(options?: {
   const cache = new RecordingCache();
   const { logger, logs } = createRecordingLogger();
   const { notifier, notices, failWith } = createRecordingNotifier();
-  let nowCalls = 0;
-  const clock: Clock = {
-    now() {
-      nowCalls += 1;
-      return UPDATED_AT;
-    },
-  };
+  const recorded = fixedClock(UPDATED_AT);
   const state: Harness = {
     useCase: undefined as unknown as UpdateWarehouse,
     calls,
@@ -64,72 +58,36 @@ function createHarness(options?: {
     notices,
     cache,
     get nowCalls() {
-      return nowCalls;
+      return recorded.nowCalls();
     },
     failNotifier: failWith,
   };
-  const unitOfWork: UnitOfWork = {
-    async execute(work) {
-      calls.push('execute');
-      const tx: TransactionContext = {
-        warehouses: {
-          async insert() {
-            throw new Error('insert must not be used');
-          },
-          async findById(warehouseId) {
-            calls.push(`findById:${warehouseId}`);
-            if (options?.findError) {
-              throw options.findError;
-            }
-            return options?.found === undefined
-              ? { id: WAREHOUSE_ID, name: 'Main', createdAt: CREATED_AT, updatedAt: CREATED_AT }
-              : options.found;
-          },
-          async list() {
-            throw new Error('list must not be used');
-          },
-          async save(warehouse, updatedAt) {
-            calls.push('save');
-            if (options?.saveError) {
-              throw options.saveError;
-            }
-            state.saved = warehouse;
-            state.savedAt = updatedAt;
-            return options?.saveResult ?? { status: 'saved' };
-          },
-          async delete() {
-            throw new Error('delete must not be used');
-          },
-        },
-        maps: {
-          async insert() {
-            calls.push('map');
-            throw new Error('map repository must not be used');
-          },
-          async findById() {
-            calls.push('map');
-            throw new Error('map repository must not be used');
-          },
-          async findByWarehouseId() {
-            calls.push('map');
-            throw new Error('map repository must not be used');
-          },
-          async save() {
-            calls.push('map');
-            throw new Error('map repository must not be used');
-          },
-          async deleteByWarehouseId() {
-            calls.push('map');
-            throw new Error('map repository must not be used');
-          },
-        },
-      };
-      const result = await work(tx);
-      await options?.afterCallback?.();
-      return result;
+  const unitOfWork = stubUnitOfWork({
+    calls,
+    inserts: { count: 0 },
+    after: options?.afterCallback,
+    warehouses: {
+      async findById(warehouseId) {
+        calls.push(`findById:${warehouseId}`);
+        if (options?.findError) {
+          throw options.findError;
+        }
+        return options?.found === undefined
+          ? { id: WAREHOUSE_ID, name: 'Main', createdAt: CREATED_AT, updatedAt: CREATED_AT }
+          : options.found;
+      },
+      async save(warehouse, updatedAt) {
+        calls.push('save');
+        if (options?.saveError) {
+          throw options.saveError;
+        }
+        state.saved = warehouse;
+        state.savedAt = updatedAt;
+        return options?.saveResult ?? { status: 'saved' };
+      },
     },
-  };
-  state.useCase = new UpdateWarehouse(unitOfWork, clock, cache, logger, notifier);
+  });
+  state.useCase = new UpdateWarehouse(unitOfWork, recorded.clock, cache, logger, notifier);
   return state;
 }
 

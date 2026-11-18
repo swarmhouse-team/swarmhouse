@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { IdGenerator } from '../../../../../common/application/id-generator';
 import { Position } from '../../../../../common/domain/position';
+import { fixedId } from '../../../../../common/testing/scripted-ids';
 import { WarehouseMap, type WarehouseMapSnapshot } from '../../../domain/entities/warehouse-map';
 import {
   CellOccupiedError,
@@ -18,8 +18,8 @@ import {
   WarehouseMapNotFoundError,
 } from '../../errors/application.errors';
 import type { SaveMapResult } from '../../ports/repositories/warehouse-map.repository';
-import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
-import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
+import { stubUnitOfWork } from '../../testing/stub-unit-of-work';
+import { createRecordingLogger, type LogEntry } from '../../../../../common/testing/create-recording-logger';
 import {
   createRecordingNotifier,
   type WarehouseNotice,
@@ -66,64 +66,33 @@ function createHarness(options?: {
     notices,
     failNotifier: failWith,
   };
-  const unitOfWork: UnitOfWork = {
-    async execute(work) {
-      calls.push('execute');
-      const tx: TransactionContext = {
-        warehouses: {
-          async insert() {
-            throw new Error('warehouse repository must not be used');
-          },
-          async findById() {
-            throw new Error('warehouse repository must not be used');
-          },
-          async save() {
-            throw new Error('warehouse repository must not be used');
-          },
-          async delete() {
-            throw new Error('warehouse repository must not be used');
-          },
-          async list() {
-            throw new Error('warehouse repository must not be used');
-          },
-        },
-        maps: {
-          async insert() {
-            calls.push('insert');
-          },
-          async findById(mapId) {
-            calls.push(`findById:${mapId}`);
-            if (options?.findError) {
-              throw options.findError;
-            }
-            return options?.found === undefined
-              ? { snapshot: emptySnapshot(), version: 0 }
-              : options.found;
-          },
-          async findByWarehouseId() {
-            throw new Error('findByWarehouseId must not be used');
-          },
-          async save(map, expectedVersion) {
-            calls.push('save');
-            state.saved = { map, expectedVersion };
-            return options?.saveResult ?? { status: 'saved', version: 1 };
-          },
-          async deleteByWarehouseId() {
-            throw new Error('deleteByWarehouseId must not be used');
-          },
-        },
-      };
-      const result = await work(tx);
-      await options?.afterCallback?.();
-      return result;
+  const unitOfWork = stubUnitOfWork({
+    calls,
+    inserts: { count: 0 },
+    after: options?.afterCallback,
+    maps: {
+      async insert() {
+        calls.push('insert');
+      },
+      async findById(mapId) {
+        calls.push(`findById:${mapId}`);
+        if (options?.findError) {
+          throw options.findError;
+        }
+        return options?.found === undefined
+          ? { snapshot: emptySnapshot(), version: 0 }
+          : options.found;
+      },
+      async save(map, expectedVersion) {
+        calls.push('save');
+        state.saved = { map, expectedVersion };
+        return options?.saveResult ?? { status: 'saved', version: 1 };
+      },
     },
-  };
-  const ids: IdGenerator = {
-    next() {
-      calls.push('nextId');
-      return options?.nextId ?? ROBOT_ID;
-    },
-  };
+  });
+  const ids = fixedId(options?.nextId ?? ROBOT_ID, () => {
+    calls.push('nextId');
+  });
   state.useCase = new EditWarehouseMap(unitOfWork, ids, logger, notifier);
   return state;
 }
