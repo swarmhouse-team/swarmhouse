@@ -5,7 +5,7 @@ import type {
   StoredWarehouse,
   WarehouseRepository,
 } from '../../ports/repositories/warehouse.repository';
-import { stubWarehouses } from '../../testing/stub-unit-of-work';
+import { stubWarehouses } from '../../testing/stub-warehouse-unit-of-work';
 import { RecordingCache } from '../../../../../common/testing/recording-cache';
 import { WAREHOUSE_LIST_CACHE_KEY, WAREHOUSE_LIST_TTL_MS } from '../warehouse-cache.policy';
 import { ListWarehouses } from './list-warehouses.use-case';

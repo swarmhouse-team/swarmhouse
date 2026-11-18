@@ -3,14 +3,14 @@ import {
   type ApplicationErrorPresentation,
   type ErrorDetails,
 } from '../../../../common/application/application.error';
-import type { ApplicationErrorCode } from './application-error-code';
+import type { WarehouseApplicationErrorCode } from './warehouse-application-error-code';
 
 /** Warehouse application error. The code set stays in this module. */
-export abstract class ApplicationError extends CommonApplicationError {
-  declare readonly code: ApplicationErrorCode;
+export abstract class WarehouseApplicationError extends CommonApplicationError {
+  declare readonly code: WarehouseApplicationErrorCode;
 
   protected constructor(
-    code: ApplicationErrorCode,
+    code: WarehouseApplicationErrorCode,
     message: string,
     details?: ErrorDetails,
     cause?: unknown,

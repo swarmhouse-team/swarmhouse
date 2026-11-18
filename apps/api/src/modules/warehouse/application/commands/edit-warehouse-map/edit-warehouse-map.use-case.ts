@@ -11,7 +11,7 @@ import {
   WarehouseMapNotFoundError,
 } from '../../errors/application.errors';
 import { restoreStoredWarehouseMap } from '../../mapping/restore-stored-warehouse-map';
-import type { UnitOfWork } from '../../ports/system/unit-of-work';
+import type { WarehouseUnitOfWork } from '../../ports/system/warehouse-unit-of-work';
 import type { WarehouseNotifier } from '../../ports/system/warehouse-notifier';
 import type { EditWarehouseMapInput, EditWarehouseMapResult } from './edit-warehouse-map.types';
 
@@ -28,7 +28,7 @@ interface AppliedEdit {
  */
 export class EditWarehouseMap {
   constructor(
-    private readonly unitOfWork: UnitOfWork,
+    private readonly unitOfWork: WarehouseUnitOfWork,
     private readonly ids: IdGenerator,
     private readonly logger: LoggerPort,
     private readonly notifier: WarehouseNotifier,

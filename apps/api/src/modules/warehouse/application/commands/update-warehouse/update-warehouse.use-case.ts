@@ -5,7 +5,7 @@ import { publishAfterCommit } from '../../../../../common/application/publish-af
 import { Warehouse } from '../../../domain/entities/warehouse';
 import { invalidateWarehouseCache } from '../../cache/invalidate-warehouse-cache';
 import { WarehouseNotFoundError } from '../../errors/application.errors';
-import type { UnitOfWork } from '../../ports/system/unit-of-work';
+import type { WarehouseUnitOfWork } from '../../ports/system/warehouse-unit-of-work';
 import type { WarehouseNotifier } from '../../ports/system/warehouse-notifier';
 import type { UpdateWarehouseInput, UpdateWarehouseResult } from './update-warehouse.types';
 
@@ -15,7 +15,7 @@ import type { UpdateWarehouseInput, UpdateWarehouseResult } from './update-wareh
  */
 export class UpdateWarehouse {
   constructor(
-    private readonly unitOfWork: UnitOfWork,
+    private readonly unitOfWork: WarehouseUnitOfWork,
     private readonly clock: Clock,
     private readonly cache: CachePort,
     private readonly logger: LoggerPort,

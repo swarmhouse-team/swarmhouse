@@ -1,4 +1,4 @@
-export type DomainErrorCode =
+export type WarehouseDomainErrorCode =
   | 'INVALID_ID'
   | 'INVALID_POSITION'
   | 'INVALID_GRID_SIZE'

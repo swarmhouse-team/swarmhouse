@@ -15,7 +15,7 @@ import {
   type WarehouseNotice,
 } from '../../testing/create-recording-notifier';
 import { RecordingCache } from '../../../../../common/testing/recording-cache';
-import { stubUnitOfWork } from '../../testing/stub-unit-of-work';
+import { stubUnitOfWork } from '../../testing/stub-warehouse-unit-of-work';
 import {
   WAREHOUSE_LIST_CACHE_KEY,
   warehouseDetailsCacheKey,

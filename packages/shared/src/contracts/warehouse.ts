@@ -9,13 +9,13 @@ const warehouseNameSchema = z.string().trim().min(1).max(MAX_WAREHOUSE_NAME_LENG
 
 const uuidSchema = z.uuid();
 
-const nonnegativeIntegerSchema = z.number().int().nonnegative();
-const positiveIntegerSchema = z.number().int().positive();
+const nonnegativeIntegerSchema = z.int().nonnegative();
+const positiveIntegerSchema = z.int().positive();
 
 /** Координаты команды. Границы клетки проверяет домен. */
 const warehouseCommandCellSchema = z.strictObject({
-  x: z.number().int(),
-  y: z.number().int(),
+  x: z.int(),
+  y: z.int(),
 });
 
 const addObstacleOperationSchema = z.strictObject({
@@ -174,7 +174,7 @@ export type GetWarehouseResponse = z.infer<typeof getWarehouseResponseSchema>;
 export const listWarehousesResponseSchema = z
   .strictObject({
     items: z.array(warehouseDetailsSchema),
-    total: z.number().int().nonnegative(),
+    total: z.int().nonnegative(),
   })
   .refine((list) => list.total === list.items.length, {
     path: ['total'],

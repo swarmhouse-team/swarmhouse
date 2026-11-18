@@ -1,7 +1,7 @@
-import { DomainError } from './domain.error';
+import { WarehouseDomainError } from './warehouse-domain.error';
 
 /** Position is outside the grid of a specific map. */
-export class PositionOutOfBoundsError extends DomainError {
+export class PositionOutOfBoundsError extends WarehouseDomainError {
   constructor(
     readonly x: number,
     readonly y: number,
@@ -11,7 +11,7 @@ export class PositionOutOfBoundsError extends DomainError {
 }
 
 /** Cell is already occupied by another object. */
-export class CellOccupiedError extends DomainError {
+export class CellOccupiedError extends WarehouseDomainError {
   constructor(
     readonly x: number,
     readonly y: number,
@@ -21,28 +21,28 @@ export class CellOccupiedError extends DomainError {
 }
 
 /** ID is already used by a robot or a station on this map. */
-export class DuplicateObjectIdError extends DomainError {
+export class DuplicateObjectIdError extends WarehouseDomainError {
   constructor(readonly id: string) {
     super('DUPLICATE_OBJECT_ID', 'Object id is already used', { id });
   }
 }
 
 /** Normalized robot name is already used on this map. */
-export class DuplicateRobotNameError extends DomainError {
+export class DuplicateRobotNameError extends WarehouseDomainError {
   constructor(readonly robotName: string) {
     super('DUPLICATE_ROBOT_NAME', 'Robot name is already used', { robotName });
   }
 }
 
 /** Normalized station name is already used on this map. */
-export class DuplicateStationNameError extends DomainError {
+export class DuplicateStationNameError extends WarehouseDomainError {
   constructor(readonly stationName: string) {
     super('DUPLICATE_STATION_NAME', 'Station name is already used', { stationName });
   }
 }
 
 /** Move or remove targets an object that is not on the map. */
-export class MapObjectNotFoundError extends DomainError {
+export class MapObjectNotFoundError extends WarehouseDomainError {
   constructor(readonly objectKind: 'robot' | 'station' | 'obstacle') {
     super('MAP_OBJECT_NOT_FOUND', 'Map object was not found', { objectKind });
   }

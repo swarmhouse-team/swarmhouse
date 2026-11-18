@@ -36,7 +36,7 @@ export type WarehouseSubscribePayload = z.infer<typeof warehouseSubscribePayload
 
 export const warehouseMapEditPayloadSchema = z.strictObject({
   mapId: z.uuid(),
-  expectedVersion: z.number().int().nonnegative(),
+  expectedVersion: z.int().nonnegative(),
   operation: editWarehouseMapOperationSchema,
 });
 
@@ -46,7 +46,7 @@ export type WarehouseMapEditPayload = z.infer<typeof warehouseMapEditPayloadSche
 export const warehouseMapChangedEventSchema = z.strictObject({
   warehouseId: z.uuid(),
   mapId: z.uuid(),
-  version: z.number().int().nonnegative(),
+  version: z.int().nonnegative(),
   operation: editWarehouseMapOperationSchema,
   createdId: z.uuid().optional(),
 });

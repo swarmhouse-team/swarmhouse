@@ -3,14 +3,14 @@ import type { LoggerPort } from '../../../../../common/application/logger.port';
 import { publishAfterCommit } from '../../../../../common/application/publish-after-commit';
 import { invalidateWarehouseCache } from '../../cache/invalidate-warehouse-cache';
 import { WarehouseNotFoundError } from '../../errors/application.errors';
-import type { UnitOfWork } from '../../ports/system/unit-of-work';
+import type { WarehouseUnitOfWork } from '../../ports/system/warehouse-unit-of-work';
 import type { WarehouseNotifier } from '../../ports/system/warehouse-notifier';
 import type { DeleteWarehouseInput } from './delete-warehouse.types';
 
 /** Deletes a warehouse and every map that belongs to it in one unit of work. */
 export class DeleteWarehouse {
   constructor(
-    private readonly unitOfWork: UnitOfWork,
+    private readonly unitOfWork: WarehouseUnitOfWork,
     private readonly cache: CachePort,
     private readonly logger: LoggerPort,
     private readonly notifier: WarehouseNotifier,

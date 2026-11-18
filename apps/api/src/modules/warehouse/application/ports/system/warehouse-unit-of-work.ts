@@ -2,10 +2,10 @@ import type { WarehouseMapRepository } from '../repositories/warehouse-map.repos
 import type { WarehouseRepository } from '../repositories/warehouse.repository';
 
 /**
- * Repositories for a single `UnitOfWork.execute` callback.
+ * Repositories for a single `WarehouseUnitOfWork.execute` callback.
  * They share that transaction and must not be stored or used after the callback returns.
  */
-export interface TransactionContext {
+export interface WarehouseTransactionContext {
   readonly warehouses: WarehouseRepository;
   readonly maps: WarehouseMapRepository;
 }
@@ -28,6 +28,6 @@ export interface TransactionContext {
  * This does not replace the `expectedVersion` check in `WarehouseMapRepository.save`.
  * `saved` inside the callback still does not mean the commit succeeded.
  */
-export interface UnitOfWork {
-  execute<T>(work: (tx: TransactionContext) => Promise<T>): Promise<T>;
+export interface WarehouseUnitOfWork {
+  execute<T>(work: (tx: WarehouseTransactionContext) => Promise<T>): Promise<T>;
 }

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { WarehouseMap, type WarehouseMapSnapshot } from '../../../domain/entities/warehouse-map';
 import { CorruptedMapStateError, WarehouseMapNotFoundError } from '../../errors/application.errors';
 import type { WarehouseMapRepository } from '../../ports/repositories/warehouse-map.repository';
-import { stubMaps } from '../../testing/stub-unit-of-work';
+import { stubMaps } from '../../testing/stub-warehouse-unit-of-work';
 import { GetWarehouseMap } from './get-warehouse-map.use-case';
 
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
