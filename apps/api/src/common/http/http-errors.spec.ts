@@ -2,15 +2,18 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   NotFoundException,
   Post,
   type INestApplication,
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { ExampleRequestDto } from '../../example/example.dto';
+import { ApplicationError } from '../application/application.error';
+import { DomainError } from '../domain/domain.error';
 import { httpProviders } from './http.providers';
 
 @Controller('test')
@@ -28,6 +31,28 @@ class TestController {
   @Get('boom')
   boom(): never {
     throw new Error('connection string: postgresql://user:secret@db');
+  }
+
+  @Get('domain')
+  domain(): never {
+    throw new HiddenNameError();
+  }
+
+  @Get('hidden')
+  hidden(): never {
+    throw new HiddenFailure();
+  }
+}
+
+class HiddenNameError extends DomainError {
+  constructor() {
+    super('INVALID_NAME', 'Invalid name');
+  }
+}
+
+class HiddenFailure extends ApplicationError {
+  constructor() {
+    super('SAMPLE', 'postgres://user:secret@db');
   }
 }
 
@@ -92,5 +117,30 @@ describe('API error format', () => {
 
     expect(response.status).toBe(500);
     expect(response.body).toEqual({ code: 'INTERNAL_ERROR', message: 'Internal server error' });
+  });
+
+  it('DomainError → 422 with its code and message', async () => {
+    const response = await request(app.getHttpServer()).get('/test/domain');
+
+    expect(response.status).toBe(422);
+    expect(response.body).toEqual({ code: 'INVALID_NAME', message: 'Invalid name' });
+  });
+
+  it('ApplicationError without a client status → 500 and the log skips the message', async () => {
+    const logged: unknown[][] = [];
+    const spy = vi.spyOn(Logger.prototype, 'error').mockImplementation((...args: unknown[]) => {
+      logged.push(args);
+    });
+
+    try {
+      const response = await request(app.getHttpServer()).get('/test/hidden');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({ code: 'INTERNAL_ERROR', message: 'Internal server error' });
+      expect(JSON.stringify(logged)).not.toContain('secret');
+      expect(JSON.stringify(logged)).toContain('HiddenFailure');
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

@@ -8,7 +8,6 @@ import {
   Param,
   Patch,
   Post,
-  UseFilters,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -40,7 +39,6 @@ import {
   RenameWarehouseDto,
   WarehousePathParamsDto,
 } from './warehouse-http.dto';
-import { WarehouseHttpExceptionFilter } from './warehouse-http-exception.filter';
 import { toWarehouseMapBody } from './warehouse-map.body';
 
 const NO_ACCESS_CHECK =
@@ -50,7 +48,6 @@ const TEMPORARY_LIST =
   'Temporary stage contract: every stored warehouse is returned, not the warehouses available to one user. There is no pagination. A null date was not recorded; a future UI may render it as an em dash.';
 
 @ApiTags('warehouses')
-@UseFilters(WarehouseHttpExceptionFilter)
 @Controller('warehouses')
 export class WarehousesController {
   constructor(

@@ -1,5 +1,6 @@
 import {
   ApplicationError as CommonApplicationError,
+  type ApplicationErrorPresentation,
   type ErrorDetails,
 } from '../../../../common/application/application.error';
 import type { ApplicationErrorCode } from './application-error-code';
@@ -13,7 +14,8 @@ export abstract class ApplicationError extends CommonApplicationError {
     message: string,
     details?: ErrorDetails,
     cause?: unknown,
+    presentation?: ApplicationErrorPresentation,
   ) {
-    super(code, message, details, cause);
+    super(code, message, details, cause, presentation);
   }
 }

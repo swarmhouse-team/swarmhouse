@@ -22,6 +22,7 @@ import {
 import type { Namespace, Server, Socket } from 'socket.io';
 import { ZodError } from 'zod';
 
+import { mapThrownError } from '../../../../common/http/map-thrown-error';
 import { EditWarehouseMap } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.use-case';
 import { WarehouseNotFoundError } from '../../application/errors/application.errors';
 import type { LoggerPort } from '../../application/ports/system/logger.port';
@@ -38,7 +39,6 @@ import {
 import { WarehouseSubscriptionBook } from '../../infrastructure/realtime/warehouse-subscription.book';
 import { NestjsWarehouseLogger } from '../../infrastructure/system/nestjs-warehouse-logger';
 import { toEditWarehouseMapAckData } from './edit-warehouse-map-ack';
-import { toWarehouseApiError, zodErrorToApiError } from './warehouse-client-error';
 
 /**
  * Socket.IO namespace `/warehouse`.
@@ -117,7 +117,7 @@ export class WarehouseGateway implements OnGatewayInit, OnGatewayDisconnect {
     try {
       warehouseId = normalizeId(parsed.value.warehouseId);
     } catch (error) {
-      return { ok: false, error: toWarehouseApiError(error) };
+      return { ok: false, error: apiErrorFrom(error) };
     }
 
     const room = warehouseRoom(warehouseId);
@@ -197,7 +197,7 @@ export class WarehouseGateway implements OnGatewayInit, OnGatewayDisconnect {
       return { ok: true, value: schema.parse(payload) };
     } catch (error) {
       if (error instanceof ZodError) {
-        return { ok: false, ack: { ok: false, error: zodErrorToApiError(error) } };
+        return { ok: false, ack: { ok: false, error: apiErrorFrom(error) } };
       }
       return {
         ok: false,
@@ -210,7 +210,7 @@ export class WarehouseGateway implements OnGatewayInit, OnGatewayDisconnect {
   }
 
   private commandError(error: unknown): ApiError {
-    const apiError = toWarehouseApiError(error);
+    const apiError = apiErrorFrom(error);
     if (apiError.code === API_ERROR_CODES.INTERNAL_ERROR) {
       this.logger.error('warehouse.realtime.command_failed', {
         errorClass: error instanceof Error ? error.name : 'UnknownError',
@@ -218,4 +218,13 @@ export class WarehouseGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
     return apiError;
   }
+}
+
+function apiErrorFrom(error: unknown): ApiError {
+  return (
+    mapThrownError(error)?.body ?? {
+      code: API_ERROR_CODES.INTERNAL_ERROR,
+      message: 'Internal server error',
+    }
+  );
 }

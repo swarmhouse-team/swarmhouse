@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, Post, UseFilters } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -13,14 +13,12 @@ import type { EditWarehouseMapResponse } from '@robots/shared';
 
 import { EditWarehouseMap } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.use-case';
 import { EditWarehouseMapDto, WarehouseMapPathParamsDto } from './warehouse-http.dto';
-import { WarehouseHttpExceptionFilter } from './warehouse-http-exception.filter';
 import { toWarehouseMapBody } from './warehouse-map.body';
 
 const NO_ACCESS_CHECK =
   'At this stage the endpoint does not check access: any client that can reach the API may call it.';
 
 @ApiTags('warehouse-maps')
-@UseFilters(WarehouseHttpExceptionFilter)
 @Controller('maps')
 export class WarehouseMapsController {
   constructor(private readonly editWarehouseMap: EditWarehouseMap) {}
