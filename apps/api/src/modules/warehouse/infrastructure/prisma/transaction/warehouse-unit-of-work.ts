@@ -19,7 +19,7 @@ type _PrismaClientRunsTransactions = AssertAssignable<PrismaClient, TransactionR
 type _PrismaServiceRunsTransactions = AssertAssignable<PrismaService, TransactionRunner>;
 
 /** One interactive Read Committed transaction. It does not retry or interpret the result. */
-export class PrismaUnitOfWork implements UnitOfWork {
+export class WarehouseUnitOfWork implements UnitOfWork {
   constructor(private readonly db: TransactionRunner) {}
 
   execute<T>(work: (tx: TransactionContext) => Promise<T>): Promise<T> {

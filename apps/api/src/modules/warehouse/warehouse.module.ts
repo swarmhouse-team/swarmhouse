@@ -16,7 +16,7 @@ import { GetWarehouse } from './application/queries/get-warehouse/get-warehouse.
 import { ListWarehouses } from './application/queries/list-warehouses/list-warehouses.use-case';
 import { PrismaWarehouseMapRepository } from './infrastructure/prisma/repositories/prisma-warehouse-map.repository';
 import { PrismaWarehouseRepository } from './infrastructure/prisma/repositories/prisma-warehouse.repository';
-import { PrismaUnitOfWork } from './infrastructure/prisma/transaction/prisma-unit-of-work';
+import { WarehouseUnitOfWork } from './infrastructure/prisma/transaction/warehouse-unit-of-work';
 import { SocketIoWarehouseNotifier } from './infrastructure/realtime/socket-io-warehouse-notifier';
 import { WAREHOUSE_EXISTENCE } from './infrastructure/realtime/warehouse-existence';
 import { WarehouseSubscriptionBook } from './infrastructure/realtime/warehouse-subscription.book';
@@ -30,9 +30,9 @@ import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
   controllers: [WarehousesController, WarehouseMapsController],
   providers: [
     {
-      provide: PrismaUnitOfWork,
+      provide: WarehouseUnitOfWork,
       inject: [PrismaService],
-      useFactory: (prisma: PrismaService) => new PrismaUnitOfWork(prisma),
+      useFactory: (prisma: PrismaService) => new WarehouseUnitOfWork(prisma),
     },
     {
       provide: UuidV7IdGenerator,
@@ -57,9 +57,9 @@ import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
     },
     {
       provide: CreateWarehouse,
-      inject: [PrismaUnitOfWork, UuidV7IdGenerator, SystemClock, CachePort, NestjsLogger],
+      inject: [WarehouseUnitOfWork, UuidV7IdGenerator, SystemClock, CachePort, NestjsLogger],
       useFactory: (
-        unitOfWork: PrismaUnitOfWork,
+        unitOfWork: WarehouseUnitOfWork,
         ids: UuidV7IdGenerator,
         clock: SystemClock,
         cache: CachePort,
@@ -86,13 +86,13 @@ import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
     {
       provide: EditWarehouseMap,
       inject: [
-        PrismaUnitOfWork,
+        WarehouseUnitOfWork,
         UuidV7IdGenerator,
         NestjsLogger,
         SocketIoWarehouseNotifier,
       ],
       useFactory: (
-        unitOfWork: PrismaUnitOfWork,
+        unitOfWork: WarehouseUnitOfWork,
         ids: UuidV7IdGenerator,
         logger: NestjsLogger,
         notifier: SocketIoWarehouseNotifier,
@@ -101,14 +101,14 @@ import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
     {
       provide: UpdateWarehouse,
       inject: [
-        PrismaUnitOfWork,
+        WarehouseUnitOfWork,
         SystemClock,
         CachePort,
         NestjsLogger,
         SocketIoWarehouseNotifier,
       ],
       useFactory: (
-        unitOfWork: PrismaUnitOfWork,
+        unitOfWork: WarehouseUnitOfWork,
         clock: SystemClock,
         cache: CachePort,
         logger: NestjsLogger,
@@ -117,9 +117,9 @@ import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
     },
     {
       provide: DeleteWarehouse,
-      inject: [PrismaUnitOfWork, CachePort, NestjsLogger, SocketIoWarehouseNotifier],
+      inject: [WarehouseUnitOfWork, CachePort, NestjsLogger, SocketIoWarehouseNotifier],
       useFactory: (
-        unitOfWork: PrismaUnitOfWork,
+        unitOfWork: WarehouseUnitOfWork,
         cache: CachePort,
         logger: NestjsLogger,
         notifier: SocketIoWarehouseNotifier,

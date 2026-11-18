@@ -12,7 +12,7 @@ import type { WarehouseNotifier } from '../../../src/modules/warehouse/applicati
 import { WarehouseMap } from '../../../src/modules/warehouse/domain/entities/warehouse-map';
 import { Warehouse } from '../../../src/modules/warehouse/domain/entities/warehouse';
 import { Position } from '../../../src/common/domain/position';
-import { PrismaUnitOfWork } from '../../../src/modules/warehouse/infrastructure/prisma/transaction/prisma-unit-of-work';
+import { WarehouseUnitOfWork } from '../../../src/modules/warehouse/infrastructure/prisma/transaction/warehouse-unit-of-work';
 import { PrismaWarehouseMapRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse-map.repository';
 import { SystemClock } from '../../../src/common/infrastructure/system-clock';
 import { PrismaWarehouseRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse.repository';
@@ -65,9 +65,9 @@ class UnusedCache extends CachePort {
   }
 }
 
-describe('warehouse use cases in PrismaUnitOfWork', () => {
+describe('warehouse use cases in WarehouseUnitOfWork', () => {
   const prisma = () => getTestPrisma();
-  const unitOfWork = () => new PrismaUnitOfWork(prisma());
+  const unitOfWork = () => new WarehouseUnitOfWork(prisma());
   const warehouses = () => new PrismaWarehouseRepository(prisma());
   const maps = () => new PrismaWarehouseMapRepository(prisma());
 

@@ -8,7 +8,7 @@ import type { WarehouseRepository } from '../../../src/modules/warehouse/applica
 import { WarehouseMap } from '../../../src/modules/warehouse/domain/entities/warehouse-map';
 import { Warehouse } from '../../../src/modules/warehouse/domain/entities/warehouse';
 import { Position } from '../../../src/common/domain/position';
-import { PrismaUnitOfWork } from '../../../src/modules/warehouse/infrastructure/prisma/transaction/prisma-unit-of-work';
+import { WarehouseUnitOfWork } from '../../../src/modules/warehouse/infrastructure/prisma/transaction/warehouse-unit-of-work';
 import { PrismaWarehouseMapRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse-map.repository';
 import { PrismaWarehouseRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse.repository';
 import { disconnectTestPrisma, getTestPrisma } from '../support/test-database';
@@ -49,9 +49,9 @@ function gateFor(parties: number) {
   };
 }
 
-describe('PrismaUnitOfWork', () => {
+describe('WarehouseUnitOfWork', () => {
   const prisma = () => getTestPrisma();
-  const unitOfWork = () => new PrismaUnitOfWork(prisma());
+  const unitOfWork = () => new WarehouseUnitOfWork(prisma());
   const warehouses = () => new PrismaWarehouseRepository(prisma());
   const maps = () => new PrismaWarehouseMapRepository(prisma());
 
