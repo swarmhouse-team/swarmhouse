@@ -21,3 +21,11 @@ export { Input } from './components/input';
 export { Label } from './components/label';
 export { Toaster, toast } from './components/toaster';
 export { cn } from './lib/cn';
+export {
+  Heading,
+  headingVariants,
+  type HeadingLevel,
+  type HeadingProps,
+  type HeadingSize,
+} from './components/heading';
+export { Text, textVariants, type TextElement, type TextProps } from './components/text';

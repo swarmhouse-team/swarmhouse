@@ -1,4 +1,4 @@
-# RobotsProject
+# Swarmhouse
 
 Платформа управления роботами на симулируемом складе: 2D-карта, роботы, очередь заданий, диспетчерская в real time. Полное ТЗ — [docs/SPEC.md](docs/SPEC.md).
 
@@ -6,19 +6,18 @@
 
 - **Node.js 22** (версия в [.nvmrc](.nvmrc): `nvm use` / `fnm use`). Рекомендуется свежий 22.x.
 - **pnpm 10** — версия зафиксирована в `packageManager`, ставится через Corepack: `corepack enable`.
-- **Docker** с Docker Compose — для PostgreSQL.
+- **Docker** с Docker Compose — для PostgreSQL и Redis.
 
 ## Быстрый старт
 
 ```bash
 corepack enable        # один раз: включает pnpm нужной версии
 pnpm i                 # зависимости, .env из .env.example, Prisma Client, git-хуки
-docker compose up -d   # PostgreSQL
+docker compose up -d   # PostgreSQL, Redis
 pnpm db:migrate        # миграции
 pnpm dev               # shared (watch) + api + web
 ```
 
-- Фронтенд: http://localhost:3000 — на странице должно быть `health: ok`.
 - API: http://localhost:3001/api, Swagger: http://localhost:3001/api/docs.
 
 ## Структура
@@ -56,12 +55,14 @@ packages/
 | ------------------- | ---------------------------------------------------------------- | --------------- | --------------------------------------- |
 | `NODE_ENV`          | `development`                                                    | api             | Режим работы                            |
 | `DATABASE_URL`      | `postgresql://robots:robots@localhost:5432/robots?schema=public` | api, Prisma CLI | Подключение к PostgreSQL (обязательная) |
+| `REDIS_URL`         | `redis://localhost:6379`                                         | api             | Подключение к Redis (обязательная)      |
 | `API_PORT`          | `3001`                                                           | api             | Порт бэкенда                            |
 | `API_INTERNAL_URL`  | `http://localhost:3001`                                          | web (сервер)    | Куда Next проксирует `/api/*`           |
 | `POSTGRES_USER`     | `robots`                                                         | docker compose  | Пользователь БД                         |
 | `POSTGRES_PASSWORD` | `robots`                                                         | docker compose  | Пароль БД                               |
 | `POSTGRES_DB`       | `robots`                                                         | docker compose  | Имя БД                                  |
 | `POSTGRES_PORT`     | `5432`                                                           | docker compose  | Порт БД на хосте                        |
+| `REDIS_PORT`        | `6379`                                                           | docker compose  | Порт Redis на хосте                     |
 
 Окружение `api` проверяется при старте zod-схемой ([apps/api/src/config/env.ts](apps/api/src/config/env.ts)): с некорректными значениями приложение не запустится. Новую переменную добавляем в схему, в `.env.example` и в эту таблицу.
 

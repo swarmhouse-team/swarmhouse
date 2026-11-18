@@ -8,6 +8,7 @@ export const envSchema = z.object({
   JWT_ACCESS_SECRET: z.string().min(1),
   /** Время жизни access-токена (формат ms: 15m, 1h, ...). */
   JWT_ACCESS_TTL: z.string().min(1).default('15m'),
+  REDIS_URL: z.string().regex(/^rediss?:\/\//, 'должен начинаться с redis:// или rediss://'),
 });
 
 export type Env = z.infer<typeof envSchema>;
