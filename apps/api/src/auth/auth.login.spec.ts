@@ -1,7 +1,7 @@
-import { Controller, Get, type INestApplication } from '@nestjs/common';
+import type { INestApplication } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, Reflector } from '@nestjs/core';
-import { JwtModule, JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { hash } from 'argon2';
 import cookieParser from 'cookie-parser';
@@ -14,7 +14,6 @@ import { PrismaService } from '../prisma/prisma.service';
 
 import { AuthController } from './auth.controller';
 import { AuthGuard } from '../common/auth/auth.guard';
-import { Roles } from '../common/auth/public.decorator';
 import { AuthService } from './auth.service';
 
 const PASSWORD = '123456';
@@ -22,19 +21,8 @@ const USER: User = {
   id: 'user-1',
   email: 'dispatcher@swarmhouse.local',
   name: 'dispatcher',
-  role: 'OWNER',
   passwordHash: '',
 };
-
-/** Тестовый маршрут только для владельца: проверяет работу @Roles в глобальном guard. */
-@Controller('test-roles')
-class OwnerOnlyController {
-  @Get('owner-only')
-  @Roles('OWNER')
-  ownerOnly(): { ok: true } {
-    return { ok: true };
-  }
-}
 
 describe('Аутентификация: HTTP', () => {
   let app: INestApplication;
@@ -85,7 +73,7 @@ describe('Аутентификация: HTTP', () => {
         }),
         JwtModule.register({ secret: 'test-secret', signOptions: { expiresIn: '15m' } }),
       ],
-      controllers: [AuthController, OwnerOnlyController],
+      controllers: [AuthController],
       providers: [
         ...httpProviders,
         AuthService,
@@ -160,27 +148,7 @@ describe('Аутентификация: HTTP', () => {
       id: USER.id,
       email: USER.email,
       name: USER.name,
-      role: 'OWNER',
     });
-  });
-
-  it("роли: OWNER проходит @Roles('OWNER')-маршрут, VIEWER получает 403", async () => {
-    const ownerResponse = await request(app.getHttpServer())
-      .get('/api/test-roles/owner-only')
-      .set('Authorization', `Bearer ${accessToken}`);
-    expect(ownerResponse.status).toBe(200);
-
-    const jwtService = app.get(JwtService);
-    const viewerToken = await jwtService.signAsync({
-      sub: 'user-2',
-      email: 'employee@swarmhouse.local',
-      role: 'VIEWER',
-    });
-    const viewerResponse = await request(app.getHttpServer())
-      .get('/api/test-roles/owner-only')
-      .set('Authorization', `Bearer ${viewerToken}`);
-    expect(viewerResponse.status).toBe(403);
-    expect(viewerResponse.body.code).toBe('FORBIDDEN');
   });
 
   it('refresh: по cookie → новая пара токенов, старая cookie не работает (ротация)', async () => {

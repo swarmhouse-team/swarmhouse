@@ -1,14 +1,8 @@
-enum Role {
-  OWNER
-  VIEWER
-}
-
 model User {
   id           String           @id @default(uuid())
   email        String           @unique
   passwordHash String
   name         String
-  role         Role             @default(VIEWER)
   sessions     RefreshSession[]
 }
 

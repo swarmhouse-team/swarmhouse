@@ -23,8 +23,14 @@ apps/api/src/generated/
 npm-debug.log*
 pnpm-debug.log*
 
+# local manual pages, not for git or production
+apps/api/local/
+
 # editors / OS
 .idea/
 .vscode/*
 !.vscode/extensions.json
 .DS_Store
+
+# Claude Code: локальный конфиг превью dev-сервера
+.claude/launch.json

@@ -6,18 +6,20 @@
 
 - **Node.js 22** (версия в [.nvmrc](.nvmrc): `nvm use` / `fnm use`). Рекомендуется свежий 22.x.
 - **pnpm 10** — версия зафиксирована в `packageManager`, ставится через Corepack: `corepack enable`.
-- **Docker** с Docker Compose — для PostgreSQL и Redis.
+- **Docker** с Docker Compose — для PostgreSQL.
 
 ## Быстрый старт
 
 ```bash
 corepack enable        # один раз: включает pnpm нужной версии
 pnpm i                 # зависимости, .env из .env.example, Prisma Client, git-хуки
-docker compose up -d   # PostgreSQL, Redis
-pnpm db:migrate        # миграции
-pnpm dev               # shared (watch) + api + web
+pnpm db:migrate        # поднимет Postgres (если ещё не запущен) и применит миграции
+pnpm dev               # shared (watch) + api + web; Postgres поднимается сам
 ```
 
+`pnpm dev` и `pnpm db:migrate` сами поднимают Postgres из `docker-compose.yml` (`predev`/`predb:migrate` → `pnpm docker:up`) и ждут, пока контейнер станет healthy — вручную `docker compose up -d` не нужен. Остановить инфраструктуру: `pnpm docker:down`.
+
+- Frontend: http://localhost:3000
 - API: http://localhost:3001/api, Swagger: http://localhost:3001/api/docs.
 
 ## Структура
@@ -33,17 +35,19 @@ packages/
 
 ## Скрипты (из корня)
 
-| Скрипт             | Что делает                                                                 |
-| ------------------ | -------------------------------------------------------------------------- |
-| `pnpm dev`         | Собирает `shared`, затем запускает `shared` (watch), `api` и `web`         |
-| `pnpm build`       | Продакшн-сборка всех пакетов                                               |
-| `pnpm lint`        | ESLint по всему репозиторию + Steiger (правила FSD) для `apps/web`         |
-| `pnpm typecheck`   | `tsc --noEmit` во всех пакетах                                             |
-| `pnpm test`        | Vitest во всех пакетах                                                     |
-| `pnpm format`      | Prettier: исправить форматирование (`format:check` — только проверка)      |
-| `pnpm db:migrate`  | `prisma migrate dev`: применить миграции, создать новую после правок схемы |
-| `pnpm db:generate` | Перегенерировать Prisma Client                                             |
-| `pnpm db:studio`   | Prisma Studio                                                              |
+| Скрипт             | Что делает                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| `pnpm dev`         | Поднимает Postgres (`predev`), собирает `shared`, запускает `shared` (watch), `api` и `web` |
+| `pnpm docker:up`   | `docker compose up -d --wait`: поднять Postgres и дождаться healthy                         |
+| `pnpm docker:down` | `docker compose down`: остановить инфраструктуру                                            |
+| `pnpm build`       | Продакшн-сборка всех пакетов                                                                |
+| `pnpm lint`        | ESLint по всему репозиторию + Steiger (правила FSD) для `apps/web`                          |
+| `pnpm typecheck`   | `tsc --noEmit` во всех пакетах                                                              |
+| `pnpm test`        | Vitest во всех пакетах                                                                      |
+| `pnpm format`      | Prettier: исправить форматирование (`format:check` — только проверка)                       |
+| `pnpm db:migrate`  | `prisma migrate dev`: применить миграции, создать новую после правок схемы                  |
+| `pnpm db:generate` | Перегенерировать Prisma Client                                                              |
+| `pnpm db:studio`   | Prisma Studio                                                                               |
 
 Запуск в одном пакете: `pnpm --filter @robots/api test`, `pnpm --filter @robots/web dev` и т. д.
 
@@ -51,20 +55,24 @@ packages/
 
 Один файл `.env` в корне (не коммитится). Шаблон — [.env.example](.env.example); `pnpm i` копирует его в `.env`, если файла ещё нет.
 
-| Переменная          | По умолчанию                                                     | Кто читает      | Назначение                              |
-| ------------------- | ---------------------------------------------------------------- | --------------- | --------------------------------------- |
-| `NODE_ENV`          | `development`                                                    | api             | Режим работы                            |
-| `DATABASE_URL`      | `postgresql://robots:robots@localhost:5432/robots?schema=public` | api, Prisma CLI | Подключение к PostgreSQL (обязательная) |
-| `REDIS_URL`         | `redis://localhost:6379`                                         | api             | Подключение к Redis (обязательная)      |
-| `API_PORT`          | `3001`                                                           | api             | Порт бэкенда                            |
-| `API_INTERNAL_URL`  | `http://localhost:3001`                                          | web (сервер)    | Куда Next проксирует `/api/*`           |
-| `POSTGRES_USER`     | `robots`                                                         | docker compose  | Пользователь БД                         |
-| `POSTGRES_PASSWORD` | `robots`                                                         | docker compose  | Пароль БД                               |
-| `POSTGRES_DB`       | `robots`                                                         | docker compose  | Имя БД                                  |
-| `POSTGRES_PORT`     | `5432`                                                           | docker compose  | Порт БД на хосте                        |
-| `REDIS_PORT`        | `6379`                                                           | docker compose  | Порт Redis на хосте                     |
+| Переменная                 | По умолчанию                                                     | Кто читает      | Назначение                                                                           |
+| -------------------------- | ---------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------ |
+| `NODE_ENV`                 | `development`                                                    | api             | Режим работы                                                                         |
+| `DATABASE_URL`             | `postgresql://robots:robots@localhost:5432/robots?schema=public` | api, Prisma CLI | Подключение к PostgreSQL (обязательная)                                              |
+| `API_PORT`                 | `3001`                                                           | api             | Порт бэкенда                                                                         |
+| `CACHE_DRIVER`             | нет, обязателен: `memory` или `redis`                            | api             | Какой адаптер кэша создать                                                           |
+| `CACHE_MEMORY_MAX_ENTRIES` | нет, обязателен для `memory`                                     | api             | Лимит записей process-local кэша                                                     |
+| `REDIS_URL`                | нет, обязателен для `redis`                                      | api             | Адрес клиента кэша; health пингует его только в этом режиме. В ошибках не печатается |
+| `CACHE_KEY_PREFIX`         | нет, обязателен для `redis`                                      | api             | Префикс ключей Redis                                                                 |
+| `API_INTERNAL_URL`         | `http://localhost:3001`                                          | web (сервер)    | Куда Next проксирует `/api/*`                                                        |
+| `POSTGRES_USER`            | `robots`                                                         | docker compose  | Пользователь БД                                                                      |
+| `POSTGRES_PASSWORD`        | `robots`                                                         | docker compose  | Пароль БД                                                                            |
+| `POSTGRES_DB`              | `robots`                                                         | docker compose  | Имя БД                                                                               |
+| `POSTGRES_PORT`            | `5432`                                                           | docker compose  | Порт БД на хосте                                                                     |
 
 Окружение `api` проверяется при старте zod-схемой ([apps/api/src/config/env.ts](apps/api/src/config/env.ts)): с некорректными значениями приложение не запустится. Новую переменную добавляем в схему, в `.env.example` и в эту таблицу.
+
+`CACHE_DRIVER=memory` не открывает Redis: `GET /health` не вызывает PING и не содержит поле `redis`. При `redis` health проверяет тот же клиент, которым пользуется кэш. Если повторные подключения этого клиента исчерпаны, процесс нужно перезапустить.
 
 ## Договорённости
 

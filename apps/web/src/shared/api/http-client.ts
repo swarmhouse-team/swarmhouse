@@ -43,7 +43,7 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
     }
     throw new HttpError(0, {
       code: API_ERROR_CODES.NETWORK_ERROR,
-      message: 'Нет соединения с сервером',
+      message: 'Cannot reach the server',
     });
   }
 
@@ -62,7 +62,7 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
   } catch (cause) {
     throw new HttpError(
       response.status,
-      { code: API_ERROR_CODES.UNKNOWN_ERROR, message: 'Сервер вернул некорректный ответ' },
+      { code: API_ERROR_CODES.UNKNOWN_ERROR, message: 'The server returned an invalid response' },
       { cause },
     );
   }
@@ -80,6 +80,6 @@ async function parseApiError(response: Response): Promise<ApiError> {
 
   return {
     code: API_ERROR_CODES.UNKNOWN_ERROR,
-    message: response.statusText || `Ошибка запроса (${response.status})`,
+    message: response.statusText || `Request failed with status ${response.status}`,
   };
 }

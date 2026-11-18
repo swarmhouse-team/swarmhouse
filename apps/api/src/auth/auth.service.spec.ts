@@ -20,7 +20,6 @@ beforeAll(async () => {
     id: 'user-1',
     email: 'dispatcher@swarmhouse.local',
     name: 'dispatcher',
-    role: 'OWNER',
     passwordHash,
   };
 });
@@ -66,7 +65,6 @@ describe('AuthService', () => {
       expect(jwt.verify(result.accessToken)).toMatchObject({
         sub: 'user-1',
         email: user.email,
-        role: 'OWNER',
       });
       expect(result.refreshToken).toMatch(/^session-1\..+$/);
       const storedHash = (sessionCreate.mock.calls[0] as [{ data: { tokenHash: string } }])[0].data
@@ -195,7 +193,7 @@ describe('AuthService', () => {
     it('возвращает профиль без passwordHash', async () => {
       findUnique.mockResolvedValue(user);
       const profile = await service.me('user-1');
-      expect(profile).toEqual({ id: 'user-1', email: user.email, name: user.name, role: 'OWNER' });
+      expect(profile).toEqual({ id: 'user-1', email: user.email, name: user.name });
       expect(profile).not.toHaveProperty('passwordHash');
     });
 

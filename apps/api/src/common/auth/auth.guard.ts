@@ -1,18 +1,16 @@
 import {
   type CanActivate,
   type ExecutionContext,
-  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { UserRole } from '@robots/shared';
 import type { Request } from 'express';
 
 import type { AccessPayload } from '../../auth/auth.service';
 
 import { AuthService } from '../../auth/auth.service';
-import { IS_PUBLIC_KEY, ROLES_KEY } from './public.decorator';
+import { IS_PUBLIC_KEY } from './public.decorator';
 
 /** Глобальный guard: требует валидный access JWT в `Authorization: Bearer`, кроме `@Public()`. */
 @Injectable()
@@ -40,14 +38,6 @@ export class AuthGuard implements CanActivate {
 
     const payload = await this.authService.verifyAccessToken(token);
     (request as Request & { user?: AccessPayload }).user = payload;
-
-    const roles = this.reflector.getAllAndOverride<UserRole[] | undefined>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (roles && !roles.includes(payload.role)) {
-      throw new ForbiddenException('Недостаточно прав');
-    }
     return true;
   }
 }

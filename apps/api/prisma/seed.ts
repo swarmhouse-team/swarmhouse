@@ -8,13 +8,11 @@ const DEV_USERS = [
   {
     email: 'dispatcher@swarmhouse.local',
     name: 'dispatcher',
-    role: 'OWNER',
     password: '123456',
   },
   {
     email: 'employee@swarmhouse.local',
     name: 'user',
-    role: 'VIEWER',
     password: '123456',
   },
 ] as const;
@@ -32,8 +30,8 @@ async function main(): Promise<void> {
       const passwordHash = await hash(user.password);
       await prisma.user.upsert({
         where: { email: user.email },
-        update: { name: user.name, role: user.role, passwordHash },
-        create: { email: user.email, name: user.name, role: user.role, passwordHash },
+        update: { name: user.name, passwordHash },
+        create: { email: user.email, name: user.name, passwordHash },
       });
     }
     console.log(`Сид выполнен: ${DEV_USERS.length} пользователя`);

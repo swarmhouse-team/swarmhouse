@@ -1,0 +1,80 @@
+import { z } from 'zod';
+
+import { apiErrorSchema } from '../api-error';
+import { editWarehouseMapOperationSchema, editWarehouseMapResponseSchema } from './warehouse';
+
+/** Socket.IO namespace for warehouse commands. The client does not choose the room. */
+export const WAREHOUSE_SOCKET_NAMESPACE = '/warehouse';
+
+/** Engine path of the one process Socket.IO server. Nest's HTTP prefix does not apply. */
+export const SOCKET_ENGINE_PATH = '/api/socket.io';
+
+/** Transport frame limit for every Socket.IO namespace in this process. */
+export const SOCKET_MAX_HTTP_BUFFER_BYTES = 16 * 1024;
+
+/** Subscriptions one warehouse socket may hold, including a join that is still in flight. */
+export const WAREHOUSE_SOCKET_MAX_SUBSCRIPTIONS = 20;
+
+/**
+ * Socket.IO events for one warehouse process.
+ * `warehouse.map.edit` repeats the HTTP body: one `operation`, not a list.
+ */
+export const WAREHOUSE_REALTIME_EVENTS = {
+  subscribe: 'warehouse.subscribe',
+  unsubscribe: 'warehouse.unsubscribe',
+  mapEdit: 'warehouse.map.edit',
+  mapChanged: 'warehouse.map.changed',
+  updated: 'warehouse.updated',
+  deleted: 'warehouse.deleted',
+} as const;
+
+export const warehouseSubscribePayloadSchema = z.strictObject({
+  warehouseId: z.uuid(),
+});
+
+export type WarehouseSubscribePayload = z.infer<typeof warehouseSubscribePayloadSchema>;
+
+export const warehouseMapEditPayloadSchema = z.strictObject({
+  mapId: z.uuid(),
+  expectedVersion: z.int().nonnegative(),
+  operation: editWarehouseMapOperationSchema,
+});
+
+export type WarehouseMapEditPayload = z.infer<typeof warehouseMapEditPayloadSchema>;
+
+/** Saved map edit. Subscribers apply `operation` when their version is exactly one behind. */
+export const warehouseMapChangedEventSchema = z.strictObject({
+  warehouseId: z.uuid(),
+  mapId: z.uuid(),
+  version: z.int().nonnegative(),
+  operation: editWarehouseMapOperationSchema,
+  createdId: z.uuid().optional(),
+});
+
+export type WarehouseMapChangedEvent = z.infer<typeof warehouseMapChangedEventSchema>;
+
+export const warehouseUpdatedEventSchema = z.strictObject({
+  warehouseId: z.uuid(),
+});
+
+export type WarehouseUpdatedEvent = z.infer<typeof warehouseUpdatedEventSchema>;
+
+export const warehouseDeletedEventSchema = z.strictObject({
+  warehouseId: z.uuid(),
+});
+
+export type WarehouseDeletedEvent = z.infer<typeof warehouseDeletedEventSchema>;
+
+export const warehouseAckSchema = z.discriminatedUnion('ok', [
+  z.strictObject({ ok: z.literal(true) }),
+  z.strictObject({ ok: z.literal(false), error: apiErrorSchema }),
+]);
+
+export type WarehouseAck = z.infer<typeof warehouseAckSchema>;
+
+export const warehouseMapEditAckSchema = z.discriminatedUnion('ok', [
+  z.strictObject({ ok: z.literal(true), data: editWarehouseMapResponseSchema }),
+  z.strictObject({ ok: z.literal(false), error: apiErrorSchema }),
+]);
+
+export type WarehouseMapEditAck = z.infer<typeof warehouseMapEditAckSchema>;

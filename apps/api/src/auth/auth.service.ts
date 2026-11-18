@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import type { LoginRequest, UserRole } from '@robots/shared';
+import type { LoginRequest } from '@robots/shared';
 import { verify } from 'argon2';
 import { createHash, randomBytes } from 'node:crypto';
 
@@ -12,7 +12,6 @@ export const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export interface AccessPayload {
   sub: string;
   email: string;
-  role: UserRole;
 }
 
 export interface SessionTokens {
@@ -96,7 +95,7 @@ export class AuthService {
   async verifyAccessToken(token: string): Promise<AccessPayload> {
     try {
       const payload = await this.jwtService.verifyAsync<AccessPayload>(token);
-      return { sub: payload.sub, email: payload.email, role: payload.role };
+      return { sub: payload.sub, email: payload.email };
     } catch {
       throw new UnauthorizedException('Недействительный токен');
     }
@@ -115,7 +114,6 @@ export class AuthService {
     const accessToken = await this.jwtService.signAsync({
       sub: user.id,
       email: user.email,
-      role: user.role,
     });
     return { accessToken, refreshToken: `${session.id}.${secret}` };
   }

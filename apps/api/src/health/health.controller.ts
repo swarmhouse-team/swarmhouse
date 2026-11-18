@@ -1,19 +1,16 @@
 import { Controller, Get, Inject, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ApiOkResponse, ApiServiceUnavailableResponse, ApiTags } from '@nestjs/swagger';
 import { healthResponseSchema, type HealthResponse } from '@robots/shared';
-import type { Redis } from 'ioredis';
 import { createZodDto } from 'nestjs-zod';
 
+import { CachePort } from '../cache/application/ports/cache.port';
+import { RedisCache } from '../cache/infrastructure/redis/redis-cache';
 import { Public } from '../common/auth/public.decorator';
 import { PrismaService } from '../prisma/prisma.service';
-import { REDIS_CLIENT } from '../redis/redis.constants';
 
 class HealthResponseDto extends createZodDto(healthResponseSchema) {}
 
-/**
- * Пока Redis недоступен, ioredis держит команды в офлайн-очереди и долго переподключается:
- * без таймаута health-check висел бы вместо быстрого 503.
- */
+/** PING не должен держать health дольше секунды. */
 const REDIS_PING_TIMEOUT_MS = 1000;
 
 @ApiTags('health')
@@ -23,33 +20,39 @@ export class HealthController {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    @Inject(CachePort) private readonly cache: CachePort,
   ) {}
 
+  @Public()
   @Public()
   @Get()
   @ApiOkResponse({ type: HealthResponseDto })
   @ApiServiceUnavailableResponse({ description: 'База данных или Redis недоступны' })
   async check(): Promise<HealthResponse> {
-    const [db, redis] = await Promise.all([
-      this.probe('БД', () => this.prisma.$queryRaw`SELECT 1`),
-      this.probe('Redis', () => withTimeout(this.redis.ping(), REDIS_PING_TIMEOUT_MS)),
-    ]);
+    const redisCache = this.cache instanceof RedisCache ? this.cache : undefined;
+    const probes = [this.probe('БД', () => this.prisma.$queryRaw`SELECT 1`)];
+    if (redisCache) {
+      probes.push(this.probe('Redis', () => withTimeout(redisCache.ping(), REDIS_PING_TIMEOUT_MS)));
+    }
 
-    const unavailable = [!db && 'database', !redis && 'redis'].filter(Boolean);
+    const [db, redis] = await Promise.all(probes);
+    const unavailable = [!db && 'database', redis === false && 'redis'].filter(Boolean);
     if (unavailable.length > 0) {
       throw new ServiceUnavailableException(`Unavailable: ${unavailable.join(', ')}`);
     }
 
-    return { status: 'ok', db: 'up', redis: 'up' };
+    if (redisCache) {
+      return { status: 'ok', db: 'up', redis: 'up' };
+    }
+    return { status: 'ok', db: 'up' };
   }
 
   private async probe(name: string, check: () => Promise<unknown>): Promise<boolean> {
     try {
       await check();
       return true;
-    } catch (error) {
-      this.logger.error(`Проверка ${name} не прошла`, error instanceof Error ? error.stack : error);
+    } catch {
+      this.logger.error(`Проверка ${name} не прошла`);
       return false;
     }
   }

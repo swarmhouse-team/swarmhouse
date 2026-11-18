@@ -15,17 +15,11 @@ export const loginResponseSchema = z.object({
 
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
 
-/** Роли пользователя: владелец редактирует склад и управляет симуляцией, наблюдатель смотрит. */
-export const userRoleSchema = z.enum(['OWNER', 'VIEWER']);
-
-export type UserRole = z.infer<typeof userRoleSchema>;
-
 /** Профиль текущего пользователя (`GET /auth/me`). */
 export const meResponseSchema = z.object({
   id: z.string().min(1),
   email: z.email(),
   name: z.string(),
-  role: userRoleSchema,
 });
 
 export type MeResponse = z.infer<typeof meResponseSchema>;
