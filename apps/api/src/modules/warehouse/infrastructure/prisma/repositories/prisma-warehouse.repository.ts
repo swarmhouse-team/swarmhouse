@@ -1,3 +1,4 @@
+import type { PrismaDb } from '../../../../../common/infrastructure/prisma-db';
 import { Warehouse } from '../../../domain/entities/warehouse';
 import type {
   DeleteWarehouseResult,
@@ -5,7 +6,6 @@ import type {
   StoredWarehouse,
   WarehouseRepository,
 } from '../../../application/ports/repositories/warehouse.repository';
-import type { PrismaDb } from '../prisma-db';
 
 export const warehouseListOrder = [
   { createdAt: { sort: 'desc', nulls: 'last' } },

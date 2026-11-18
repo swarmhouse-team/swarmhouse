@@ -1,5 +1,5 @@
-import type { Prisma, PrismaClient } from '../../../../generated/prisma/client';
-import type { PrismaService } from '../../../../prisma/prisma.service';
+import type { Prisma, PrismaClient } from '../../generated/prisma/client';
+import type { PrismaService } from '../../prisma/prisma.service';
 
 /** Client methods shared by `PrismaClient` and an interactive transaction. */
 export type PrismaDb = Prisma.TransactionClient;

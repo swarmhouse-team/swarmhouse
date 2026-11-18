@@ -1,3 +1,4 @@
+import type { PrismaDb } from '../../../../../common/infrastructure/prisma-db';
 import type { Prisma } from '../../../../../generated/prisma/client';
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import type {
@@ -6,7 +7,6 @@ import type {
   WarehouseMapRepository,
 } from '../../../application/ports/repositories/warehouse-map.repository';
 import { parseMapContent, toMapContent } from '../mapping/map-content.schema';
-import type { PrismaDb } from '../prisma-db';
 
 /** Stores one map row. It does not restore the aggregate or open a transaction. */
 export class PrismaWarehouseMapRepository implements WarehouseMapRepository {
