@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { StationType } from '../../domain/enums/station-type';
 import { WarehouseMap, type WarehouseMapSnapshot } from '../../domain/entities/warehouse-map';
 import type { WarehouseMapRestoreInput } from './warehouse-map-restore-input';
 import {
@@ -38,7 +37,7 @@ function filledSnapshot(): WarehouseMapSnapshot {
   const map = WarehouseMap.create(MAP_ID, WAREHOUSE_ID);
   map.addObstacle(Position.create(1, 1));
   map.placeRobot(ROBOT_ID, 'Robot', Position.create(2, 2));
-  map.placeStation(STATION_ID, 'Receiving', StationType.Receiving, Position.create(3, 3));
+  map.placeStation(STATION_ID, 'Receiving', Position.create(3, 3));
   return map.snapshot();
 }
 
@@ -85,28 +84,6 @@ describe('restoreWarehouseMap', () => {
         reason: 'GRID_SIZE_MISMATCH',
       });
       expect((error as CorruptedMapStateError).cause).toBeUndefined();
-    }
-  });
-
-  it('rejects an unknown station type', () => {
-    const source = filledSnapshot();
-    const station = source.stations[0];
-    if (!station) {
-      throw new Error('Station is missing');
-    }
-    const input: WarehouseMapRestoreInput = {
-      ...source,
-      stations: [{ ...station, type: 'packing' }],
-    };
-
-    expect(() => restoreWarehouseMap(input)).toThrow(CorruptedMapStateError);
-    try {
-      restoreWarehouseMap(input);
-    } catch (error) {
-      expect((error as CorruptedMapStateError).details).toEqual({
-        mapId: MAP_ID,
-        reason: 'UNKNOWN_STATION_TYPE',
-      });
     }
   });
 
@@ -173,7 +150,6 @@ describe('restoreWarehouseMap', () => {
     duplicate.stations.push({
       id: ROBOT_ID,
       name: 'Other',
-      type: StationType.Issuing,
       x: 4,
       y: 4,
     });
@@ -183,7 +159,6 @@ describe('restoreWarehouseMap', () => {
     sameName.stations.push({
       id: STATION_2_ID,
       name: 'receiving',
-      type: StationType.Issuing,
       x: 5,
       y: 5,
     });

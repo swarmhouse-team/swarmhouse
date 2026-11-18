@@ -1,3 +1,5 @@
+import type { EditWarehouseMapOperation } from '@robots/shared';
+
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { normalizeId } from '../../../domain/vo/id';
 import { Position } from '../../../domain/vo/position';
@@ -11,11 +13,7 @@ import type { IdGenerator } from '../../ports/system/id-generator';
 import type { LoggerPort } from '../../ports/system/logger.port';
 import type { UnitOfWork } from '../../ports/system/unit-of-work';
 import type { WarehouseNotifier } from '../../ports/system/warehouse-notifier';
-import type {
-  EditWarehouseMapInput,
-  EditWarehouseMapResult,
-  MapOperation,
-} from './edit-warehouse-map.types';
+import type { EditWarehouseMapInput, EditWarehouseMapResult } from './edit-warehouse-map.types';
 
 interface AppliedEdit {
   changed: boolean;
@@ -110,7 +108,7 @@ export class EditWarehouseMap {
     return result;
   }
 
-  private apply(map: WarehouseMap, operation: MapOperation): AppliedEdit {
+  private apply(map: WarehouseMap, operation: EditWarehouseMapOperation): AppliedEdit {
     switch (operation.type) {
       case 'addObstacle':
         map.addObstacle(Position.create(operation.position.x, operation.position.y));
@@ -156,11 +154,11 @@ export class EditWarehouseMap {
 
   private placeStation(
     map: WarehouseMap,
-    operation: Extract<MapOperation, { type: 'placeStation' }>,
+    operation: Extract<EditWarehouseMapOperation, { type: 'placeStation' }>,
   ): AppliedEdit {
     const position = Position.create(operation.position.x, operation.position.y);
     const id = this.ids.next();
-    map.placeStation(id, operation.name, operation.stationType, position);
+    map.placeStation(id, operation.name, position);
     return { changed: true, createdId: id };
   }
 
@@ -213,7 +211,7 @@ function assertNever(value: never): never {
   throw new Error(`Unexpected operation: ${JSON.stringify(value)}`);
 }
 
-function publishedOperation(operation: MapOperation): MapOperation {
+function publishedOperation(operation: EditWarehouseMapOperation): EditWarehouseMapOperation {
   switch (operation.type) {
     case 'moveRobot':
     case 'removeRobot':

@@ -7,7 +7,6 @@ import { GetWarehouseMap } from '../../../src/modules/warehouse/application/quer
 import { CorruptedMapStateError } from '../../../src/modules/warehouse/application/errors/application.errors';
 import { WarehouseMap } from '../../../src/modules/warehouse/domain/entities/warehouse-map';
 import { Warehouse } from '../../../src/modules/warehouse/domain/entities/warehouse';
-import { StationType } from '../../../src/modules/warehouse/domain/enums/station-type';
 import { Position } from '../../../src/modules/warehouse/domain/vo/position';
 import { PrismaWarehouseMapRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse-map.repository';
 import { PrismaWarehouseRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse.repository';
@@ -27,9 +26,9 @@ function filledMap(mapId = MAP_ID, warehouseId = WAREHOUSE_ID): WarehouseMap {
   const map = WarehouseMap.create(mapId, warehouseId);
   map.addObstacle(Position.create(1, 1));
   map.placeRobot(ROBOT_ID, 'Robot', Position.create(2, 2));
-  map.placeStation(RECEIVING_ID, 'Receiving', StationType.Receiving, Position.create(3, 3));
-  map.placeStation(ISSUING_ID, 'Issuing', StationType.Issuing, Position.create(4, 4));
-  map.placeStation(INTERMEDIATE_ID, 'Buffer', StationType.Intermediate, Position.create(5, 5));
+  map.placeStation(RECEIVING_ID, 'Receiving', Position.create(3, 3));
+  map.placeStation(ISSUING_ID, 'Issuing', Position.create(4, 4));
+  map.placeStation(INTERMEDIATE_ID, 'Buffer', Position.create(5, 5));
   return map;
 }
 

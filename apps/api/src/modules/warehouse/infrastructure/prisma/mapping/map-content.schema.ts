@@ -20,7 +20,7 @@ const mapContentSchema = z.object({
   height: z.number(),
   obstacles: z.array(coordinates),
   robots: z.array(namedObject),
-  stations: z.array(namedObject.extend({ type: z.string() })),
+  stations: z.array(namedObject),
 });
 
 /** Writes a map snapshot into the stored JSON content. Columns keep id and warehouseId. */
@@ -38,7 +38,6 @@ export function toMapContent(snapshot: WarehouseMapSnapshot): Prisma.InputJsonOb
     stations: snapshot.stations.map((station) => ({
       id: station.id,
       name: station.name,
-      type: station.type,
       x: station.x,
       y: station.y,
     })),
@@ -71,7 +70,6 @@ export function parseMapContent(
     stations: parsed.data.stations.map((station) => ({
       id: station.id,
       name: station.name,
-      type: station.type,
       x: station.x,
       y: station.y,
     })),

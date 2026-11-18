@@ -30,10 +30,6 @@ const warehouseCommandCellSchema = z.strictObject({
   y: z.number(),
 });
 
-export const warehouseStationTypeSchema = z.enum(['receiving', 'issuing', 'intermediate']);
-
-export type WarehouseStationType = z.infer<typeof warehouseStationTypeSchema>;
-
 const addObstacleOperationSchema = z.strictObject({
   type: z.literal('addObstacle'),
   position: warehouseCommandCellSchema,
@@ -70,7 +66,6 @@ const removeRobotOperationSchema = z.strictObject({
 const placeStationOperationSchema = z.strictObject({
   type: z.literal('placeStation'),
   name: z.string(),
-  stationType: warehouseStationTypeSchema,
   position: warehouseCommandCellSchema,
 });
 
@@ -154,7 +149,6 @@ export const warehouseMapBodySchema = z.strictObject({
     z.strictObject({
       id: uuidTextSchema,
       name: z.string(),
-      type: warehouseStationTypeSchema,
       x: nonnegativeIntegerSchema,
       y: nonnegativeIntegerSchema,
     }),

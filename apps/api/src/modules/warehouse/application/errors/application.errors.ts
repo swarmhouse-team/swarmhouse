@@ -2,7 +2,6 @@ import { ApplicationError } from './application.error';
 
 export type CorruptedMapReason =
   | 'GRID_SIZE_MISMATCH'
-  | 'UNKNOWN_STATION_TYPE'
   | 'DENORMALIZED_NAME'
   | 'DOMAIN_INVARIANT'
   | 'INVALID_STORED_FORMAT';

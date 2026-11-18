@@ -42,14 +42,14 @@ describe('toWarehouseMapBody', () => {
     expect(warehouseMapBodySchema.parse(body)).toEqual(body);
   });
 
-  it('puts an obstacle, a robot, and every station type into flat fields', () => {
+  it('puts an obstacle, a robot, and stations into flat fields', () => {
     const source = snapshot({
       obstacles: [{ x: 2, y: 3 }],
       robots: [{ id: ROBOT_ID, name: 'loader', x: 1, y: 1 }],
       stations: [
-        { id: RECEIVING_ID, name: 'receiving', type: 'receiving', x: 0, y: 1 },
-        { id: ISSUING_ID, name: 'issuing', type: 'issuing', x: 4, y: 5 },
-        { id: INTERMEDIATE_ID, name: 'intermediate', type: 'intermediate', x: 6, y: 7 },
+        { id: RECEIVING_ID, name: 'receiving', x: 0, y: 1 },
+        { id: ISSUING_ID, name: 'issuing', x: 4, y: 5 },
+        { id: INTERMEDIATE_ID, name: 'intermediate', x: 6, y: 7 },
       ],
     });
     const before = structuredClone(source);
@@ -64,9 +64,9 @@ describe('toWarehouseMapBody', () => {
       obstacles: [{ x: 2, y: 3 }],
       robots: [{ id: ROBOT_ID, name: 'loader', x: 1, y: 1 }],
       stations: [
-        { id: RECEIVING_ID, name: 'receiving', type: 'receiving', x: 0, y: 1 },
-        { id: ISSUING_ID, name: 'issuing', type: 'issuing', x: 4, y: 5 },
-        { id: INTERMEDIATE_ID, name: 'intermediate', type: 'intermediate', x: 6, y: 7 },
+        { id: RECEIVING_ID, name: 'receiving', x: 0, y: 1 },
+        { id: ISSUING_ID, name: 'issuing', x: 4, y: 5 },
+        { id: INTERMEDIATE_ID, name: 'intermediate', x: 6, y: 7 },
       ],
     });
     expect(JSON.stringify(body)).not.toContain('position');
@@ -75,7 +75,7 @@ describe('toWarehouseMapBody', () => {
 
     body.robots[0]!.name = 'changed';
     body.obstacles.push({ x: 9, y: 9 });
-    body.stations[0]!.type = 'issuing';
+    body.stations[0]!.name = 'changed';
     expect(source).toEqual(before);
   });
 });

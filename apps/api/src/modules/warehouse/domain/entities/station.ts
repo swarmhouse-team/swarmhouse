@@ -1,4 +1,3 @@
-import type { StationType } from '../enums/station-type';
 import { normalizeId } from '../vo/id';
 import { Name } from '../vo/name';
 import { Position } from '../vo/position';
@@ -7,22 +6,20 @@ import { Position } from '../vo/position';
 export class Station {
   readonly id: string;
   readonly name: Name;
-  readonly type: StationType;
   readonly position: Position;
 
-  private constructor(id: string, name: Name, type: StationType, position: Position) {
+  private constructor(id: string, name: Name, position: Position) {
     this.id = id;
     this.name = name;
-    this.type = type;
     this.position = position;
     Object.freeze(this);
   }
 
-  static create(id: string, name: string, type: StationType, position: Position): Station {
-    return new Station(normalizeId(id), Name.create(name), type, position);
+  static create(id: string, name: string, position: Position): Station {
+    return new Station(normalizeId(id), Name.create(name), position);
   }
 
   withPosition(position: Position): Station {
-    return new Station(this.id, this.name, this.type, position);
+    return new Station(this.id, this.name, position);
   }
 }

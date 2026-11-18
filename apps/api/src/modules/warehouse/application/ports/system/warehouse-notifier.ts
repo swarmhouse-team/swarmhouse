@@ -1,11 +1,11 @@
-import type { MapOperation } from '../../commands/edit-warehouse-map/edit-warehouse-map.types';
+import type { EditWarehouseMapOperation } from '@robots/shared';
 
 /** Published after a successful commit. The adapter must not throw. */
 export interface WarehouseMapChangedNotice {
   warehouseId: string;
   mapId: string;
   version: number;
-  operation: MapOperation;
+  operation: EditWarehouseMapOperation;
   createdId?: string;
 }
 

@@ -8,7 +8,6 @@ import {
   PositionOutOfBoundsError,
 } from '../errors/map.errors';
 import { InvalidPositionError } from '../errors/value.errors';
-import type { StationType } from '../enums/station-type';
 import { GridSize } from '../vo/grid-size';
 import { normalizeId } from '../vo/id';
 import { Position } from '../vo/position';
@@ -30,7 +29,6 @@ interface RobotSnapshot {
 export interface StationSnapshot {
   id: string;
   name: string;
-  type: StationType;
   x: number;
   y: number;
 }
@@ -96,7 +94,6 @@ export class WarehouseMap {
       stations: this.#stations.map((station) => ({
         id: station.id,
         name: station.name.value,
-        type: station.type,
         x: station.position.x,
         y: station.position.y,
       })),
@@ -130,9 +127,9 @@ export class WarehouseMap {
     this.#robots.push(robot);
   }
 
-  placeStation(id: string, name: string, type: StationType, position: Position): void {
+  placeStation(id: string, name: string, position: Position): void {
     this.requirePosition(position);
-    const station = Station.create(id, name, type, position);
+    const station = Station.create(id, name, position);
     this.assertInside(position);
     this.assertFree(position);
     this.assertObjectIdAvailable(station.id);

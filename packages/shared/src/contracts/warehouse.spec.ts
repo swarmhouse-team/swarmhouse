@@ -117,7 +117,6 @@ describe('map operations', () => {
       operation: {
         type: 'placeStation',
         name: 'dock',
-        stationType: 'receiving',
         position: { x: 0, y: 1 },
       },
     },
@@ -135,11 +134,11 @@ describe('map operations', () => {
     expect(editWarehouseMapRequestSchema.parse(request)).toEqual(request);
   });
 
-  it('rejects a missing field, an unknown type, an invalid UUID, and stationType', () => {
+  it('rejects a missing field, an unknown operation, an invalid UUID, and stationType', () => {
     expect(
       editWarehouseMapRequestSchema.safeParse({
         expectedVersion: 0,
-        operation: { type: 'placeStation', name: 'dock', position: { x: 1, y: 1 } },
+        operation: { type: 'placeStation', position: { x: 1, y: 1 } },
       }).success,
     ).toBe(false);
     expect(
@@ -200,7 +199,7 @@ describe('warehouse responses', () => {
       ...emptyMap,
       obstacles: [{ x: 2, y: 3 }],
       robots: [{ id: UUID_V4, name: 'loader', x: 1, y: 1 }],
-      stations: [{ id: UUID_V1, name: 'dock', type: 'issuing', x: 4, y: 5 }],
+      stations: [{ id: UUID_V1, name: 'dock', x: 4, y: 5 }],
     };
 
     expect(warehouseMapBodySchema.parse(map)).toEqual(map);

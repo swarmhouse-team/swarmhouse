@@ -1,5 +1,4 @@
-import { StationType } from '../../domain/enums/station-type';
-import { WarehouseMap, type StationSnapshot } from '../../domain/entities/warehouse-map';
+import { WarehouseMap } from '../../domain/entities/warehouse-map';
 import { DomainError } from '../../domain/errors/domain.error';
 import { Position } from '../../domain/vo/position';
 import { WAREHOUSE_MAP_HEIGHT, WAREHOUSE_MAP_WIDTH } from '../../domain/constants';
@@ -10,20 +9,6 @@ import type { WarehouseMapRestoreInput } from './warehouse-map-restore-input';
 export function restoreWarehouseMap(input: WarehouseMapRestoreInput): WarehouseMap {
   if (input.width !== WAREHOUSE_MAP_WIDTH || input.height !== WAREHOUSE_MAP_HEIGHT) {
     throw new CorruptedMapStateError(input.id, 'GRID_SIZE_MISMATCH');
-  }
-
-  const stations: StationSnapshot[] = [];
-  for (const station of input.stations) {
-    if (!isStationType(station.type)) {
-      throw new CorruptedMapStateError(input.id, 'UNKNOWN_STATION_TYPE');
-    }
-    stations.push({
-      id: station.id,
-      name: station.name,
-      type: station.type,
-      x: station.x,
-      y: station.y,
-    });
   }
 
   for (const named of [...input.robots, ...input.stations]) {
@@ -40,13 +25,8 @@ export function restoreWarehouseMap(input: WarehouseMapRestoreInput): WarehouseM
     for (const robot of input.robots) {
       map.placeRobot(robot.id, robot.name, Position.create(robot.x, robot.y));
     }
-    for (const station of stations) {
-      map.placeStation(
-        station.id,
-        station.name,
-        station.type,
-        Position.create(station.x, station.y),
-      );
+    for (const station of input.stations) {
+      map.placeStation(station.id, station.name, Position.create(station.x, station.y));
     }
     return map;
   } catch (error) {
@@ -55,12 +35,4 @@ export function restoreWarehouseMap(input: WarehouseMapRestoreInput): WarehouseM
     }
     throw error;
   }
-}
-
-function isStationType(value: string): value is StationType {
-  return (
-    value === StationType.Receiving ||
-    value === StationType.Issuing ||
-    value === StationType.Intermediate
-  );
 }

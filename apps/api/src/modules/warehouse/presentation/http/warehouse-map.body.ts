@@ -23,7 +23,6 @@ export function toWarehouseMapBody(
     stations: snapshot.stations.map((station) => ({
       id: station.id,
       name: station.name,
-      type: station.type,
       x: station.x,
       y: station.y,
     })),
