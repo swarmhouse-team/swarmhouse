@@ -2,32 +2,20 @@ import { z } from 'zod';
 
 import { API_ERROR_CODES, apiErrorSchema } from '../api-error';
 
-const UUID_TEXT = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-const NIL_UUID = '00000000-0000-0000-0000-000000000000';
-const MAX_UUID = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+/** Совпадает с доменным `MAX_NAME_LENGTH`. Длина считается после trim. */
+const MAX_WAREHOUSE_NAME_LENGTH = 100;
 
-/**
- * Та же текстовая форма, что у доменного `assertId`: любая версия UUID,
- * nil и max отклоняются. Регистр не меняется.
- */
-export const uuidTextSchema = z.string().refine((value) => {
-  if (!UUID_TEXT.test(value)) {
-    return false;
-  }
+const warehouseNameSchema = z.string().trim().min(1).max(MAX_WAREHOUSE_NAME_LENGTH);
 
-  const canonical = value.toLowerCase();
-  return canonical !== NIL_UUID && canonical !== MAX_UUID;
-});
-
-export type UuidText = z.infer<typeof uuidTextSchema>;
+const uuidSchema = z.uuid();
 
 const nonnegativeIntegerSchema = z.number().int().nonnegative();
 const positiveIntegerSchema = z.number().int().positive();
 
-/** Координаты команды. Целочисленность и границы проверяет домен. */
+/** Координаты команды. Границы клетки проверяет домен. */
 const warehouseCommandCellSchema = z.strictObject({
-  x: z.number(),
-  y: z.number(),
+  x: z.number().int(),
+  y: z.number().int(),
 });
 
 const addObstacleOperationSchema = z.strictObject({
@@ -48,36 +36,36 @@ const removeObstacleOperationSchema = z.strictObject({
 
 const placeRobotOperationSchema = z.strictObject({
   type: z.literal('placeRobot'),
-  name: z.string(),
+  name: warehouseNameSchema,
   position: warehouseCommandCellSchema,
 });
 
 const moveRobotOperationSchema = z.strictObject({
   type: z.literal('moveRobot'),
-  robotId: uuidTextSchema,
+  robotId: uuidSchema,
   position: warehouseCommandCellSchema,
 });
 
 const removeRobotOperationSchema = z.strictObject({
   type: z.literal('removeRobot'),
-  robotId: uuidTextSchema,
+  robotId: uuidSchema,
 });
 
 const placeStationOperationSchema = z.strictObject({
   type: z.literal('placeStation'),
-  name: z.string(),
+  name: warehouseNameSchema,
   position: warehouseCommandCellSchema,
 });
 
 const moveStationOperationSchema = z.strictObject({
   type: z.literal('moveStation'),
-  stationId: uuidTextSchema,
+  stationId: uuidSchema,
   position: warehouseCommandCellSchema,
 });
 
 const removeStationOperationSchema = z.strictObject({
   type: z.literal('removeStation'),
-  stationId: uuidTextSchema,
+  stationId: uuidSchema,
 });
 
 export const editWarehouseMapOperationSchema = z.discriminatedUnion('type', [
@@ -95,25 +83,25 @@ export const editWarehouseMapOperationSchema = z.discriminatedUnion('type', [
 export type EditWarehouseMapOperation = z.infer<typeof editWarehouseMapOperationSchema>;
 
 export const createWarehouseRequestSchema = z.strictObject({
-  name: z.string(),
+  name: warehouseNameSchema,
 });
 
 export type CreateWarehouseRequest = z.infer<typeof createWarehouseRequestSchema>;
 
 export const renameWarehouseRequestSchema = z.strictObject({
-  name: z.string(),
+  name: warehouseNameSchema,
 });
 
 export type RenameWarehouseRequest = z.infer<typeof renameWarehouseRequestSchema>;
 
 export const warehousePathParamsSchema = z.strictObject({
-  warehouseId: uuidTextSchema,
+  warehouseId: uuidSchema,
 });
 
 export type WarehousePathParams = z.infer<typeof warehousePathParamsSchema>;
 
 export const warehouseMapPathParamsSchema = z.strictObject({
-  mapId: uuidTextSchema,
+  mapId: uuidSchema,
 });
 
 export type WarehouseMapPathParams = z.infer<typeof warehouseMapPathParamsSchema>;
@@ -131,24 +119,24 @@ const warehouseMapCellSchema = z.strictObject({
 });
 
 export const warehouseMapBodySchema = z.strictObject({
-  mapId: uuidTextSchema,
-  warehouseId: uuidTextSchema,
+  mapId: uuidSchema,
+  warehouseId: uuidSchema,
   version: nonnegativeIntegerSchema,
   width: positiveIntegerSchema,
   height: positiveIntegerSchema,
   obstacles: z.array(warehouseMapCellSchema),
   robots: z.array(
     z.strictObject({
-      id: uuidTextSchema,
-      name: z.string(),
+      id: uuidSchema,
+      name: warehouseNameSchema,
       x: nonnegativeIntegerSchema,
       y: nonnegativeIntegerSchema,
     }),
   ),
   stations: z.array(
     z.strictObject({
-      id: uuidTextSchema,
-      name: z.string(),
+      id: uuidSchema,
+      name: warehouseNameSchema,
       x: nonnegativeIntegerSchema,
       y: nonnegativeIntegerSchema,
     }),
@@ -167,8 +155,8 @@ export type GetWarehouseMapResponse = z.infer<typeof getWarehouseMapResponseSche
  * `null` means the instant was not recorded. It is not replaced with a guessed time.
  */
 export const warehouseDetailsSchema = z.strictObject({
-  warehouseId: uuidTextSchema,
-  name: z.string(),
+  warehouseId: uuidSchema,
+  name: warehouseNameSchema,
   createdAt: z.iso.datetime().nullable(),
   updatedAt: z.iso.datetime().nullable(),
 });
@@ -196,9 +184,9 @@ export const listWarehousesResponseSchema = z
 export type ListWarehousesResponse = z.infer<typeof listWarehousesResponseSchema>;
 
 export const createWarehouseResponseSchema = z.strictObject({
-  warehouseId: uuidTextSchema,
-  name: z.string(),
-  mapId: uuidTextSchema,
+  warehouseId: uuidSchema,
+  name: warehouseNameSchema,
+  mapId: uuidSchema,
   version: nonnegativeIntegerSchema,
 });
 
@@ -209,8 +197,8 @@ export type CreateWarehouseResponse = z.infer<typeof createWarehouseResponseSche
  * A later concurrent rename is allowed.
  */
 export const renameWarehouseResponseSchema = z.strictObject({
-  warehouseId: uuidTextSchema,
-  name: z.string(),
+  warehouseId: uuidSchema,
+  name: warehouseNameSchema,
 });
 
 export type RenameWarehouseResponse = z.infer<typeof renameWarehouseResponseSchema>;
@@ -223,7 +211,7 @@ export type RenameWarehouseResponse = z.infer<typeof renameWarehouseResponseSche
  */
 export const editWarehouseMapResponseSchema = z.strictObject({
   changed: z.boolean(),
-  createdId: uuidTextSchema.optional(),
+  createdId: uuidSchema.optional(),
   map: warehouseMapBodySchema,
 });
 

@@ -7,12 +7,12 @@ import {
   editWarehouseMapResponseSchema,
   mapVersionConflictErrorSchema,
   renameWarehouseResponseSchema,
-  uuidTextSchema,
   warehouseMapBodySchema,
   type CreateWarehouseResponse,
 } from '@robots/shared';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import { httpProviders } from '../../../src/common/http/http.providers';
 import { PrismaService } from '../../../src/prisma/prisma.service';
@@ -57,8 +57,8 @@ describe('warehouse HTTP on the test database', () => {
     expect(response.status).toBe(201);
     const created = createWarehouseResponseSchema.parse(response.body);
     expect(created).toMatchObject({ name: 'dock', version: 0 });
-    expect(uuidTextSchema.parse(created.warehouseId)).toBe(created.warehouseId);
-    expect(uuidTextSchema.parse(created.mapId)).toBe(created.mapId);
+    expect(z.uuid().parse(created.warehouseId)).toBe(created.warehouseId);
+    expect(z.uuid().parse(created.mapId)).toBe(created.mapId);
 
     const warehouse = await getTestPrisma().warehouseRecord.findUnique({
       where: { id: created.warehouseId },
@@ -126,7 +126,7 @@ describe('warehouse HTTP on the test database', () => {
     const edited = editWarehouseMapResponseSchema.parse(response.body);
     expect(edited.changed).toBe(true);
     expect(edited.createdId).toBeDefined();
-    expect(uuidTextSchema.parse(edited.createdId)).toBe(edited.createdId);
+    expect(z.uuid().parse(edited.createdId)).toBe(edited.createdId);
     expect(edited.map).toMatchObject({
       mapId: created.mapId,
       warehouseId: created.warehouseId,

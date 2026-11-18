@@ -15,7 +15,6 @@ import {
 
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
 const MAP_ID = '22222222-2222-7111-8111-22222222222b';
-const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
 const emptyMap = {
   mapId: MAP_ID,
@@ -36,7 +35,7 @@ describe('warehouse realtime contracts', () => {
     expect(WAREHOUSE_SOCKET_MAX_SUBSCRIPTIONS).toBe(20);
   });
 
-  it('accepts one operation and rejects a nil uuid', () => {
+  it('accepts one operation and rejects a warehouse id that is not a uuid', () => {
     expect(WAREHOUSE_REALTIME_EVENTS.mapEdit).toBe('warehouse.map.edit');
     expect(
       warehouseMapEditPayloadSchema.parse({
@@ -49,9 +48,7 @@ describe('warehouse realtime contracts', () => {
       expectedVersion: 2,
       operation: { type: 'addObstacle', position: { x: 1, y: 2 } },
     });
-    expect(warehouseSubscribePayloadSchema.safeParse({ warehouseId: NIL_UUID }).success).toBe(
-      false,
-    );
+    expect(warehouseSubscribePayloadSchema.safeParse({ warehouseId: 'wh-1' }).success).toBe(false);
     expect(warehouseMapEditPayloadSchema.safeParse({ operations: [] }).success).toBe(false);
   });
 

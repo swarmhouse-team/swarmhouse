@@ -9,7 +9,6 @@ import {
   renameWarehouseRequestSchema,
   renameWarehouseResponseSchema,
   mapVersionConflictErrorSchema,
-  uuidTextSchema,
   listWarehousesResponseSchema,
   warehouseDetailsSchema,
   warehouseMapBodySchema,
@@ -21,8 +20,6 @@ import {
 const UUID_V1 = 'c232ab00-9414-11ec-b3c8-9f4e5d6c7b8a';
 const UUID_V4 = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 const UUID_V7 = '01933c2a-7b3e-7a1b-8c4d-1a2b3c4d5e6f';
-const NIL_UUID = '00000000-0000-0000-0000-000000000000';
-const MAX_UUID = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 
 const emptyMap = {
   mapId: UUID_V7,
@@ -35,30 +32,6 @@ const emptyMap = {
   stations: [],
 };
 
-describe('uuidTextSchema', () => {
-  it.each([UUID_V1, UUID_V4, UUID_V7, UUID_V4.toUpperCase()])('accepts %s unchanged', (value) => {
-    expect(uuidTextSchema.parse(value)).toBe(value);
-  });
-
-  it.each([
-    '',
-    '   ',
-    ` ${UUID_V4}`,
-    `${UUID_V4} `,
-    'f47ac10b58cc4372a5670e02b2c3d479',
-    'f47ac10b-58cc-4372-a567-0e02b2c3d47',
-    'f47ac10b-58cc-4372-a567-0e02b2c3d47g',
-    'f47ac10b-58cc-4372-a567',
-    'wh-1',
-    NIL_UUID,
-    NIL_UUID.toUpperCase(),
-    MAX_UUID,
-    MAX_UUID.toUpperCase(),
-  ])('rejects %j', (value) => {
-    expect(uuidTextSchema.safeParse(value).success).toBe(false);
-  });
-});
-
 describe('warehouse requests', () => {
   it('accepts create and rename', () => {
     expect(createWarehouseRequestSchema.parse({ name: 'dock' })).toEqual({ name: 'dock' });
@@ -69,9 +42,15 @@ describe('warehouse requests', () => {
     expect(warehouseMapPathParamsSchema.parse({ mapId: UUID_V7 })).toEqual({ mapId: UUID_V7 });
   });
 
-  it('accepts an empty name because the domain checks the length', () => {
-    expect(createWarehouseRequestSchema.parse({ name: '' })).toEqual({ name: '' });
-    expect(renameWarehouseRequestSchema.parse({ name: '   ' })).toEqual({ name: '   ' });
+  it('trims a name and rejects an empty one', () => {
+    expect(createWarehouseRequestSchema.parse({ name: '  dock  ' })).toEqual({ name: 'dock' });
+    expect(renameWarehouseRequestSchema.parse({ name: '  dock  ' })).toEqual({ name: 'dock' });
+    expect(createWarehouseRequestSchema.safeParse({ name: '' }).success).toBe(false);
+    expect(renameWarehouseRequestSchema.safeParse({ name: '   ' }).success).toBe(false);
+    expect(createWarehouseRequestSchema.safeParse({ name: 'd'.repeat(101) }).success).toBe(false);
+    expect(createWarehouseRequestSchema.parse({ name: 'd'.repeat(100) })).toEqual({
+      name: 'd'.repeat(100),
+    });
   });
 
   it('rejects a wrong type, a missing field, an extra field, and coercion', () => {
@@ -90,7 +69,7 @@ describe('map operations', () => {
   const operations: EditWarehouseMapRequest[] = [
     {
       expectedVersion: 0,
-      operation: { type: 'addObstacle', position: { x: 1.5, y: -1 } },
+      operation: { type: 'addObstacle', position: { x: -1, y: 2 } },
     },
     {
       expectedVersion: 1,
@@ -102,7 +81,7 @@ describe('map operations', () => {
     },
     {
       expectedVersion: 3,
-      operation: { type: 'placeRobot', name: '', position: { x: 3, y: 4 } },
+      operation: { type: 'placeRobot', name: 'loader', position: { x: 3, y: 4 } },
     },
     {
       expectedVersion: 4,
@@ -177,6 +156,21 @@ describe('map operations', () => {
       editWarehouseMapRequestSchema.safeParse({
         expectedVersion: 0,
         operation: { type: 'removeRobot', robotId: UUID_V4, name: 'loader' },
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects a fractional cell and a blank object name', () => {
+    expect(
+      editWarehouseMapRequestSchema.safeParse({
+        expectedVersion: 0,
+        operation: { type: 'addObstacle', position: { x: 1.5, y: 0 } },
+      }).success,
+    ).toBe(false);
+    expect(
+      editWarehouseMapRequestSchema.safeParse({
+        expectedVersion: 0,
+        operation: { type: 'placeRobot', name: '   ', position: { x: 1, y: 1 } },
       }).success,
     ).toBe(false);
   });

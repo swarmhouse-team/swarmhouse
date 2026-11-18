@@ -4,7 +4,6 @@ import { apiErrorSchema } from '../api-error';
 import {
   editWarehouseMapOperationSchema,
   editWarehouseMapResponseSchema,
-  uuidTextSchema,
 } from './warehouse';
 
 /** Socket.IO namespace for warehouse commands. The client does not choose the room. */
@@ -33,13 +32,13 @@ export const WAREHOUSE_REALTIME_EVENTS = {
 } as const;
 
 export const warehouseSubscribePayloadSchema = z.strictObject({
-  warehouseId: uuidTextSchema,
+  warehouseId: z.uuid(),
 });
 
 export type WarehouseSubscribePayload = z.infer<typeof warehouseSubscribePayloadSchema>;
 
 export const warehouseMapEditPayloadSchema = z.strictObject({
-  mapId: uuidTextSchema,
+  mapId: z.uuid(),
   expectedVersion: z.number().int().nonnegative(),
   operation: editWarehouseMapOperationSchema,
 });
@@ -48,23 +47,23 @@ export type WarehouseMapEditPayload = z.infer<typeof warehouseMapEditPayloadSche
 
 /** Saved map edit. Subscribers apply `operation` when their version is exactly one behind. */
 export const warehouseMapChangedEventSchema = z.strictObject({
-  warehouseId: uuidTextSchema,
-  mapId: uuidTextSchema,
+  warehouseId: z.uuid(),
+  mapId: z.uuid(),
   version: z.number().int().nonnegative(),
   operation: editWarehouseMapOperationSchema,
-  createdId: uuidTextSchema.optional(),
+  createdId: z.uuid().optional(),
 });
 
 export type WarehouseMapChangedEvent = z.infer<typeof warehouseMapChangedEventSchema>;
 
 export const warehouseUpdatedEventSchema = z.strictObject({
-  warehouseId: uuidTextSchema,
+  warehouseId: z.uuid(),
 });
 
 export type WarehouseUpdatedEvent = z.infer<typeof warehouseUpdatedEventSchema>;
 
 export const warehouseDeletedEventSchema = z.strictObject({
-  warehouseId: uuidTextSchema,
+  warehouseId: z.uuid(),
 });
 
 export type WarehouseDeletedEvent = z.infer<typeof warehouseDeletedEventSchema>;

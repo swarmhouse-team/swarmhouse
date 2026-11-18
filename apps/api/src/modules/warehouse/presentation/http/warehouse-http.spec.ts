@@ -451,7 +451,7 @@ describe('warehouse HTTP', () => {
 
     const response = await request(app.getHttpServer())
       .post('/api/warehouses')
-      .send({ name: '   ' });
+      .send({ name: 'dock' });
 
     expect(response.status).toBe(422);
     expect(apiErrorSchema.parse(response.body)).toEqual({

@@ -6,18 +6,18 @@ import type { WarehouseMapRestoreInput } from '../../../application/mapping/ware
 import type { WarehouseMapSnapshot } from '../../../domain/entities/warehouse-map';
 
 const coordinates = z.object({
-  x: z.number(),
-  y: z.number(),
+  x: z.number().int(),
+  y: z.number().int(),
 });
 
 const namedObject = coordinates.extend({
-  id: z.string(),
-  name: z.string(),
+  id: z.uuid(),
+  name: z.string().min(1).max(100),
 });
 
 const mapContentSchema = z.object({
-  width: z.number(),
-  height: z.number(),
+  width: z.number().int(),
+  height: z.number().int(),
   obstacles: z.array(coordinates),
   robots: z.array(namedObject),
   stations: z.array(namedObject),

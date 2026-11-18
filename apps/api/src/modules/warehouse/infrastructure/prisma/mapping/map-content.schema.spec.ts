@@ -108,6 +108,9 @@ describe('parseMapContent', () => {
     { ...emptyContent(), robots: [{ id: ROBOT_ID, x: 0, y: 0 }] },
     { ...emptyContent(), obstacles: [{ x: 1 }] },
     { ...emptyContent(), obstacles: [{ x: '1', y: 1 }] },
+    { ...emptyContent(), obstacles: [{ x: 1.5, y: 0 }] },
+    { ...emptyContent(), robots: [{ id: 'not-a-uuid', name: 'Robot', x: 0, y: 0 }] },
+    { ...emptyContent(), robots: [{ id: ROBOT_ID, name: '', x: 0, y: 0 }] },
   ])('rejects malformed content %j', (content) => {
     const error = formatError(content);
 
