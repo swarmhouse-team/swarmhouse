@@ -10,7 +10,6 @@ import {
 import {
   API_ERROR_CODES,
   SOCKET_MAX_HTTP_BUFFER_BYTES,
-  WAREHOUSE_HTTP_ERROR_CODES,
   WAREHOUSE_REALTIME_EVENTS,
   WAREHOUSE_SOCKET_NAMESPACE,
   warehouseMapEditPayloadSchema,
@@ -26,13 +25,9 @@ import type { LoggerPort } from '../../../../common/application/logger.port';
 import { mapThrownError } from '../../../../common/http/map-thrown-error';
 import { NestjsLogger } from '../../../../common/infrastructure/nestjs-logger';
 import { EditWarehouseMap } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.use-case';
-import { WarehouseNotFoundError } from '../../application/errors/application.errors';
+import { GetWarehouse } from '../../application/queries/get-warehouse/get-warehouse.use-case';
 import { normalizeId } from '../../domain/vo/id';
 import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
-import {
-  WAREHOUSE_EXISTENCE,
-  type WarehouseExistenceReader,
-} from '../../infrastructure/realtime/warehouse-existence';
 import {
   warehousePayloadBytes,
   warehouseRoom,
@@ -48,7 +43,7 @@ import { toEditWarehouseMapAckData } from './edit-warehouse-map-ack';
 @WebSocketGateway({ namespace: WAREHOUSE_SOCKET_NAMESPACE })
 export class WarehouseGateway implements OnGatewayInit, OnGatewayDisconnect {
   constructor(
-    @Inject(WAREHOUSE_EXISTENCE) private readonly warehouses: WarehouseExistenceReader,
+    private readonly getWarehouse: GetWarehouse,
     private readonly editWarehouseMap: EditWarehouseMap,
     private readonly notifier: SocketIoWarehouseNotifier,
     private readonly subscriptions: WarehouseSubscriptionBook,
@@ -137,18 +132,13 @@ export class WarehouseGateway implements OnGatewayInit, OnGatewayDisconnect {
       warehouseId,
       async () => {
         try {
-          const found = await this.warehouses.findById(warehouseId);
-          if (!found) {
-            return {
-              ok: false,
-              error: {
-                code: WAREHOUSE_HTTP_ERROR_CODES.WAREHOUSE_NOT_FOUND,
-                message: new WarehouseNotFoundError({ warehouseId }).message,
-              },
-            };
-          }
+          await this.getWarehouse.execute({ warehouseId });
           return { ok: true };
         } catch (error) {
+          const mapped = mapThrownError(error);
+          if (mapped && mapped.status < 500) {
+            return { ok: false, error: { code: mapped.body.code, message: mapped.body.message } };
+          }
           this.logger.error('warehouse.realtime.subscribe_failed', {
             errorClass: error instanceof Error ? error.name : 'UnknownError',
             warehouseId,

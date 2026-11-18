@@ -18,7 +18,6 @@ import { PrismaWarehouseMapRepository } from './infrastructure/prisma/repositori
 import { PrismaWarehouseRepository } from './infrastructure/prisma/repositories/prisma-warehouse.repository';
 import { WarehouseUnitOfWork } from './infrastructure/prisma/transaction/warehouse-unit-of-work';
 import { SocketIoWarehouseNotifier } from './infrastructure/realtime/socket-io-warehouse-notifier';
-import { WAREHOUSE_EXISTENCE } from './infrastructure/realtime/warehouse-existence';
 import { WarehouseSubscriptionBook } from './infrastructure/realtime/warehouse-subscription.book';
 import { WarehouseMapsController } from './presentation/http/warehouse-maps.controller';
 import { WarehousesController } from './presentation/http/warehouses.controller';
@@ -130,10 +129,6 @@ import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
       useFactory: () => new WarehouseSubscriptionBook(),
     },
     SocketIoWarehouseNotifier,
-    {
-      provide: WAREHOUSE_EXISTENCE,
-      useExisting: PrismaWarehouseRepository,
-    },
     WarehouseGateway,
   ],
 })

@@ -15,11 +15,14 @@ import type {
   EditWarehouseMapInput,
   EditWarehouseMapResult,
 } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.types';
-import { MapVersionConflictError } from '../../application/errors/application.errors';
+import {
+  MapVersionConflictError,
+  WarehouseNotFoundError,
+} from '../../application/errors/application.errors';
+import { GetWarehouse } from '../../application/queries/get-warehouse/get-warehouse.use-case';
 import { createRecordingLogger } from '../../../../common/testing/create-recording-logger';
 import { WarehouseMap } from '../../domain/entities/warehouse-map';
 import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
-import { WAREHOUSE_EXISTENCE } from '../../infrastructure/realtime/warehouse-existence';
 import { WarehouseSubscriptionBook } from '../../infrastructure/realtime/warehouse-subscription.book';
 import { WarehouseGateway } from './warehouse.gateway';
 
@@ -49,11 +52,13 @@ describe('warehouse socket transport', () => {
         { provide: SocketIoWarehouseNotifier, useValue: notifier },
         { provide: NestjsLogger, useValue: logger },
         {
-          provide: WAREHOUSE_EXISTENCE,
+          provide: GetWarehouse,
           useValue: {
-            async findById(id: string) {
-              finds.push(id);
-              return known.has(id) ? { id } : null;
+            async execute(input: { warehouseId: string }) {
+              finds.push(input.warehouseId);
+              if (!known.has(input.warehouseId)) {
+                throw new WarehouseNotFoundError({ warehouseId: input.warehouseId });
+              }
             },
           },
         },

@@ -4,11 +4,14 @@ import type { Socket } from 'socket.io';
 
 import { EditWarehouseMap } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.use-case';
 import type { EditWarehouseMapInput } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.types';
-import { MapVersionConflictError } from '../../application/errors/application.errors';
+import {
+  MapVersionConflictError,
+  WarehouseNotFoundError,
+} from '../../application/errors/application.errors';
+import { GetWarehouse } from '../../application/queries/get-warehouse/get-warehouse.use-case';
 import { createRecordingLogger } from '../../../../common/testing/create-recording-logger';
 import { WarehouseMap } from '../../domain/entities/warehouse-map';
 import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
-import type { WarehouseExistenceReader } from '../../infrastructure/realtime/warehouse-existence';
 import { warehouseRoom } from '../../infrastructure/realtime/warehouse-socket.constants';
 import { WarehouseSubscriptionBook } from '../../infrastructure/realtime/warehouse-subscription.book';
 import { WarehouseGateway } from './warehouse.gateway';
@@ -35,13 +38,16 @@ function setup(options?: { limit?: number }) {
   const book = new WarehouseSubscriptionBook(options?.limit);
   const { logger, logs } = createRecordingLogger();
   const finds: string[] = [];
-  let findImpl: WarehouseExistenceReader['findById'] = async (id) => ({ id });
-  const reader: WarehouseExistenceReader = {
-    findById: (id) => {
-      finds.push(id);
-      return findImpl(id);
+  let findImpl: (id: string) => Promise<{ id: string } | null> = async (id) => ({ id });
+  const getWarehouse = {
+    async execute(input: { warehouseId: string }) {
+      finds.push(input.warehouseId);
+      const found = await findImpl(input.warehouseId);
+      if (!found) {
+        throw new WarehouseNotFoundError({ warehouseId: input.warehouseId });
+      }
     },
-  };
+  } as unknown as GetWarehouse;
   const executions: EditWarehouseMapInput[] = [];
   const edit = {
     async execute(input: EditWarehouseMapInput) {
@@ -57,7 +63,7 @@ function setup(options?: { limit?: number }) {
   };
   const notifier = new SocketIoWarehouseNotifier(logger, book);
   const gateway = new WarehouseGateway(
-    reader,
+    getWarehouse,
     edit as unknown as EditWarehouseMap,
     notifier,
     book,
@@ -70,7 +76,7 @@ function setup(options?: { limit?: number }) {
     finds,
     executions,
     notifier,
-    setFind(next: WarehouseExistenceReader['findById']) {
+    setFind(next: (id: string) => Promise<{ id: string } | null>) {
       findImpl = next;
     },
   };
@@ -250,7 +256,7 @@ describe('WarehouseGateway map edit', () => {
     const harness = setup();
     const edit = harness.executions;
     const gateway = new WarehouseGateway(
-      { findById: async () => null },
+      { execute: async () => undefined } as unknown as GetWarehouse,
       {
         async execute() {
           edit.push({} as EditWarehouseMapInput);
