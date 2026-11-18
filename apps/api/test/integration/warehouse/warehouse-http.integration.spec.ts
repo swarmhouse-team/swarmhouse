@@ -16,7 +16,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { httpProviders } from '../../../src/common/http/http.providers';
 import { PrismaService } from '../../../src/prisma/prisma.service';
-import { WarehousePresentationModule } from '../../../src/warehouse/presentation/warehouse-presentation.module';
+import { WarehouseModule } from '../../../src/modules/warehouse/warehouse.module';
 import { disconnectTestPrisma, getTestPrisma } from '../support/test-database';
 import { cleanWarehouseTables } from './clean-warehouse-tables';
 
@@ -27,7 +27,7 @@ describe('warehouse HTTP on the test database', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [WarehousePresentationModule],
+      imports: [WarehouseModule],
       providers: [...httpProviders],
     })
       .overrideProvider(PrismaService)

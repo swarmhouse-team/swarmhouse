@@ -1,7 +1,7 @@
 import swc from 'unplugin-swc';
 import { configDefaults, defineConfig } from 'vitest/config';
 
-// `*.transport.spec.ts` stays out of `vitest run` and `vitest run src/warehouse`.
+// `*.transport.spec.ts` stays out of `vitest run` and `vitest run src/modules/warehouse`.
 // The explicit transport path opts this config into that file only, so the
 // documented command still runs it.
 const transportOnly = process.argv.some((argument) => argument.includes('.transport.spec.ts'));

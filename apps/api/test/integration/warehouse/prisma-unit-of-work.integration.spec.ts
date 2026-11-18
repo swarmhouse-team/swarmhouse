@@ -2,15 +2,15 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 const RECORDED_AT = new Date('2026-01-01T00:00:00.000Z');
 
-import { MapVersionConflictError } from '../../../src/warehouse/application/errors/application.errors';
-import type { SaveMapResult } from '../../../src/warehouse/application/ports/repositories/warehouse-map.repository';
-import type { WarehouseRepository } from '../../../src/warehouse/application/ports/repositories/warehouse.repository';
-import { WarehouseMap } from '../../../src/warehouse/domain/entities/warehouse-map';
-import { Warehouse } from '../../../src/warehouse/domain/entities/warehouse';
-import { Position } from '../../../src/warehouse/domain/vo/position';
-import { PrismaUnitOfWork } from '../../../src/warehouse/infrastructure/prisma/transaction/prisma-unit-of-work';
-import { PrismaWarehouseMapRepository } from '../../../src/warehouse/infrastructure/prisma/repositories/prisma-warehouse-map.repository';
-import { PrismaWarehouseRepository } from '../../../src/warehouse/infrastructure/prisma/repositories/prisma-warehouse.repository';
+import { MapVersionConflictError } from '../../../src/modules/warehouse/application/errors/application.errors';
+import type { SaveMapResult } from '../../../src/modules/warehouse/application/ports/repositories/warehouse-map.repository';
+import type { WarehouseRepository } from '../../../src/modules/warehouse/application/ports/repositories/warehouse.repository';
+import { WarehouseMap } from '../../../src/modules/warehouse/domain/entities/warehouse-map';
+import { Warehouse } from '../../../src/modules/warehouse/domain/entities/warehouse';
+import { Position } from '../../../src/modules/warehouse/domain/vo/position';
+import { PrismaUnitOfWork } from '../../../src/modules/warehouse/infrastructure/prisma/transaction/prisma-unit-of-work';
+import { PrismaWarehouseMapRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse-map.repository';
+import { PrismaWarehouseRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse.repository';
 import { disconnectTestPrisma, getTestPrisma } from '../support/test-database';
 import { cleanWarehouseTables } from './clean-warehouse-tables';
 

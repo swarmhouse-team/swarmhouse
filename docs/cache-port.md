@@ -44,4 +44,4 @@ delete(key: string): Promise<void>
 
 Кэш не источник истины. В него кладут то, что уже прочитано или сохранено в БД, с коротким TTL. Команда склада сначала завершает транзакцию, потом удаляет ключи. Неудачное удаление не делает commit неуспешным.
 
-Ключи склада заданы в [apps/api/src/warehouse/application/queries/warehouse-cache.policy.ts](../apps/api/src/warehouse/application/queries/warehouse-cache.policy.ts): `warehouse:details:v1:{id}` и `warehouse:list:v1:all`, TTL 30 с. Карта в этот кэш не пишется. Новый use case заводит свой ключ с версией в имени и не переиспользует эти строки.
+Ключи склада заданы в [apps/api/src/modules/warehouse/application/queries/warehouse-cache.policy.ts](../apps/api/src/modules/warehouse/application/queries/warehouse-cache.policy.ts): `warehouse:details:v1:{id}` и `warehouse:list:v1:all`, TTL 30 с. Карта в этот кэш не пишется. Новый use case заводит свой ключ с версией в имени и не переиспользует эти строки.

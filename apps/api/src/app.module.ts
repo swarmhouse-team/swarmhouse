@@ -6,7 +6,7 @@ import { validateEnv } from './config/env';
 import { ExampleModule } from './example/example.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
-import { WarehousePresentationModule } from './warehouse/presentation/warehouse-presentation.module';
+import { WarehouseModule } from './modules/warehouse/warehouse.module';
 
 @Module({
   imports: [
@@ -18,7 +18,7 @@ import { WarehousePresentationModule } from './warehouse/presentation/warehouse-
       validate: validateEnv,
     }),
     PrismaModule,
-    WarehousePresentationModule,
+    WarehouseModule,
     HealthModule,
     ExampleModule,
   ],

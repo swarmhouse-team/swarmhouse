@@ -3,14 +3,14 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 const RECORDED_AT = new Date('2026-01-01T00:00:00.000Z');
 const UPDATED_AT = new Date('2026-02-01T00:00:00.000Z');
 
-import { GetWarehouseMap } from '../../../src/warehouse/application/queries/get-warehouse-map/get-warehouse-map.use-case';
-import { CorruptedMapStateError } from '../../../src/warehouse/application/errors/application.errors';
-import { WarehouseMap } from '../../../src/warehouse/domain/entities/warehouse-map';
-import { Warehouse } from '../../../src/warehouse/domain/entities/warehouse';
-import { StationType } from '../../../src/warehouse/domain/enums/station-type';
-import { Position } from '../../../src/warehouse/domain/vo/position';
-import { PrismaWarehouseMapRepository } from '../../../src/warehouse/infrastructure/prisma/repositories/prisma-warehouse-map.repository';
-import { PrismaWarehouseRepository } from '../../../src/warehouse/infrastructure/prisma/repositories/prisma-warehouse.repository';
+import { GetWarehouseMap } from '../../../src/modules/warehouse/application/queries/get-warehouse-map/get-warehouse-map.use-case';
+import { CorruptedMapStateError } from '../../../src/modules/warehouse/application/errors/application.errors';
+import { WarehouseMap } from '../../../src/modules/warehouse/domain/entities/warehouse-map';
+import { Warehouse } from '../../../src/modules/warehouse/domain/entities/warehouse';
+import { StationType } from '../../../src/modules/warehouse/domain/enums/station-type';
+import { Position } from '../../../src/modules/warehouse/domain/vo/position';
+import { PrismaWarehouseMapRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse-map.repository';
+import { PrismaWarehouseRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse.repository';
 import { disconnectTestPrisma, getTestPrisma } from '../support/test-database';
 import { cleanWarehouseTables } from './clean-warehouse-tables';
 
