@@ -44,9 +44,7 @@ function mapped(exception: ApplicationError | DomainError) {
 
 describe('warehouse errors through the shared mapper', () => {
   it('missing warehouse → 404 WAREHOUSE_NOT_FOUND', () => {
-    const { status, body, log } = mapped(
-      new WarehouseNotFoundError({ warehouseId: WAREHOUSE_ID }),
-    );
+    const { status, body, log } = mapped(new WarehouseNotFoundError({ warehouseId: WAREHOUSE_ID }));
 
     expect(status).toBe(404);
     expect(body).toEqual({

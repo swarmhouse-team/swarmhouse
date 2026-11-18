@@ -105,9 +105,9 @@ describe('WarehouseMap', () => {
 
     expect(() => map.addObstacle(at(x, y))).toThrow(PositionOutOfBoundsError);
     expect(() => map.placeRobot(ROBOT_ID, 'Robot', at(x, y))).toThrow(PositionOutOfBoundsError);
-    expect(() =>
-      map.placeStation(STATION_ID, 'Receiving', at(x, y)),
-    ).toThrow(PositionOutOfBoundsError);
+    expect(() => map.placeStation(STATION_ID, 'Receiving', at(x, y))).toThrow(
+      PositionOutOfBoundsError,
+    );
     expect(map.snapshot()).toEqual(before);
   });
 
@@ -142,9 +142,7 @@ describe('WarehouseMap', () => {
     const before = map.snapshot();
 
     expect(() => map.placeRobot(SAME_ID, 'Second', at(2, 0))).toThrow(DuplicateObjectIdError);
-    expect(() => map.placeStation(SAME_ID, 'Issuing', at(3, 0))).toThrow(
-      DuplicateObjectIdError,
-    );
+    expect(() => map.placeStation(SAME_ID, 'Issuing', at(3, 0))).toThrow(DuplicateObjectIdError);
     expect(map.snapshot()).toEqual(before);
   });
 
@@ -155,9 +153,7 @@ describe('WarehouseMap', () => {
     const before = map.snapshot();
 
     expect(() => map.placeRobot(ROBOT_2_ID, 'id', at(2, 0))).toThrow(DuplicateRobotNameError);
-    expect(() => map.placeStation(STATION_2_ID, 'id', at(3, 0))).toThrow(
-      DuplicateStationNameError,
-    );
+    expect(() => map.placeStation(STATION_2_ID, 'id', at(3, 0))).toThrow(DuplicateStationNameError);
     expect(map.snapshot()).toEqual(before);
   });
 
@@ -187,9 +183,9 @@ describe('WarehouseMap', () => {
     map.placeStation(STATION_ID, 'Приёмка', at(0, 0));
     const before = map.snapshot();
 
-    expect(() =>
-      map.placeStation(STATION_2_ID, ' приёмка ', at(1, 0)),
-    ).toThrow(DuplicateStationNameError);
+    expect(() => map.placeStation(STATION_2_ID, ' приёмка ', at(1, 0))).toThrow(
+      DuplicateStationNameError,
+    );
     expect(map.snapshot()).toEqual(before);
   });
 
@@ -200,9 +196,7 @@ describe('WarehouseMap', () => {
     map.placeStation(STATION_ID, ' Issuing ', at(0, 2));
 
     expect(map.snapshot().robots).toEqual([{ id: ROBOT_ID, name: 'Robot', x: 0, y: 1 }]);
-    expect(map.snapshot().stations).toEqual([
-      { id: STATION_ID, name: 'Issuing', x: 0, y: 2 },
-    ]);
+    expect(map.snapshot().stations).toEqual([{ id: STATION_ID, name: 'Issuing', x: 0, y: 2 }]);
   });
 
   it('moves an object and frees its previous cell', () => {
@@ -359,9 +353,9 @@ describe('WarehouseMap', () => {
     expect(() => map.placeRobot(SAME_ID.toUpperCase(), 'Second', at(1, 0))).toThrow(
       DuplicateObjectIdError,
     );
-    expect(() =>
-      map.placeStation(SAME_ID.toUpperCase(), 'Issuing', at(2, 0)),
-    ).toThrow(DuplicateObjectIdError);
+    expect(() => map.placeStation(SAME_ID.toUpperCase(), 'Issuing', at(2, 0))).toThrow(
+      DuplicateObjectIdError,
+    );
     expect(map.snapshot()).toEqual(before);
   });
 
@@ -374,9 +368,7 @@ describe('WarehouseMap', () => {
     map.moveStation(STATION_ID.toUpperCase(), at(1, 1));
 
     expect(map.snapshot().robots).toEqual([{ id: ROBOT_ID, name: 'Robot', x: 0, y: 1 }]);
-    expect(map.snapshot().stations).toEqual([
-      { id: STATION_ID, name: 'Receiving', x: 1, y: 1 },
-    ]);
+    expect(map.snapshot().stations).toEqual([{ id: STATION_ID, name: 'Receiving', x: 1, y: 1 }]);
   });
 
   it('rejects a lookup id that is not a uuid', () => {
@@ -415,9 +407,7 @@ describe('WarehouseMap', () => {
 
     expect(() => map.addObstacle(foreign)).toThrow(InvalidPositionError);
     expect(() => map.placeRobot(ROBOT_2_ID, 'Second', foreign)).toThrow(InvalidPositionError);
-    expect(() => map.placeStation(STATION_2_ID, 'Issuing', foreign)).toThrow(
-      InvalidPositionError,
-    );
+    expect(() => map.placeStation(STATION_2_ID, 'Issuing', foreign)).toThrow(InvalidPositionError);
     expect(() => map.moveRobot(ROBOT_ID, foreign)).toThrow(InvalidPositionError);
     expect(() => map.moveStation(STATION_ID, foreign)).toThrow(InvalidPositionError);
     expect(() => map.moveObstacle(at(2, 0), foreign)).toThrow(InvalidPositionError);

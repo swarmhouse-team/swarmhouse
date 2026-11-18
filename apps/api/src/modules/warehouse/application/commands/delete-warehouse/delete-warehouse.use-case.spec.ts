@@ -6,7 +6,10 @@ import type {
   DeleteWarehouseResult,
   StoredWarehouse,
 } from '../../ports/repositories/warehouse.repository';
-import { createRecordingLogger, type LogEntry } from '../../../../../common/testing/create-recording-logger';
+import {
+  createRecordingLogger,
+  type LogEntry,
+} from '../../../../../common/testing/create-recording-logger';
 import {
   createRecordingNotifier,
   type WarehouseNotice,

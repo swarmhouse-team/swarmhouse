@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { CacheError } from '../../../../../cache/application/errors/cache.error';
 import { fixedClock } from '../../../../../common/testing/fixed-clock';
-import { createRecordingLogger, type LogEntry } from '../../../../../common/testing/create-recording-logger';
+import {
+  createRecordingLogger,
+  type LogEntry,
+} from '../../../../../common/testing/create-recording-logger';
 import { RecordingCache } from '../../../../../common/testing/recording-cache';
 import { MAX_NAME_LENGTH } from '../../../domain/constants';
 import type { Warehouse } from '../../../domain/entities/warehouse';

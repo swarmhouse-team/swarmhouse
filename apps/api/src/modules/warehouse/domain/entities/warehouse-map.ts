@@ -7,7 +7,11 @@ import {
   MapObjectNotFoundError,
   PositionOutOfBoundsError,
 } from '../errors/map.errors';
-import { InvalidGridSizeError, InvalidNameError, InvalidPositionError } from '../errors/value.errors';
+import {
+  InvalidGridSizeError,
+  InvalidNameError,
+  InvalidPositionError,
+} from '../errors/value.errors';
 import { GridSize } from '../../../../common/domain/grid-size';
 import { Position } from '../../../../common/domain/position';
 import { normalizeId } from '../vo/id';

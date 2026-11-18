@@ -19,7 +19,10 @@ import {
 } from '../../errors/application.errors';
 import type { SaveMapResult } from '../../ports/repositories/warehouse-map.repository';
 import { stubUnitOfWork } from '../../testing/stub-unit-of-work';
-import { createRecordingLogger, type LogEntry } from '../../../../../common/testing/create-recording-logger';
+import {
+  createRecordingLogger,
+  type LogEntry,
+} from '../../../../../common/testing/create-recording-logger';
 import {
   createRecordingNotifier,
   type WarehouseNotice,
@@ -1006,9 +1009,7 @@ describe('EditWarehouseMap moveStation', () => {
     });
 
     const saved = harness.saved?.map.snapshot();
-    expect(saved?.stations).toEqual([
-      { id: STATION_ID, name: 'Приёмка', x: 3, y: 4 },
-    ]);
+    expect(saved?.stations).toEqual([{ id: STATION_ID, name: 'Приёмка', x: 3, y: 4 }]);
     expect(saved?.robots).toEqual(stored.robots);
     expect(saved?.obstacles).toEqual(stored.obstacles);
     expect(result).toMatchObject({ version: 3, changed: true });

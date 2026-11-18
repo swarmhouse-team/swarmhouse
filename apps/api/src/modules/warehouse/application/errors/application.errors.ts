@@ -1,10 +1,7 @@
 import { ApplicationError } from './application.error';
 
 export type CorruptedMapReason =
-  | 'GRID_SIZE_MISMATCH'
-  | 'DENORMALIZED_NAME'
-  | 'DOMAIN_INVARIANT'
-  | 'INVALID_STORED_FORMAT';
+  'GRID_SIZE_MISMATCH' | 'DENORMALIZED_NAME' | 'DOMAIN_INVARIANT' | 'INVALID_STORED_FORMAT';
 
 const MAP_VERSION_CONFLICT_CLIENT_MESSAGE =
   'The map version is stale. Read the map again and repeat the command.';

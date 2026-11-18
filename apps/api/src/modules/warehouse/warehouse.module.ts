@@ -84,12 +84,7 @@ import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
     },
     {
       provide: EditWarehouseMap,
-      inject: [
-        WarehouseUnitOfWork,
-        UuidV7IdGenerator,
-        NestjsLogger,
-        SocketIoWarehouseNotifier,
-      ],
+      inject: [WarehouseUnitOfWork, UuidV7IdGenerator, NestjsLogger, SocketIoWarehouseNotifier],
       useFactory: (
         unitOfWork: WarehouseUnitOfWork,
         ids: UuidV7IdGenerator,

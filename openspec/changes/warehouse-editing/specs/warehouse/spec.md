@@ -12,7 +12,7 @@ The system SHALL create a warehouse from a trimmed name of 1 to 100 characters a
 
 #### Scenario: Valid name
 
-- **WHEN** a client creates a warehouse with the name ` North dock `
+- **WHEN** a client creates a warehouse with the name `North dock`
 - **THEN** the warehouse is stored as `North dock` and the response contains a new warehouse id, a new map id, and version 0
 
 #### Scenario: Empty or oversized name

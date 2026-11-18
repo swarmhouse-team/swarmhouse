@@ -1,10 +1,7 @@
 import { z } from 'zod';
 
 import { apiErrorSchema } from '../api-error';
-import {
-  editWarehouseMapOperationSchema,
-  editWarehouseMapResponseSchema,
-} from './warehouse';
+import { editWarehouseMapOperationSchema, editWarehouseMapResponseSchema } from './warehouse';
 
 /** Socket.IO namespace for warehouse commands. The client does not choose the room. */
 export const WAREHOUSE_SOCKET_NAMESPACE = '/warehouse';
