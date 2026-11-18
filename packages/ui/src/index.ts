@@ -29,3 +29,10 @@ export {
   type HeadingSize,
 } from './components/heading';
 export { Text, textVariants, type TextElement, type TextProps } from './components/text';
+export {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from './components/dropdown-menu';
+export { Dialog, DialogContent, DialogDescription, DialogTitle } from './components/dialog';
