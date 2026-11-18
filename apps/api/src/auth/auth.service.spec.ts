@@ -1,6 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { hash } from 'argon2';
+import { createHash } from 'node:crypto';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { User } from '../generated/prisma/client';
@@ -140,14 +141,38 @@ describe('AuthService', () => {
   });
 
   describe('logout', () => {
-    it('удаляет сессию по id из токена', async () => {
-      await service.logout('session-1.secret');
-      expect(sessionDeleteMany).toHaveBeenCalledWith({ where: { id: 'session-1' } });
+    it('удаляет сессию, если секрет совпадает с хешем в БД', async () => {
+      const secret = 'valid-secret';
+      sessionFindUnique.mockResolvedValue({
+        id: 'session-1',
+        tokenHash: createHash('sha256').update(secret).digest('hex'),
+        expiresAt: new Date(Date.now() + 60_000),
+        user,
+      });
+
+      await service.logout(`session-1.${secret}`);
+
+      expect(sessionDelete).toHaveBeenCalledWith({ where: { id: 'session-1' } });
+    });
+
+    it('не удаляет сессию по одному sessionId без верного секрета', async () => {
+      sessionFindUnique.mockResolvedValue({
+        id: 'session-1',
+        tokenHash: createHash('sha256').update('real-secret').digest('hex'),
+        expiresAt: new Date(Date.now() + 60_000),
+        user,
+      });
+
+      await service.logout('session-1.forged-secret');
+
+      expect(sessionDelete).not.toHaveBeenCalled();
+      expect(sessionDeleteMany).not.toHaveBeenCalled();
     });
 
     it('без cookie молча ничего не делает', async () => {
       await service.logout(undefined);
-      expect(sessionDeleteMany).not.toHaveBeenCalled();
+      expect(sessionFindUnique).not.toHaveBeenCalled();
+      expect(sessionDelete).not.toHaveBeenCalled();
     });
   });
 

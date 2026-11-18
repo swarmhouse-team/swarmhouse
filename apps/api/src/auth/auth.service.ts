@@ -71,8 +71,12 @@ export class AuthService {
     if (!rawToken) {
       return;
     }
-    const sessionId = rawToken.split('.')[0];
-    await this.prisma.refreshSession.deleteMany({ where: { id: sessionId } });
+    // Удаляем только после проверки секрета: по одному sessionId чужую сессию не отозвать.
+    const session = await this.findActiveSession(rawToken);
+    if (!session) {
+      return;
+    }
+    await this.prisma.refreshSession.delete({ where: { id: session.id } });
   }
 
   /** Данные текущего пользователя по id из access-токена. */
