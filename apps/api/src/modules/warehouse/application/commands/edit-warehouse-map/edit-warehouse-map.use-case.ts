@@ -2,10 +2,10 @@ import type { EditWarehouseMapOperation } from '@robots/shared';
 
 import type { IdGenerator } from '../../../../../common/application/id-generator';
 import type { LoggerPort } from '../../../../../common/application/logger.port';
+import { publishAfterCommit } from '../../../../../common/application/publish-after-commit';
 import { Position } from '../../../../../common/domain/position';
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { normalizeId } from '../../../domain/vo/id';
-import { publishAfterCommit } from '../../cache/publish-after-commit';
 import {
   MapVersionConflictError,
   WarehouseMapNotFoundError,
@@ -90,6 +90,7 @@ export class EditWarehouseMap {
             operation: publishedOperation(input.operation),
             ...(result.createdId === undefined ? {} : { createdId: result.createdId }),
           }),
+        publishFailed: 'warehouse.realtime.publish_failed',
       });
       this.logger.info('warehouse.map.updated', {
         mapId: result.mapId,

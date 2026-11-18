@@ -1,9 +1,9 @@
 import type { CachePort } from '../../../../../cache/application/ports/cache.port';
 import type { Clock } from '../../../../../common/application/clock';
 import type { LoggerPort } from '../../../../../common/application/logger.port';
+import { publishAfterCommit } from '../../../../../common/application/publish-after-commit';
 import { Warehouse } from '../../../domain/entities/warehouse';
 import { invalidateWarehouseCache } from '../../cache/invalidate-warehouse-cache';
-import { publishAfterCommit } from '../../cache/publish-after-commit';
 import { WarehouseNotFoundError } from '../../errors/application.errors';
 import type { UnitOfWork } from '../../ports/system/unit-of-work';
 import type { WarehouseNotifier } from '../../ports/system/warehouse-notifier';
@@ -53,7 +53,9 @@ export class UpdateWarehouse {
       const warehouseId = outcome.result.warehouseId;
       await publishAfterCommit(this.logger, {
         invalidate: () => invalidateWarehouseCache(this.cache, this.logger, [warehouseId]),
+        invalidateFailed: 'warehouse.cache.invalidate_failed',
         publish: () => this.notifier.warehouseUpdated({ warehouseId }),
+        publishFailed: 'warehouse.realtime.publish_failed',
       });
       this.logger.info('warehouse.renamed', { warehouseId });
     }

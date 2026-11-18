@@ -1,8 +1,8 @@
 import type { ZodType } from 'zod';
 
-import { CacheError } from '../../../../cache/application/errors/cache.error';
-import type { CacheValue } from '../../../../cache/application/cache-value';
-import type { CachePort } from '../../../../cache/application/ports/cache.port';
+import { CacheError } from '../../cache/application/errors/cache.error';
+import type { CacheValue } from '../../cache/application/cache-value';
+import type { CachePort } from '../../cache/application/ports/cache.port';
 
 /**
  * Reads one cache entry. A `CacheError`, a missing key, or a payload that fails
@@ -10,7 +10,7 @@ import type { CachePort } from '../../../../cache/application/ports/cache.port';
  * A rejected payload is deleted. A `CacheError` from that delete is ignored.
  * Any other delete error is rethrown.
  */
-export async function readWarehouseCache<T>(
+export async function readCache<T>(
   cache: CachePort,
   key: string,
   schema: ZodType<T>,
@@ -30,14 +30,14 @@ export async function readWarehouseCache<T>(
   }
   const parsed = schema.safeParse(raw);
   if (!parsed.success || !accept(parsed.data)) {
-    await forgetWarehouseCacheKey(cache, key);
+    await forgetCacheKey(cache, key);
     return null;
   }
   return parsed.data;
 }
 
 /** Writes a public payload. A `CacheError` is ignored. Any other error is rethrown. */
-export async function writeWarehouseCache(
+export async function writeCache(
   cache: CachePort,
   key: string,
   value: CacheValue,
@@ -53,7 +53,7 @@ export async function writeWarehouseCache(
   }
 }
 
-async function forgetWarehouseCacheKey(cache: CachePort, key: string): Promise<void> {
+async function forgetCacheKey(cache: CachePort, key: string): Promise<void> {
   try {
     await cache.delete(key);
   } catch (error) {

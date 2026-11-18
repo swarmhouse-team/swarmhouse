@@ -1,7 +1,7 @@
 import { warehouseDetailsSchema, type WarehouseDetails } from '@robots/shared';
 
 import type { CachePort } from '../../../../../cache/application/ports/cache.port';
-import { readWarehouseCache, writeWarehouseCache } from '../../cache/read-warehouse-cache';
+import { readCache, writeCache } from '../../../../../common/application/read-cache';
 import { WarehouseNotFoundError } from '../../errors/application.errors';
 import type { WarehouseRepository } from '../../ports/repositories/warehouse.repository';
 import { normalizeId } from '../../../domain/vo/id';
@@ -23,7 +23,7 @@ export class GetWarehouse {
   async execute(input: { warehouseId: string }): Promise<WarehouseDetails> {
     const warehouseId = normalizeId(input.warehouseId);
     const key = warehouseDetailsCacheKey(warehouseId);
-    const cached = await readWarehouseCache(this.cache, key, warehouseDetailsSchema, (details) => {
+    const cached = await readCache(this.cache, key, warehouseDetailsSchema, (details) => {
       return details.warehouseId === warehouseId;
     });
     if (cached) {
@@ -35,7 +35,7 @@ export class GetWarehouse {
       throw new WarehouseNotFoundError({ warehouseId });
     }
     const details = toWarehouseDetails(record);
-    await writeWarehouseCache(this.cache, key, details, WAREHOUSE_DETAILS_TTL_MS);
+    await writeCache(this.cache, key, details, WAREHOUSE_DETAILS_TTL_MS);
     return details;
   }
 }

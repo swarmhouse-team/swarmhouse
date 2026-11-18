@@ -1,7 +1,7 @@
 import { listWarehousesResponseSchema, type ListWarehousesResponse } from '@robots/shared';
 
 import type { CachePort } from '../../../../../cache/application/ports/cache.port';
-import { readWarehouseCache, writeWarehouseCache } from '../../cache/read-warehouse-cache';
+import { readCache, writeCache } from '../../../../../common/application/read-cache';
 import type { WarehouseRepository } from '../../ports/repositories/warehouse.repository';
 import { parseWarehouseList, toWarehouseDetails } from '../warehouse-details';
 import { WAREHOUSE_LIST_CACHE_KEY, WAREHOUSE_LIST_TTL_MS } from '../warehouse-cache.policy';
@@ -18,7 +18,7 @@ export class ListWarehouses {
   ) {}
 
   async execute(): Promise<ListWarehousesResponse> {
-    const cached = await readWarehouseCache(
+    const cached = await readCache(
       this.cache,
       WAREHOUSE_LIST_CACHE_KEY,
       listWarehousesResponseSchema,
@@ -34,7 +34,7 @@ export class ListWarehouses {
       total: records.length,
     };
     const parsed = parseWarehouseList(list);
-    await writeWarehouseCache(this.cache, WAREHOUSE_LIST_CACHE_KEY, parsed, WAREHOUSE_LIST_TTL_MS);
+    await writeCache(this.cache, WAREHOUSE_LIST_CACHE_KEY, parsed, WAREHOUSE_LIST_TTL_MS);
     return parsed;
   }
 }
