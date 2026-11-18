@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { InvalidPositionError } from '../../modules/warehouse/domain/errors/value.errors';
+import { InvalidPositionError } from './grid-errors';
 import { Position } from './position';
 
 describe('Position', () => {

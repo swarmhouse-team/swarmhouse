@@ -1,13 +1,13 @@
 import { API_ERROR_CODES, WAREHOUSE_HTTP_ERROR_CODES, type ApiError } from '@robots/shared';
 import { ZodError } from 'zod';
 
-import { ApplicationError } from '../../application/errors/application.error';
+import { ApplicationError } from '../../../../common/application/application.error';
+import { DomainError } from '../../../../common/domain/domain.error';
 import {
   MapVersionConflictError,
   WarehouseMapNotFoundError,
   WarehouseNotFoundError,
 } from '../../application/errors/application.errors';
-import { DomainError } from '../../domain/errors/domain.error';
 
 export const MAP_VERSION_CONFLICT_PUBLIC_MESSAGE =
   'The map version is stale. Read the map again and repeat the command.';

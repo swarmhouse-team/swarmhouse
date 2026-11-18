@@ -1,4 +1,4 @@
-import { InvalidPositionError } from '../../modules/warehouse/domain/errors/value.errors';
+import { InvalidPositionError } from './grid-errors';
 
 /** A grid cell. It does not know the size of a particular map. */
 export class Position {

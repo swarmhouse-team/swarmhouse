@@ -1,17 +1,14 @@
+import {
+  DomainError as CommonDomainError,
+  type ErrorDetails,
+} from '../../../../common/domain/domain.error';
 import type { DomainErrorCode } from './domain-error-code';
 
-export type ErrorDetails = Readonly<Record<string, string | number | boolean | null>>;
-
-export abstract class DomainError extends Error {
-  readonly code: DomainErrorCode;
-  readonly details?: ErrorDetails;
+/** Warehouse domain error. The code set stays in this module. */
+export abstract class DomainError extends CommonDomainError {
+  declare readonly code: DomainErrorCode;
 
   protected constructor(code: DomainErrorCode, message: string, details?: ErrorDetails) {
-    super(message);
-    this.name = new.target.name;
-    this.code = code;
-    if (details !== undefined) {
-      this.details = Object.freeze({ ...details });
-    }
+    super(code, message, details);
   }
 }

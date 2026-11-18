@@ -1,4 +1,4 @@
-import { InvalidGridSizeError } from '../../modules/warehouse/domain/errors/value.errors';
+import { InvalidGridSizeError } from './grid-errors';
 
 /** Grid size. Whether a cell belongs to a particular map is checked by that map. */
 export class GridSize {

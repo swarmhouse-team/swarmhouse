@@ -1,6 +1,6 @@
-import { WarehouseMap } from '../../domain/entities/warehouse-map';
-import { DomainError } from '../../domain/errors/domain.error';
+import { DomainError } from '../../../../common/domain/domain.error';
 import { Position } from '../../../../common/domain/position';
+import { WarehouseMap } from '../../domain/entities/warehouse-map';
 import { WAREHOUSE_MAP_HEIGHT, WAREHOUSE_MAP_WIDTH } from '../../domain/constants';
 import { CorruptedMapStateError } from '../errors/application.errors';
 import type { WarehouseMapRestoreInput } from './warehouse-map-restore-input';

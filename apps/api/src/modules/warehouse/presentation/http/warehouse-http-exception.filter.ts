@@ -2,7 +2,8 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Inject } from '@nest
 import { WAREHOUSE_HTTP_ERROR_CODES, type ApiError } from '@robots/shared';
 import type { Response } from 'express';
 
-import { ApplicationError } from '../../application/errors/application.error';
+import { ApplicationError } from '../../../../common/application/application.error';
+import { DomainError } from '../../../../common/domain/domain.error';
 import {
   CorruptedMapStateError,
   MapVersionConflictError,
@@ -10,7 +11,6 @@ import {
   WarehouseNotFoundError,
 } from '../../application/errors/application.errors';
 import type { LogContext, LoggerPort } from '../../application/ports/system/logger.port';
-import { DomainError } from '../../domain/errors/domain.error';
 import { MAP_VERSION_CONFLICT_PUBLIC_MESSAGE } from '../realtime/warehouse-client-error';
 import { NestjsWarehouseLogger } from '../../infrastructure/system/nestjs-warehouse-logger';
 

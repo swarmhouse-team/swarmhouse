@@ -1,10 +1,12 @@
+import {
+  ApplicationError as CommonApplicationError,
+  type ErrorDetails,
+} from '../../../../common/application/application.error';
 import type { ApplicationErrorCode } from './application-error-code';
 
-export type ErrorDetails = Readonly<Record<string, string | number | boolean | null>>;
-
-export abstract class ApplicationError extends Error {
-  readonly code: ApplicationErrorCode;
-  readonly details?: ErrorDetails;
+/** Warehouse application error. The code set stays in this module. */
+export abstract class ApplicationError extends CommonApplicationError {
+  declare readonly code: ApplicationErrorCode;
 
   protected constructor(
     code: ApplicationErrorCode,
@@ -12,11 +14,6 @@ export abstract class ApplicationError extends Error {
     details?: ErrorDetails,
     cause?: unknown,
   ) {
-    super(message, cause === undefined ? undefined : { cause });
-    this.name = new.target.name;
-    this.code = code;
-    if (details !== undefined) {
-      this.details = Object.freeze({ ...details });
-    }
+    super(code, message, details, cause);
   }
 }

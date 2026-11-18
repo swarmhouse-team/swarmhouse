@@ -8,19 +8,18 @@ import type {
 import { apiErrorSchema, mapVersionConflictErrorSchema } from '@robots/shared';
 import { describe, expect, it } from 'vitest';
 
-import {
-  createRecordingLogger,
-  type LogEntry,
-} from '../../application/testing/create-recording-logger';
-
-import { ApplicationError } from '../../application/errors/application.error';
+import { ApplicationError } from '../../../../common/application/application.error';
+import { DomainError } from '../../../../common/domain/domain.error';
 import {
   CorruptedMapStateError,
   MapVersionConflictError,
   WarehouseMapNotFoundError,
   WarehouseNotFoundError,
 } from '../../application/errors/application.errors';
-import { DomainError } from '../../domain/errors/domain.error';
+import {
+  createRecordingLogger,
+  type LogEntry,
+} from '../../application/testing/create-recording-logger';
 import {
   CellOccupiedError,
   DuplicateObjectIdError,
