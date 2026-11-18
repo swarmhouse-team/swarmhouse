@@ -1,16 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { CacheError } from '../../../../../cache/application/errors/cache.error';
-
+import type { Clock } from '../../../../../common/application/clock';
+import { MAX_NAME_LENGTH } from '../../../domain/constants';
 import type { Warehouse } from '../../../domain/entities/warehouse';
 import { InvalidNameError } from '../../../domain/errors/value.errors';
-import { MAX_NAME_LENGTH } from '../../../domain/constants';
 import { WarehouseNotFoundError } from '../../errors/application.errors';
 import type {
   SaveWarehouseResult,
   StoredWarehouse,
 } from '../../ports/repositories/warehouse.repository';
-import type { Clock } from '../../ports/system/clock';
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
 import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
 import {

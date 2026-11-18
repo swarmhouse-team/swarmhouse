@@ -1,14 +1,19 @@
-import { Logger } from '@nestjs/common';
+import { Logger, type Provider } from '@nestjs/common';
 
-import type { LogContext, LoggerPort } from '../../application/ports/system/logger.port';
+import type { LogContext, LoggerPort } from '../application/logger.port';
 
 /**
- * NestJS Logger adapter for warehouse application use cases.
- * Logging failures are swallowed so they cannot change a use case result,
- * including after a successful commit. Those failures are not logged again.
+ * NestJS Logger adapter.
+ * `context` is the Nest logger context for this instance.
+ * Logging failures are swallowed so they cannot change a caller result.
+ * Those failures are not logged again.
  */
-export class NestjsWarehouseLogger implements LoggerPort {
-  private readonly logger = new Logger('WarehouseApplication');
+export class NestjsLogger implements LoggerPort {
+  private readonly logger: Logger;
+
+  constructor(context: string) {
+    this.logger = new Logger(context);
+  }
 
   debug(event: string, context?: LogContext): void {
     this.write('debug', event, context);
@@ -38,4 +43,12 @@ export class NestjsWarehouseLogger implements LoggerPort {
       // Logging must not break the caller.
     }
   }
+}
+
+/** One logger provider for a Nest module `providers` array. */
+export function provideLogger(context: string): Provider {
+  return {
+    provide: NestjsLogger,
+    useFactory: () => new NestjsLogger(context),
+  };
 }

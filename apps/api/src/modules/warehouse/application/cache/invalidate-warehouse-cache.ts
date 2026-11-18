@@ -1,6 +1,6 @@
 import { CacheError } from '../../../../cache/application/errors/cache.error';
 import type { CachePort } from '../../../../cache/application/ports/cache.port';
-import type { LoggerPort } from '../ports/system/logger.port';
+import type { LoggerPort } from '../../../../common/application/logger.port';
 import {
   WAREHOUSE_LIST_CACHE_KEY,
   warehouseDetailsCacheKey,

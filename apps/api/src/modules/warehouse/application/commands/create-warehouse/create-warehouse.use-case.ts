@@ -1,10 +1,10 @@
 import type { CachePort } from '../../../../../cache/application/ports/cache.port';
+import type { Clock } from '../../../../../common/application/clock';
+import type { IdGenerator } from '../../../../../common/application/id-generator';
+import type { LoggerPort } from '../../../../../common/application/logger.port';
 import { Warehouse } from '../../../domain/entities/warehouse';
 import { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { invalidateWarehouseCache } from '../../cache/invalidate-warehouse-cache';
-import type { Clock } from '../../ports/system/clock';
-import type { IdGenerator } from '../../ports/system/id-generator';
-import type { LoggerPort } from '../../ports/system/logger.port';
 import type { UnitOfWork } from '../../ports/system/unit-of-work';
 import type { CreateWarehouseInput, CreateWarehouseResult } from './create-warehouse.types';
 

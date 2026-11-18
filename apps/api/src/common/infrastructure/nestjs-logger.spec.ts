@@ -1,16 +1,16 @@
 import { Logger } from '@nestjs/common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { NestjsWarehouseLogger } from './nestjs-warehouse-logger';
+import { NestjsLogger } from './nestjs-logger';
 
-describe('NestjsWarehouseLogger', () => {
+describe('NestjsLogger', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
   it('forwards info to NestJS log with a structured payload', () => {
     const log = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
-    const logger = new NestjsWarehouseLogger();
+    const logger = new NestjsLogger('WarehouseApplication');
 
     logger.info('warehouse.created', { warehouseId: 'wh-1', mapId: 'map-1', version: 0 });
 
@@ -26,7 +26,7 @@ describe('NestjsWarehouseLogger', () => {
     const debug = vi.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
     const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     const error = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    const logger = new NestjsWarehouseLogger();
+    const logger = new NestjsLogger('WarehouseApplication');
 
     logger.debug('warehouse.map.noop', { mapId: 'map-1' });
     logger.warn('unused.warn', { mapId: 'map-1' });
@@ -41,7 +41,7 @@ describe('NestjsWarehouseLogger', () => {
     vi.spyOn(Logger.prototype, 'log').mockImplementation(() => {
       throw new Error('logger broken');
     });
-    const logger = new NestjsWarehouseLogger();
+    const logger = new NestjsLogger('WarehouseApplication');
 
     expect(() => logger.info('warehouse.created', { warehouseId: 'wh-1' })).not.toThrow();
   });

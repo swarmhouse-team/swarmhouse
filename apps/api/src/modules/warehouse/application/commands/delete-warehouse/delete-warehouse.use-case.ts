@@ -1,8 +1,8 @@
 import type { CachePort } from '../../../../../cache/application/ports/cache.port';
+import type { LoggerPort } from '../../../../../common/application/logger.port';
 import { invalidateWarehouseCache } from '../../cache/invalidate-warehouse-cache';
 import { publishAfterCommit } from '../../cache/publish-after-commit';
 import { WarehouseNotFoundError } from '../../errors/application.errors';
-import type { LoggerPort } from '../../ports/system/logger.port';
 import type { UnitOfWork } from '../../ports/system/unit-of-work';
 import type { WarehouseNotifier } from '../../ports/system/warehouse-notifier';
 import type { DeleteWarehouseInput } from './delete-warehouse.types';

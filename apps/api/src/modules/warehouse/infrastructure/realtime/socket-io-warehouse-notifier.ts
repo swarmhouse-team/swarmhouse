@@ -2,14 +2,14 @@ import { Inject, Injectable } from '@nestjs/common';
 import { WAREHOUSE_SOCKET_NAMESPACE } from '@robots/shared';
 import type { Namespace, Server } from 'socket.io';
 
-import type { LoggerPort } from '../../application/ports/system/logger.port';
+import type { LoggerPort } from '../../../../common/application/logger.port';
+import { NestjsLogger } from '../../../../common/infrastructure/nestjs-logger';
 import type {
   WarehouseDeletedNotice,
   WarehouseMapChangedNotice,
   WarehouseNotifier,
   WarehouseUpdatedNotice,
 } from '../../application/ports/system/warehouse-notifier';
-import { NestjsWarehouseLogger } from '../system/nestjs-warehouse-logger';
 import { warehouseRoom } from './warehouse-socket.constants';
 import { WarehouseSubscriptionBook } from './warehouse-subscription.book';
 
@@ -24,7 +24,7 @@ export class SocketIoWarehouseNotifier implements WarehouseNotifier {
   private namespace: Namespace | undefined;
 
   constructor(
-    @Inject(NestjsWarehouseLogger) private readonly logger: LoggerPort,
+    @Inject(NestjsLogger) private readonly logger: LoggerPort,
     private readonly subscriptions: WarehouseSubscriptionBook,
   ) {}
 

@@ -1,16 +1,16 @@
 import type { EditWarehouseMapOperation } from '@robots/shared';
 
+import type { IdGenerator } from '../../../../../common/application/id-generator';
+import type { LoggerPort } from '../../../../../common/application/logger.port';
+import { Position } from '../../../../../common/domain/position';
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { normalizeId } from '../../../domain/vo/id';
-import { Position } from '../../../../../common/domain/position';
 import { publishAfterCommit } from '../../cache/publish-after-commit';
 import {
   MapVersionConflictError,
   WarehouseMapNotFoundError,
 } from '../../errors/application.errors';
 import { restoreWarehouseMap } from '../../mapping/restore-warehouse-map';
-import type { IdGenerator } from '../../ports/system/id-generator';
-import type { LoggerPort } from '../../ports/system/logger.port';
 import type { UnitOfWork } from '../../ports/system/unit-of-work';
 import type { WarehouseNotifier } from '../../ports/system/warehouse-notifier';
 import type { EditWarehouseMapInput, EditWarehouseMapResult } from './edit-warehouse-map.types';

@@ -8,6 +8,8 @@ import {
 import { io, type Socket } from 'socket.io-client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { NestjsLogger } from '../../../../common/infrastructure/nestjs-logger';
+import { AppSocketIoAdapter } from '../../../../common/socket/app-socket-io.adapter';
 import { EditWarehouseMap } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.use-case';
 import type {
   EditWarehouseMapInput,
@@ -18,9 +20,7 @@ import { createRecordingLogger } from '../../application/testing/create-recordin
 import { WarehouseMap } from '../../domain/entities/warehouse-map';
 import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
 import { WAREHOUSE_EXISTENCE } from '../../infrastructure/realtime/warehouse-existence';
-import { AppSocketIoAdapter } from '../../../../common/socket/app-socket-io.adapter';
 import { WarehouseSubscriptionBook } from '../../infrastructure/realtime/warehouse-subscription.book';
-import { NestjsWarehouseLogger } from '../../infrastructure/system/nestjs-warehouse-logger';
 import { WarehouseGateway } from './warehouse.gateway';
 
 const ALLOWED = 'http://allowed.example';
@@ -47,7 +47,7 @@ describe('warehouse socket transport', () => {
       providers: [
         { provide: WarehouseSubscriptionBook, useValue: book },
         { provide: SocketIoWarehouseNotifier, useValue: notifier },
-        { provide: NestjsWarehouseLogger, useValue: logger },
+        { provide: NestjsLogger, useValue: logger },
         {
           provide: WAREHOUSE_EXISTENCE,
           useValue: {

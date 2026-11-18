@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { CacheError } from '../../../../../cache/application/errors/cache.error';
-
+import type { Clock } from '../../../../../common/application/clock';
+import type { IdGenerator } from '../../../../../common/application/id-generator';
 import type { Warehouse } from '../../../domain/entities/warehouse';
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { InvalidNameError } from '../../../domain/errors/value.errors';
-import type { Clock } from '../../ports/system/clock';
-import type { IdGenerator } from '../../ports/system/id-generator';
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
 import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
 import { RecordingCache } from '../../testing/recording-cache';

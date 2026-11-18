@@ -22,10 +22,11 @@ import {
 import type { Namespace, Server, Socket } from 'socket.io';
 import { ZodError } from 'zod';
 
+import type { LoggerPort } from '../../../../common/application/logger.port';
 import { mapThrownError } from '../../../../common/http/map-thrown-error';
+import { NestjsLogger } from '../../../../common/infrastructure/nestjs-logger';
 import { EditWarehouseMap } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.use-case';
 import { WarehouseNotFoundError } from '../../application/errors/application.errors';
-import type { LoggerPort } from '../../application/ports/system/logger.port';
 import { normalizeId } from '../../domain/vo/id';
 import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
 import {
@@ -37,7 +38,6 @@ import {
   warehouseRoom,
 } from '../../infrastructure/realtime/warehouse-socket.constants';
 import { WarehouseSubscriptionBook } from '../../infrastructure/realtime/warehouse-subscription.book';
-import { NestjsWarehouseLogger } from '../../infrastructure/system/nestjs-warehouse-logger';
 import { toEditWarehouseMapAckData } from './edit-warehouse-map-ack';
 
 /**
@@ -52,7 +52,7 @@ export class WarehouseGateway implements OnGatewayInit, OnGatewayDisconnect {
     private readonly editWarehouseMap: EditWarehouseMap,
     private readonly notifier: SocketIoWarehouseNotifier,
     private readonly subscriptions: WarehouseSubscriptionBook,
-    @Inject(NestjsWarehouseLogger) private readonly logger: LoggerPort,
+    @Inject(NestjsLogger) private readonly logger: LoggerPort,
   ) {}
 
   afterInit(server: Server | Namespace): void {

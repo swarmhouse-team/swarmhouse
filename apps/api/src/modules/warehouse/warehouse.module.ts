@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 
 import { CacheModule } from '../../cache/cache.module';
 import { CachePort } from '../../cache/application/ports/cache.port';
+import { NestjsLogger, provideLogger } from '../../common/infrastructure/nestjs-logger';
+import { SystemClock } from '../../common/infrastructure/system-clock';
+import { UuidV7IdGenerator } from '../../common/infrastructure/uuid-v7-id-generator';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateWarehouse } from './application/commands/create-warehouse/create-warehouse.use-case';
@@ -17,9 +20,6 @@ import { PrismaUnitOfWork } from './infrastructure/prisma/transaction/prisma-uni
 import { SocketIoWarehouseNotifier } from './infrastructure/realtime/socket-io-warehouse-notifier';
 import { WAREHOUSE_EXISTENCE } from './infrastructure/realtime/warehouse-existence';
 import { WarehouseSubscriptionBook } from './infrastructure/realtime/warehouse-subscription.book';
-import { NestjsWarehouseLogger } from './infrastructure/system/nestjs-warehouse-logger';
-import { SystemClock } from './infrastructure/system/system-clock';
-import { UuidV7IdGenerator } from './infrastructure/system/uuid-v7-id-generator';
 import { WarehouseMapsController } from './presentation/http/warehouse-maps.controller';
 import { WarehousesController } from './presentation/http/warehouses.controller';
 import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
@@ -39,11 +39,7 @@ import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
       inject: [],
       useFactory: () => new UuidV7IdGenerator(),
     },
-    {
-      provide: NestjsWarehouseLogger,
-      inject: [],
-      useFactory: () => new NestjsWarehouseLogger(),
-    },
+    provideLogger('WarehouseApplication'),
     {
       provide: SystemClock,
       inject: [],
@@ -61,13 +57,13 @@ import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
     },
     {
       provide: CreateWarehouse,
-      inject: [PrismaUnitOfWork, UuidV7IdGenerator, SystemClock, CachePort, NestjsWarehouseLogger],
+      inject: [PrismaUnitOfWork, UuidV7IdGenerator, SystemClock, CachePort, NestjsLogger],
       useFactory: (
         unitOfWork: PrismaUnitOfWork,
         ids: UuidV7IdGenerator,
         clock: SystemClock,
         cache: CachePort,
-        logger: NestjsWarehouseLogger,
+        logger: NestjsLogger,
       ) => new CreateWarehouse(unitOfWork, ids, clock, cache, logger),
     },
     {
@@ -92,13 +88,13 @@ import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
       inject: [
         PrismaUnitOfWork,
         UuidV7IdGenerator,
-        NestjsWarehouseLogger,
+        NestjsLogger,
         SocketIoWarehouseNotifier,
       ],
       useFactory: (
         unitOfWork: PrismaUnitOfWork,
         ids: UuidV7IdGenerator,
-        logger: NestjsWarehouseLogger,
+        logger: NestjsLogger,
         notifier: SocketIoWarehouseNotifier,
       ) => new EditWarehouseMap(unitOfWork, ids, logger, notifier),
     },
@@ -108,24 +104,24 @@ import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
         PrismaUnitOfWork,
         SystemClock,
         CachePort,
-        NestjsWarehouseLogger,
+        NestjsLogger,
         SocketIoWarehouseNotifier,
       ],
       useFactory: (
         unitOfWork: PrismaUnitOfWork,
         clock: SystemClock,
         cache: CachePort,
-        logger: NestjsWarehouseLogger,
+        logger: NestjsLogger,
         notifier: SocketIoWarehouseNotifier,
       ) => new UpdateWarehouse(unitOfWork, clock, cache, logger, notifier),
     },
     {
       provide: DeleteWarehouse,
-      inject: [PrismaUnitOfWork, CachePort, NestjsWarehouseLogger, SocketIoWarehouseNotifier],
+      inject: [PrismaUnitOfWork, CachePort, NestjsLogger, SocketIoWarehouseNotifier],
       useFactory: (
         unitOfWork: PrismaUnitOfWork,
         cache: CachePort,
-        logger: NestjsWarehouseLogger,
+        logger: NestjsLogger,
         notifier: SocketIoWarehouseNotifier,
       ) => new DeleteWarehouse(unitOfWork, cache, logger, notifier),
     },

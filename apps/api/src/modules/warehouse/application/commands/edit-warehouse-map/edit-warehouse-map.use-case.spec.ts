@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import type { IdGenerator } from '../../../../../common/application/id-generator';
+import { Position } from '../../../../../common/domain/position';
 import { WarehouseMap, type WarehouseMapSnapshot } from '../../../domain/entities/warehouse-map';
 import {
   CellOccupiedError,
@@ -10,14 +12,12 @@ import {
   PositionOutOfBoundsError,
 } from '../../../domain/errors/map.errors';
 import { InvalidNameError, InvalidPositionError } from '../../../domain/errors/value.errors';
-import { Position } from '../../../../../common/domain/position';
 import {
   CorruptedMapStateError,
   MapVersionConflictError,
   WarehouseMapNotFoundError,
 } from '../../errors/application.errors';
 import type { SaveMapResult } from '../../ports/repositories/warehouse-map.repository';
-import type { IdGenerator } from '../../ports/system/id-generator';
 import type { TransactionContext, UnitOfWork } from '../../ports/system/unit-of-work';
 import { createRecordingLogger, type LogEntry } from '../../testing/create-recording-logger';
 import {

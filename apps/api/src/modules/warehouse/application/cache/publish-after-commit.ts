@@ -1,4 +1,4 @@
-import type { LoggerPort } from '../ports/system/logger.port';
+import type { LoggerPort } from '../../../../common/application/logger.port';
 
 /**
  * Runs cache invalidation and a realtime publish as two independent steps after commit.
