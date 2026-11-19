@@ -22,7 +22,8 @@
     "react-dom": "catalog:",
     "react-hook-form": "catalog:",
     "react-konva": "^19.3.2",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "@feature-sliced/steiger-plugin": "^0.8.2",
