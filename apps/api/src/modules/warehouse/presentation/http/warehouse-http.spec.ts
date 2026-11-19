@@ -161,6 +161,7 @@ describe('warehouse HTTP', () => {
             validateEnv({
               NODE_ENV: 'test',
               DATABASE_URL: 'postgresql://localhost:5432/robots',
+              JWT_ACCESS_SECRET: 'test-secret',
               CACHE_DRIVER: 'memory',
               CACHE_MEMORY_MAX_ENTRIES: '8',
             }),

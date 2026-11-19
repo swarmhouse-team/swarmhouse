@@ -5,6 +5,7 @@ import { createZodDto } from 'nestjs-zod';
 
 import { CachePort } from '../cache/application/ports/cache.port';
 import { RedisCache } from '../cache/infrastructure/redis/redis-cache';
+import { Public } from '../common/auth/public.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 
 class HealthResponseDto extends createZodDto(healthResponseSchema) {}
@@ -22,6 +23,8 @@ export class HealthController {
     @Inject(CachePort) private readonly cache: CachePort,
   ) {}
 
+  @Public()
+  @Public()
   @Get()
   @ApiOkResponse({ type: HealthResponseDto })
   @ApiServiceUnavailableResponse({ description: 'База данных или Redis недоступны' })

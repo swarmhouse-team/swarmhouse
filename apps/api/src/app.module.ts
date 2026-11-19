@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import { AuthModule } from './auth/auth.module';
 import { httpProviders } from './common/http/http.providers';
 import { validateEnv } from './config/env';
 import { ExampleModule } from './example/example.module';
@@ -20,6 +21,7 @@ import { WarehouseModule } from './modules/warehouse/warehouse.module';
     PrismaModule,
     WarehouseModule,
     HealthModule,
+    AuthModule,
     ExampleModule,
   ],
   providers: [...httpProviders],

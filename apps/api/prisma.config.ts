@@ -10,9 +10,12 @@ if (existsSync(envFile)) {
 }
 
 export default defineConfig({
-  schema: 'prisma/schema.prisma',
+  // Папка схемы: schema.prisma (generator, datasource) и модели в models/*.prisma.
+  schema: 'prisma',
   migrations: {
     path: 'prisma/migrations',
+    // Dev-сид (тестовые пользователи): запускается командой `prisma db seed`.
+    seed: 'tsx prisma/seed.ts',
   },
   datasource: {
     // `prisma generate` работает и без БД, поэтому пустое значение допустимо.
