@@ -8,7 +8,7 @@ import {
 } from '@/entities/warehouse';
 import { Button, Heading, Input, Label, Text, cn } from '@robots/ui';
 import { useTranslations } from 'next-intl';
-import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { type ChangeEvent, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { filterWarehouses, type WarehouseFilter } from '../lib/filter-warehouses';
 
@@ -27,6 +27,7 @@ type WarehouseFilterButtonProps = {
   count: number;
   isActive: boolean;
   onFilterChange: (filter: WarehouseFilter) => void;
+  onButtonRef: (filter: WarehouseFilter, element: HTMLButtonElement | null) => void;
 };
 
 function WarehouseFilterButton({
@@ -35,21 +36,25 @@ function WarehouseFilterButton({
   count,
   isActive,
   onFilterChange,
+  onButtonRef,
 }: WarehouseFilterButtonProps) {
   const handleClick = useCallback(() => onFilterChange(filter), [filter, onFilterChange]);
+  const handleRef = useCallback(
+    (element: HTMLButtonElement | null) => onButtonRef(filter, element),
+    [filter, onButtonRef],
+  );
 
   return (
     <Button
+      ref={handleRef}
       type="button"
       variant="ghost"
       role="tab"
       aria-selected={isActive}
       onClick={handleClick}
       className={cn(
-        'gap-2 px-3',
-        isActive
-          ? 'bg-background text-foreground shadow-sm'
-          : 'text-muted-foreground hover:text-foreground',
+        'relative z-10 gap-2 px-3 transition-[color,transform] duration-150 hover:bg-transparent active:scale-[0.97]',
+        isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
       )}
     >
       {label}
@@ -96,6 +101,12 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
   const t = useTranslations('warehouses.list');
   const [activeFilter, setActiveFilter] = useState<WarehouseFilter>('all');
   const [search, setSearch] = useState('');
+  const filterIndicatorRef = useRef<HTMLDivElement>(null);
+  const filterButtonRefs = useRef<Record<WarehouseFilter, HTMLButtonElement | null>>({
+    all: null,
+    mine: null,
+    available: null,
+  });
 
   const counts = useMemo(
     () => ({
@@ -113,10 +124,43 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
 
   const handleFilterChange = useCallback((filter: WarehouseFilter) => setActiveFilter(filter), []);
 
+  const handleFilterButtonRef = useCallback(
+    (filter: WarehouseFilter, element: HTMLButtonElement | null) => {
+      filterButtonRefs.current[filter] = element;
+    },
+    [],
+  );
+
   const handleSearchChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => setSearch(event.target.value),
     [],
   );
+
+  useLayoutEffect(() => {
+    const indicator = filterIndicatorRef.current;
+    const activeButton = filterButtonRefs.current[activeFilter];
+
+    if (!indicator || !activeButton) {
+      return;
+    }
+
+    const updateIndicator = () => {
+      indicator.style.width = `${activeButton.offsetWidth}px`;
+      indicator.style.transform = `translateX(${activeButton.offsetLeft}px)`;
+      indicator.style.opacity = '1';
+    };
+
+    updateIndicator();
+
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(updateIndicator);
+    resizeObserver.observe(activeButton);
+
+    return () => resizeObserver.disconnect();
+  }, [activeFilter, t]);
 
   return (
     <section className="space-y-6">
@@ -124,8 +168,14 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
         <div
           role="tablist"
           aria-label={t('filterLabel')}
-          className="flex flex-wrap gap-1 rounded-lg bg-muted p-1"
+          className="relative flex w-fit max-w-full flex-nowrap gap-1 overflow-x-auto rounded-xl bg-muted p-1"
         >
+          <div
+            ref={filterIndicatorRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1 bottom-1 left-0 rounded-lg bg-background opacity-0 shadow-sm transition-[width,transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+          />
+
           {filters.map((filter) => {
             const isActive = activeFilter === filter;
 
@@ -137,6 +187,7 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
                 count={counts[filter]}
                 isActive={isActive}
                 onFilterChange={handleFilterChange}
+                onButtonRef={handleFilterButtonRef}
               />
             );
           })}
