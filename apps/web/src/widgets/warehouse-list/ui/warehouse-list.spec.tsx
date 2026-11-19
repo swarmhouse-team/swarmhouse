@@ -1,11 +1,12 @@
 import { warehouseMocks } from '@/entities/warehouse';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { renderWithProviders } from '@/shared/lib/test-utils';
+import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { WarehouseList } from './warehouse-list';
 
 function renderWarehouseList() {
-  return render(
+  return renderWithProviders(
     <WarehouseList
       warehouses={warehouseMocks}
       onCreate={vi.fn()}
@@ -118,7 +119,7 @@ describe('WarehouseList', () => {
   });
 
   it('показывает состояние полного отсутствия складов', () => {
-    render(
+    renderWithProviders(
       <WarehouseList warehouses={[]} onCreate={vi.fn()} onSettings={vi.fn()} onDelete={vi.fn()} />,
     );
 

@@ -1,4 +1,5 @@
 import { cn } from '@robots/ui';
+import { useTranslations } from 'next-intl';
 
 import type { WarehouseRole } from '../model/mocks';
 
@@ -7,12 +8,9 @@ type WarehouseRoleBadgeProps = {
   className?: string;
 };
 
-const roleLabels = {
-  owner: 'Владелец',
-  observer: 'Наблюдатель',
-} satisfies Record<WarehouseRole, string>;
-
 export function WarehouseRoleBadge({ role, className }: WarehouseRoleBadgeProps) {
+  const t = useTranslations('warehouses.roles');
+
   return (
     <span
       className={cn(
@@ -23,7 +21,7 @@ export function WarehouseRoleBadge({ role, className }: WarehouseRoleBadgeProps)
         className,
       )}
     >
-      {roleLabels[role]}
+      {t(role)}
     </span>
   );
 }

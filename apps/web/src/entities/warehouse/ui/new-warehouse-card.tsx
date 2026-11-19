@@ -1,4 +1,5 @@
 import { cn } from '@robots/ui';
+import { useTranslations } from 'next-intl';
 
 type NewWarehouseCardProps = {
   onClick: () => void;
@@ -6,6 +7,8 @@ type NewWarehouseCardProps = {
 };
 
 export function NewWarehouseCard({ onClick, className }: NewWarehouseCardProps) {
+  const t = useTranslations('warehouses.newCard');
+
   return (
     <button
       type="button"
@@ -24,9 +27,9 @@ export function NewWarehouseCard({ onClick, className }: NewWarehouseCardProps) 
         +
       </span>
 
-      <span className="font-semibold">Новый склад</span>
+      <span className="font-semibold">{t('title')}</span>
 
-      <span className="text-sm text-muted-foreground">Создать новый склад</span>
+      <span className="text-sm text-muted-foreground">{t('description')}</span>
     </button>
   );
 }

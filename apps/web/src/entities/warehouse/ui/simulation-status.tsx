@@ -1,4 +1,5 @@
 import { cn } from '@robots/ui';
+import { useTranslations } from 'next-intl';
 
 import type { SimulationStatus as SimulationStatusValue } from '../model/mocks';
 
@@ -9,26 +10,27 @@ type SimulationStatusProps = {
 
 const statusConfig = {
   running: {
-    label: 'Идёт',
+    translationKey: 'running',
     dotClassName: 'bg-emerald-500',
   },
   paused: {
-    label: 'Пауза',
+    translationKey: 'paused',
     dotClassName: 'bg-amber-500',
   },
   not_started: {
-    label: 'Не запущена',
+    translationKey: 'notStarted',
     dotClassName: 'bg-muted-foreground',
   },
 } satisfies Record<
   SimulationStatusValue,
   {
-    label: string;
+    translationKey: 'running' | 'paused' | 'notStarted';
     dotClassName: string;
   }
 >;
 
 export function SimulationStatus({ status, className }: SimulationStatusProps) {
+  const t = useTranslations('warehouses.statuses');
   const config = statusConfig[status];
 
   return (
@@ -38,7 +40,7 @@ export function SimulationStatus({ status, className }: SimulationStatusProps) {
         className={cn('size-2 shrink-0 rounded-full', config.dotClassName)}
       />
 
-      {config.label}
+      {t(config.translationKey)}
     </span>
   );
 }
