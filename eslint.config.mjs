@@ -101,6 +101,8 @@ export default defineConfig(
               'as',
               'weight',
               'aria-hidden',
+              'align',
+              'value',
               'data-.*',
             ],
           },

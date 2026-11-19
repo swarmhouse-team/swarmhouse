@@ -1,4 +1,5 @@
 import { Card, CardHeader, CardTitle, cn } from '@robots/ui';
+import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
 import type { MockWarehouse } from '../model/mocks';
@@ -12,6 +13,7 @@ type WarehouseCardProps = {
 };
 
 export function WarehouseCard({ warehouse, actions, className }: WarehouseCardProps) {
+  const t = useTranslations('warehouses.card');
   const { name, role, mapSize, robotsCount, stationsCount, simulationStatus } = warehouse;
 
   return (
@@ -27,10 +29,10 @@ export function WarehouseCard({ warehouse, actions, className }: WarehouseCardPr
 
       <div
         role="img"
-        aria-label={`Плейсхолдер карты склада «${name}»`}
+        aria-label={t('mapPlaceholderLabel', { name })}
         className="flex aspect-video items-center justify-center border-b bg-muted/60"
       >
-        <span className="text-sm text-muted-foreground">Превью карты</span>
+        <span className="text-sm text-muted-foreground">{t('mapPlaceholder')}</span>
       </div>
 
       <CardHeader className="gap-4 py-5">
@@ -38,7 +40,12 @@ export function WarehouseCard({ warehouse, actions, className }: WarehouseCardPr
           <CardTitle className="truncate">{name}</CardTitle>
 
           <p className="text-sm text-muted-foreground">
-            {mapSize.width} × {mapSize.height} клеток · {robotsCount} роботов · {stationsCount} ст.
+            {t('summary', {
+              width: mapSize.width,
+              height: mapSize.height,
+              robots: robotsCount,
+              stations: stationsCount,
+            })}
           </p>
         </div>
 

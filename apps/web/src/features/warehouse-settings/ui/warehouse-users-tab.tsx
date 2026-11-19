@@ -3,6 +3,7 @@
 import { type WarehouseMember, type WarehouseMemberRole } from '@/entities/warehouse';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Form, FormControl, FormField, FormItem, FormMessage, Input, cn } from '@robots/ui';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 
 import {
@@ -25,6 +26,7 @@ function getInitials(name: string): string {
 }
 
 export function WarehouseUsersTab({ members, onMembersChange, onDone }: WarehouseUsersTabProps) {
+  const t = useTranslations('warehouses.settings.users');
   const form = useForm<InviteWarehouseMember>({
     resolver: zodResolver(inviteWarehouseMemberSchema),
     defaultValues: {
@@ -45,7 +47,7 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
 
     if (alreadyExists) {
       form.setError('email', {
-        message: 'Этот пользователь уже приглашён',
+        message: t('alreadyInvited'),
       });
 
       return;
@@ -88,7 +90,7 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
                     <Input
                       {...field}
                       type="email"
-                      placeholder="name@company.com"
+                      placeholder={t('emailPlaceholder')}
                       autoComplete="email"
                     />
                   </FormControl>
@@ -100,24 +102,22 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
 
             <div className="flex gap-2">
               <div className="flex h-9 items-center rounded-md border bg-muted/30 px-3 text-sm text-muted-foreground">
-                Наблюдатель
+                {t('observerRole')}
               </div>
 
-              <Button type="submit">Пригласить</Button>
+              <Button type="submit">{t('invite')}</Button>
             </div>
           </form>
         </Form>
 
-        <p className="text-xs text-muted-foreground">
-          Наблюдатель видит карту и симуляцию в реальном времени.
-        </p>
+        <p className="text-xs text-muted-foreground">{t('observerDescription')}</p>
 
         <div>
           <div className="mb-3 flex items-center justify-between gap-4">
-            <h3 className="text-sm font-semibold">Участники</h3>
+            <h3 className="text-sm font-semibold">{t('participants')}</h3>
 
             <span className="text-xs text-muted-foreground">
-              {activeCount} доступно · {pendingCount} ожидает
+              {t('participantsCount', { active: activeCount, pending: pendingCount })}
             </span>
           </div>
 
@@ -137,11 +137,11 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
                       {member.name}
-                      {member.isCurrentUser ? ' (вы)' : ''}
+                      {member.isCurrentUser ? ` ${t('currentUser')}` : ''}
                     </p>
 
                     <p className="truncate text-xs text-muted-foreground">
-                      {member.status === 'pending' ? 'Приглашение отправлено' : member.email}
+                      {member.status === 'pending' ? t('invitationSent') : member.email}
                     </p>
                   </div>
                 </div>
@@ -149,12 +149,12 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
                 <div className="flex items-center gap-2 sm:justify-end">
                   {member.status === 'pending' ? (
                     <span className="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-800">
-                      Ожидает
+                      {t('pending')}
                     </span>
                   ) : (
                     <div className="relative">
                       <select
-                        aria-label={`Роль пользователя ${member.name}`}
+                        aria-label={t('roleLabel', { name: member.name })}
                         value={member.role}
                         disabled={member.isCurrentUser}
                         onChange={(event) =>
@@ -162,8 +162,8 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
                         }
                         className="h-8 min-w-28 appearance-none rounded-md border bg-background py-1 pr-8 pl-3 text-xs leading-none disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        <option value="owner">Владелец</option>
-                        <option value="observer">Наблюдатель</option>
+                        <option value="owner">{t('ownerRole')}</option>
+                        <option value="observer">{t('observerRole')}</option>
                       </select>
 
                       <svg
@@ -189,7 +189,7 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
 
                       <button
                         type="button"
-                        aria-label={`Удалить пользователя ${member.name}`}
+                        aria-label={t('removeLabel', { name: member.name })}
                         onClick={() => handleRemove(member.id)}
                         className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                       >
@@ -213,7 +213,7 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
 
       <footer className="flex justify-end border-t px-6 py-4">
         <Button type="button" onClick={onDone}>
-          Готово
+          {t('done')}
         </Button>
       </footer>
     </div>

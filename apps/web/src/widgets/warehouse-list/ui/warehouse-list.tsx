@@ -7,6 +7,7 @@ import {
   type MockWarehouse,
 } from '@/entities/warehouse';
 import { Input, cn } from '@robots/ui';
+import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
 import { filterWarehouses, type WarehouseFilter } from '../model/filter-warehouses';
@@ -18,25 +19,10 @@ type WarehouseListProps = {
   onDelete: (warehouse: MockWarehouse) => void;
 };
 
-const filters = [
-  {
-    value: 'all',
-    label: 'Все',
-  },
-  {
-    value: 'mine',
-    label: 'Мои',
-  },
-  {
-    value: 'available',
-    label: 'Доступные мне',
-  },
-] satisfies Array<{
-  value: WarehouseFilter;
-  label: string;
-}>;
+const filters = ['all', 'mine', 'available'] satisfies WarehouseFilter[];
 
 export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: WarehouseListProps) {
+  const t = useTranslations('warehouses.list');
   const [activeFilter, setActiveFilter] = useState<WarehouseFilter>('all');
   const [search, setSearch] = useState('');
 
@@ -59,19 +45,19 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div
           role="tablist"
-          aria-label="Фильтр складов"
+          aria-label={t('filterLabel')}
           className="flex flex-wrap gap-1 rounded-lg bg-muted p-1"
         >
           {filters.map((filter) => {
-            const isActive = activeFilter === filter.value;
+            const isActive = activeFilter === filter;
 
             return (
               <button
-                key={filter.value}
+                key={filter}
                 type="button"
                 role="tab"
                 aria-selected={isActive}
-                onClick={() => setActiveFilter(filter.value)}
+                onClick={() => setActiveFilter(filter)}
                 className={cn(
                   'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
@@ -80,7 +66,7 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
-                {filter.label}
+                {t(`filters.${filter}`)}
 
                 <span
                   className={cn(
@@ -90,7 +76,7 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
                       : 'bg-background text-muted-foreground',
                   )}
                 >
-                  {counts[filter.value]}
+                  {counts[filter]}
                 </span>
               </button>
             );
@@ -99,7 +85,7 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
 
         <div className="w-full lg:max-w-xs">
           <label htmlFor="warehouse-search" className="sr-only">
-            Поиск по названию склада
+            {t('searchLabel')}
           </label>
 
           <Input
@@ -107,7 +93,7 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Поиск по названию"
+            placeholder={t('searchPlaceholder')}
           />
         </div>
       </div>
@@ -115,22 +101,18 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
       {warehouses.length === 0 ? (
         <div className="space-y-6 rounded-xl border border-dashed p-8 text-center">
           <div>
-            <h2 className="font-semibold">Складов пока нет</h2>
+            <h2 className="font-semibold">{t('empty.title')}</h2>
 
-            <p className="mt-2 text-sm text-muted-foreground">
-              Создайте первый склад, чтобы начать работу.
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">{t('empty.description')}</p>
           </div>
 
           <NewWarehouseCard onClick={onCreate} className="mx-auto max-w-sm" />
         </div>
       ) : filteredWarehouses.length === 0 ? (
         <div className="rounded-xl border border-dashed p-12 text-center">
-          <h2 className="font-semibold">Ничего не найдено</h2>
+          <h2 className="font-semibold">{t('noResults.title')}</h2>
 
-          <p className="mt-2 text-sm text-muted-foreground">
-            Попробуйте изменить поисковый запрос или выбрать другой фильтр.
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{t('noResults.description')}</p>
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">

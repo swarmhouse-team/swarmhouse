@@ -16,6 +16,7 @@ import {
   FormMessage,
   Input,
 } from '@robots/ui';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 
 type CreateWarehouseDialogProps = {
@@ -29,6 +30,7 @@ export function CreateWarehouseDialog({
   onOpenChange,
   onCreate,
 }: CreateWarehouseDialogProps) {
+  const t = useTranslations('warehouses.create');
   const form = useForm<CreateWarehouseRequest>({
     resolver: zodResolver(createWarehouseRequestSchema),
     mode: 'onChange',
@@ -56,24 +58,22 @@ export function CreateWarehouseDialog({
         <Form {...form}>
           <form onSubmit={handleSubmit}>
             <div className="space-y-5 p-6">
-              <DialogTitle>Новый склад</DialogTitle>
-              <DialogDescription className="sr-only">
-                Введите название нового склада.
-              </DialogDescription>
+              <DialogTitle>{t('title')}</DialogTitle>
+              <DialogDescription className="sr-only">{t('description')}</DialogDescription>
 
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Название</FormLabel>
+                    <FormLabel>{t('nameLabel')}</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         autoFocus
                         maxLength={100}
                         autoComplete="off"
-                        placeholder="Например, Центральный склад"
+                        placeholder={t('namePlaceholder')}
                       />
                     </FormControl>
                     <FormMessage />
@@ -84,14 +84,14 @@ export function CreateWarehouseDialog({
 
             <footer className="flex justify-end gap-3 border-t px-6 py-4">
               <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-                Отмена
+                {t('cancel')}
               </Button>
 
               <Button
                 type="submit"
                 disabled={!form.formState.isValid || form.formState.isSubmitting}
               >
-                Создать склад
+                {t('submit')}
               </Button>
             </footer>
           </form>

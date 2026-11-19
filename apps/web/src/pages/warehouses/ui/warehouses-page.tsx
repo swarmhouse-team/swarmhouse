@@ -6,9 +6,11 @@ import { DeleteWarehouseDialog } from '@/features/warehouse-delete';
 import { WarehouseSettingsDialog } from '@/features/warehouse-settings';
 import { WarehouseList } from '@/widgets/warehouse-list';
 import { Button, Heading, Text } from '@robots/ui';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 export function WarehousesPage() {
+  const t = useTranslations('warehouses.page');
   const [warehouses, setWarehouses] = useState<MockWarehouse[]>([...warehouseMocks]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedWarehouse, setSelectedWarehouse] = useState<MockWarehouse | null>(null);
@@ -88,10 +90,10 @@ export function WarehousesPage() {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <Heading level={1}>Склады</Heading>
+            <Heading level={1}>{t('title')}</Heading>
 
             <Text variant="muted" className="mt-2">
-              Управляйте складами, участниками и настройками симуляции.
+              {t('subtitle')}
             </Text>
           </div>
 
@@ -101,7 +103,7 @@ export function WarehousesPage() {
             onClick={() => setIsCreateDialogOpen(true)}
             className="mb-4 shrink-0"
           >
-            Создать склад
+            {t('create')}
           </Button>
         </header>
 
