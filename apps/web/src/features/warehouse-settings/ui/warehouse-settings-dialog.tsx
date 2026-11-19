@@ -134,7 +134,7 @@ export function WarehouseSettingsDialog({
 
             <nav
               aria-label={t('navigationLabel')}
-              className="flex gap-2 overflow-x-auto md:flex-col"
+              className="-m-1 flex gap-2 overflow-x-auto p-1 md:m-0 md:flex-col md:overflow-visible md:p-0"
             >
               <Button
                 type="button"
