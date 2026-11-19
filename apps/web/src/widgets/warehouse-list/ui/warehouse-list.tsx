@@ -10,7 +10,7 @@ import { Button, Heading, Input, Label, Text, cn } from '@robots/ui';
 import { useTranslations } from 'next-intl';
 import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
 
-import { filterWarehouses, type WarehouseFilter } from '../model/filter-warehouses';
+import { filterWarehouses, type WarehouseFilter } from '../lib/filter-warehouses';
 
 type WarehouseListProps = {
   warehouses: readonly MockWarehouse[];
