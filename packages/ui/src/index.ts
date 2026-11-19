@@ -36,3 +36,13 @@ export {
   DropdownMenuTrigger,
 } from './components/dropdown-menu';
 export { Dialog, DialogContent, DialogDescription, DialogTitle } from './components/dialog';
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from './components/select';

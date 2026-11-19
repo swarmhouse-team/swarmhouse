@@ -11,6 +11,11 @@ import {
   FormMessage,
   Heading,
   Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Text,
   cn,
 } from '@robots/ui';
@@ -176,35 +181,30 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
                       {t('pending')}
                     </Text>
                   ) : (
-                    <div className="relative">
-                      <select
+                    <Select
+                      value={member.role}
+                      disabled={member.isCurrentUser}
+                      onValueChange={(role) =>
+                        handleRoleChange(member.id, role as WarehouseMemberRole)
+                      }
+                    >
+                      <SelectTrigger
+                        size="sm"
                         aria-label={t('roleLabel', { name: member.name })}
-                        value={member.role}
-                        disabled={member.isCurrentUser}
-                        onChange={(event) =>
-                          handleRoleChange(member.id, event.target.value as WarehouseMemberRole)
-                        }
-                        className="h-8 min-w-28 appearance-none rounded-md border bg-background py-1 pr-8 pl-3 text-xs leading-none disabled:cursor-not-allowed disabled:opacity-60"
+                        className="min-w-28 text-xs"
                       >
-                        <option value="owner">{t('ownerRole')}</option>
-                        <option value="observer">{t('observerRole')}</option>
-                      </select>
+                        <SelectValue />
+                      </SelectTrigger>
 
-                      <svg
-                        aria-hidden="true"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        className="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
-                      >
-                        <path
-                          d="m4 6 4 4 4-4"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
+                      <SelectContent>
+                        <SelectItem value="owner" className="text-xs">
+                          {t('ownerRole')}
+                        </SelectItem>
+                        <SelectItem value="observer" className="text-xs">
+                          {t('observerRole')}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   )}
 
                   {!member.isCurrentUser ? (
