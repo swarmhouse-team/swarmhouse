@@ -17,12 +17,20 @@ export default defineConfig([
     // Пока они используются одной страницей, но остаются самостоятельными частями интерфейса.
     files: [
       './src/entities/warehouse/**',
+      './src/features/warehouse-create/**',
       './src/features/warehouse-delete/**',
       './src/features/warehouse-settings/**',
       './src/widgets/warehouse-list/**',
     ],
     rules: {
       'fsd/insignificant-slice': 'off',
+    },
+  },
+  {
+    // Feature-слайсы описывают разные действия над одной сущностью warehouse.
+    files: ['./src/features/**'],
+    rules: {
+      'fsd/repetitive-naming': 'off',
     },
   },
 ]);

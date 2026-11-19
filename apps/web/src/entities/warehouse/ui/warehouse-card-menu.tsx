@@ -20,7 +20,7 @@ export function WarehouseCardMenu({ warehouseName, onSettings, onDelete }: Wareh
         <button
           type="button"
           aria-label={`Открыть меню склада «${warehouseName}»`}
-          className="flex size-9 items-center justify-center rounded-md border bg-background text-xl shadow-sm transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="flex size-9 items-center justify-center rounded-md border bg-background text-xl opacity-0 shadow-sm transition hover:bg-accent group-hover:opacity-100 data-[state=open]:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <span aria-hidden="true">⋯</span>
         </button>

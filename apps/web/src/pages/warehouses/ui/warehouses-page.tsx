@@ -1,18 +1,49 @@
 'use client';
 
 import { warehouseMocks, type MockWarehouse, type WarehouseMember } from '@/entities/warehouse';
+import { CreateWarehouseDialog } from '@/features/warehouse-create';
+import { DeleteWarehouseDialog } from '@/features/warehouse-delete';
 import { WarehouseSettingsDialog } from '@/features/warehouse-settings';
 import { WarehouseList } from '@/widgets/warehouse-list';
-import { DeleteWarehouseDialog } from '@/features/warehouse-delete';
 import { Button, Heading, Text } from '@robots/ui';
 import { useState } from 'react';
 
-const handleCreateWarehouse = () => undefined;
-
 export function WarehousesPage() {
   const [warehouses, setWarehouses] = useState<MockWarehouse[]>([...warehouseMocks]);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedWarehouse, setSelectedWarehouse] = useState<MockWarehouse | null>(null);
   const [warehouseToDelete, setWarehouseToDelete] = useState<MockWarehouse | null>(null);
+
+  const handleWarehouseCreate = (name: string) => {
+    const createdAt = new Date().toISOString();
+
+    const warehouse: MockWarehouse = {
+      warehouseId: crypto.randomUUID(),
+      name,
+      createdAt,
+      updatedAt: createdAt,
+      role: 'owner',
+      mapSize: {
+        width: 20,
+        height: 20,
+      },
+      robotsCount: 0,
+      stationsCount: 0,
+      simulationStatus: 'not_started',
+      members: [
+        {
+          id: 'current-user',
+          name: 'Игорь Смирнов',
+          email: 'igor@example.com',
+          role: 'owner',
+          status: 'active',
+          isCurrentUser: true,
+        },
+      ],
+    };
+
+    setWarehouses((currentWarehouses) => [...currentWarehouses, warehouse]);
+  };
 
   const handleWarehouseSave = (warehouseId: string, name: string) => {
     setWarehouses((currentWarehouses) =>
@@ -55,7 +86,7 @@ export function WarehousesPage() {
   return (
     <main className="min-h-dvh bg-background">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <Heading level={1}>Склады</Heading>
 
@@ -64,18 +95,29 @@ export function WarehousesPage() {
             </Text>
           </div>
 
-          <Button type="button" size="lg" onClick={handleCreateWarehouse} className="shrink-0">
+          <Button
+            type="button"
+            size="lg"
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="mb-4 shrink-0"
+          >
             Создать склад
           </Button>
         </header>
 
         <WarehouseList
           warehouses={warehouses}
-          onCreate={handleCreateWarehouse}
+          onCreate={() => setIsCreateDialogOpen(true)}
           onSettings={setSelectedWarehouse}
           onDelete={setWarehouseToDelete}
         />
       </div>
+
+      <CreateWarehouseDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onCreate={handleWarehouseCreate}
+      />
 
       <WarehouseSettingsDialog
         key={selectedWarehouse?.warehouseId ?? 'warehouse-settings-closed'}

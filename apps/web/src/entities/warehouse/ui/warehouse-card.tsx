@@ -22,9 +22,7 @@ export function WarehouseCard({ warehouse, actions, className }: WarehouseCardPr
       )}
     >
       {role === 'owner' && actions ? (
-        <div className="absolute top-3 right-3 z-10 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-          {actions}
-        </div>
+        <div className="absolute top-3 right-3 z-10">{actions}</div>
       ) : null}
 
       <div

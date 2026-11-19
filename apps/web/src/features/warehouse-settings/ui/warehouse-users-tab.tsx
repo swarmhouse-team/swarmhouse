@@ -152,29 +152,57 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
                       Ожидает
                     </span>
                   ) : (
-                    <select
-                      aria-label={`Роль пользователя ${member.name}`}
-                      value={member.role}
-                      disabled={member.isCurrentUser}
-                      onChange={(event) =>
-                        handleRoleChange(member.id, event.target.value as WarehouseMemberRole)
-                      }
-                      className="h-9 rounded-md border bg-background px-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <option value="owner">Владелец</option>
-                      <option value="observer">Наблюдатель</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        aria-label={`Роль пользователя ${member.name}`}
+                        value={member.role}
+                        disabled={member.isCurrentUser}
+                        onChange={(event) =>
+                          handleRoleChange(member.id, event.target.value as WarehouseMemberRole)
+                        }
+                        className="h-8 min-w-28 appearance-none rounded-md border bg-background py-1 pr-8 pl-3 text-xs leading-none disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <option value="owner">Владелец</option>
+                        <option value="observer">Наблюдатель</option>
+                      </select>
+
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        className="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+                      >
+                        <path
+                          d="m4 6 4 4 4-4"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
                   )}
 
                   {!member.isCurrentUser ? (
-                    <button
-                      type="button"
-                      aria-label={`Удалить пользователя ${member.name}`}
-                      onClick={() => handleRemove(member.id)}
-                      className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                    >
-                      <span aria-hidden="true">×</span>
-                    </button>
+                    <>
+                      <span aria-hidden="true" className="h-5 w-px bg-border" />
+
+                      <button
+                        type="button"
+                        aria-label={`Удалить пользователя ${member.name}`}
+                        onClick={() => handleRemove(member.id)}
+                        className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="size-4">
+                          <path
+                            d="M18 6 6 18M6 6l12 12"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </button>
+                    </>
                   ) : null}
                 </div>
               </li>
