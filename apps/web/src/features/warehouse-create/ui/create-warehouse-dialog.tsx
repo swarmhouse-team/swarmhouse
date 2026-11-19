@@ -17,6 +17,7 @@ import {
   Input,
 } from '@robots/ui';
 import { useTranslations } from 'next-intl';
+import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 
 type CreateWarehouseDialogProps = {
@@ -39,24 +40,36 @@ export function CreateWarehouseDialog({
     },
   });
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) {
-      form.reset();
-    }
+  const { handleSubmit, reset } = form;
 
-    onOpenChange(nextOpen);
-  };
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) {
+        reset();
+      }
 
-  const handleSubmit = form.handleSubmit(({ name }) => {
-    onCreate(name);
-    handleOpenChange(false);
-  });
+      onOpenChange(nextOpen);
+    },
+    [onOpenChange, reset],
+  );
+
+  const handleCreate = useCallback(
+    ({ name }: CreateWarehouseRequest) => {
+      onCreate(name);
+      handleOpenChange(false);
+    },
+    [handleOpenChange, onCreate],
+  );
+
+  const submit = handleSubmit(handleCreate);
+
+  const handleCancel = useCallback(() => handleOpenChange(false), [handleOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <Form {...form}>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={submit}>
             <div className="space-y-5 p-6">
               <DialogTitle>{t('title')}</DialogTitle>
               <DialogDescription className="sr-only">{t('description')}</DialogDescription>
@@ -83,7 +96,7 @@ export function CreateWarehouseDialog({
             </div>
 
             <footer className="flex justify-end gap-3 border-t px-6 py-4">
-              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={handleCancel}>
                 {t('cancel')}
               </Button>
 

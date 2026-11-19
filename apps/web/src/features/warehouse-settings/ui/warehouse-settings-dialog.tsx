@@ -22,7 +22,7 @@ import {
   cn,
 } from '@robots/ui';
 import { useFormatter, useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 type SettingsTab = 'general' | 'users';
@@ -67,6 +67,45 @@ export function WarehouseSettingsDialog({
 
   const nameLength = nameValue.length;
 
+  const handleSave = useCallback(
+    (values: RenameWarehouseRequest) => {
+      if (!warehouse) {
+        return;
+      }
+
+      onSave(warehouse.warehouseId, values.name);
+      onOpenChange(false);
+    },
+    [onOpenChange, onSave, warehouse],
+  );
+
+  const handleCancel = useCallback(() => {
+    if (!warehouse) {
+      return;
+    }
+
+    reset({
+      name: warehouse.name,
+    });
+
+    onOpenChange(false);
+  }, [onOpenChange, reset, warehouse]);
+
+  const handleGeneralTabClick = useCallback(() => setActiveTab('general'), []);
+
+  const handleUsersTabClick = useCallback(() => setActiveTab('users'), []);
+
+  const handleMembersChange = useCallback(
+    (members: readonly WarehouseMember[]) => {
+      if (warehouse) {
+        onMembersChange(warehouse.warehouseId, members);
+      }
+    },
+    [onMembersChange, warehouse],
+  );
+
+  const handleDone = useCallback(() => onOpenChange(false), [onOpenChange]);
+
   if (!warehouse) {
     return null;
   }
@@ -78,22 +117,7 @@ export function WarehouseSettingsDialog({
       })
     : t('notAvailable');
 
-  const submit = handleSubmit((values) => {
-    onSave(warehouse.warehouseId, values.name);
-    onOpenChange(false);
-  });
-
-  const handleCancel = () => {
-    reset({
-      name: warehouse.name,
-    });
-
-    onOpenChange(false);
-  };
-
-  const handleGeneralTabClick = () => setActiveTab('general');
-
-  const handleUsersTabClick = () => setActiveTab('users');
+  const submit = handleSubmit(handleSave);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -239,8 +263,8 @@ export function WarehouseSettingsDialog({
             ) : (
               <WarehouseUsersTab
                 members={warehouse.members}
-                onMembersChange={(members) => onMembersChange(warehouse.warehouseId, members)}
-                onDone={() => onOpenChange(false)}
+                onMembersChange={handleMembersChange}
+                onDone={handleDone}
               />
             )}
           </div>

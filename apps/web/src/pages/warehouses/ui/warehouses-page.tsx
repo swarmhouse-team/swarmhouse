@@ -7,7 +7,7 @@ import { WarehouseSettingsDialog } from '@/features/warehouse-settings';
 import { WarehouseList } from '@/widgets/warehouse-list';
 import { Button, Heading, Text } from '@robots/ui';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export function WarehousesPage() {
   const t = useTranslations('warehouses.page');
@@ -16,7 +16,7 @@ export function WarehousesPage() {
   const [selectedWarehouse, setSelectedWarehouse] = useState<MockWarehouse | null>(null);
   const [warehouseToDelete, setWarehouseToDelete] = useState<MockWarehouse | null>(null);
 
-  const handleWarehouseCreate = (name: string) => {
+  const handleWarehouseCreate = useCallback((name: string) => {
     const createdAt = new Date().toISOString();
 
     const warehouse: MockWarehouse = {
@@ -45,9 +45,9 @@ export function WarehousesPage() {
     };
 
     setWarehouses((currentWarehouses) => [...currentWarehouses, warehouse]);
-  };
+  }, []);
 
-  const handleWarehouseSave = (warehouseId: string, name: string) => {
+  const handleWarehouseSave = useCallback((warehouseId: string, name: string) => {
     setWarehouses((currentWarehouses) =>
       currentWarehouses.map((warehouse) =>
         warehouse.warehouseId === warehouseId
@@ -61,29 +61,56 @@ export function WarehousesPage() {
     );
 
     setSelectedWarehouse(null);
-  };
+  }, []);
 
-  const handleMembersChange = (warehouseId: string, members: readonly WarehouseMember[]) => {
-    setWarehouses((currentWarehouses) =>
-      currentWarehouses.map((warehouse) =>
-        warehouse.warehouseId === warehouseId ? { ...warehouse, members } : warehouse,
-      ),
-    );
+  const handleMembersChange = useCallback(
+    (warehouseId: string, members: readonly WarehouseMember[]) => {
+      setWarehouses((currentWarehouses) =>
+        currentWarehouses.map((warehouse) =>
+          warehouse.warehouseId === warehouseId ? { ...warehouse, members } : warehouse,
+        ),
+      );
 
-    setSelectedWarehouse((currentWarehouse) =>
-      currentWarehouse?.warehouseId === warehouseId
-        ? { ...currentWarehouse, members }
-        : currentWarehouse,
-    );
-  };
+      setSelectedWarehouse((currentWarehouse) =>
+        currentWarehouse?.warehouseId === warehouseId
+          ? { ...currentWarehouse, members }
+          : currentWarehouse,
+      );
+    },
+    [],
+  );
 
-  const handleWarehouseDeleteConfirm = (warehouseId: string) => {
+  const handleWarehouseDeleteConfirm = useCallback((warehouseId: string) => {
     setWarehouses((currentWarehouses) =>
       currentWarehouses.filter((warehouse) => warehouse.warehouseId !== warehouseId),
     );
 
     setWarehouseToDelete(null);
-  };
+  }, []);
+
+  const handleCreateDialogOpen = useCallback(() => setIsCreateDialogOpen(true), []);
+
+  const handleWarehouseSettings = useCallback(
+    (warehouse: MockWarehouse) => setSelectedWarehouse(warehouse),
+    [],
+  );
+
+  const handleWarehouseDelete = useCallback(
+    (warehouse: MockWarehouse) => setWarehouseToDelete(warehouse),
+    [],
+  );
+
+  const handleSettingsDialogOpenChange = useCallback((nextOpen: boolean) => {
+    if (!nextOpen) {
+      setSelectedWarehouse(null);
+    }
+  }, []);
+
+  const handleDeleteDialogOpenChange = useCallback((nextOpen: boolean) => {
+    if (!nextOpen) {
+      setWarehouseToDelete(null);
+    }
+  }, []);
 
   return (
     <main className="min-h-dvh bg-background">
@@ -100,7 +127,7 @@ export function WarehousesPage() {
           <Button
             type="button"
             size="lg"
-            onClick={() => setIsCreateDialogOpen(true)}
+            onClick={handleCreateDialogOpen}
             className="mb-4 shrink-0"
           >
             {t('create')}
@@ -109,9 +136,9 @@ export function WarehousesPage() {
 
         <WarehouseList
           warehouses={warehouses}
-          onCreate={() => setIsCreateDialogOpen(true)}
-          onSettings={setSelectedWarehouse}
-          onDelete={setWarehouseToDelete}
+          onCreate={handleCreateDialogOpen}
+          onSettings={handleWarehouseSettings}
+          onDelete={handleWarehouseDelete}
         />
       </div>
 
@@ -126,22 +153,14 @@ export function WarehousesPage() {
         warehouse={selectedWarehouse}
         open={selectedWarehouse !== null}
         onMembersChange={handleMembersChange}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) {
-            setSelectedWarehouse(null);
-          }
-        }}
+        onOpenChange={handleSettingsDialogOpenChange}
         onSave={handleWarehouseSave}
       />
 
       <DeleteWarehouseDialog
         warehouse={warehouseToDelete}
         open={warehouseToDelete !== null}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) {
-            setWarehouseToDelete(null);
-          }
-        }}
+        onOpenChange={handleDeleteDialogOpenChange}
         onConfirm={handleWarehouseDeleteConfirm}
       />
     </main>

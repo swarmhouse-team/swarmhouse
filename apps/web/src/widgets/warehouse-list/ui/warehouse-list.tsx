@@ -8,7 +8,7 @@ import {
 } from '@/entities/warehouse';
 import { Button, Heading, Input, Label, Text, cn } from '@robots/ui';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import { filterWarehouses, type WarehouseFilter } from '../model/filter-warehouses';
 
@@ -20,6 +20,77 @@ type WarehouseListProps = {
 };
 
 const filters = ['all', 'mine', 'available'] satisfies WarehouseFilter[];
+
+type WarehouseFilterButtonProps = {
+  filter: WarehouseFilter;
+  label: string;
+  count: number;
+  isActive: boolean;
+  onFilterChange: (filter: WarehouseFilter) => void;
+};
+
+function WarehouseFilterButton({
+  filter,
+  label,
+  count,
+  isActive,
+  onFilterChange,
+}: WarehouseFilterButtonProps) {
+  const handleClick = useCallback(() => onFilterChange(filter), [filter, onFilterChange]);
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      role="tab"
+      aria-selected={isActive}
+      onClick={handleClick}
+      className={cn(
+        'gap-2 px-3',
+        isActive
+          ? 'bg-background text-foreground shadow-sm'
+          : 'text-muted-foreground hover:text-foreground',
+      )}
+    >
+      {label}
+
+      <Text
+        as="span"
+        size="xs"
+        className={cn(
+          'rounded-full px-1.5 py-0.5',
+          isActive ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground',
+        )}
+      >
+        {count}
+      </Text>
+    </Button>
+  );
+}
+
+type WarehouseListCardProps = {
+  warehouse: MockWarehouse;
+  onSettings: (warehouse: MockWarehouse) => void;
+  onDelete: (warehouse: MockWarehouse) => void;
+};
+
+function WarehouseListCard({ warehouse, onSettings, onDelete }: WarehouseListCardProps) {
+  const handleSettings = useCallback(() => onSettings(warehouse), [onSettings, warehouse]);
+  const handleDelete = useCallback(() => onDelete(warehouse), [onDelete, warehouse]);
+
+  return (
+    <WarehouseCard
+      warehouse={warehouse}
+      actions={
+        <WarehouseCardMenu
+          warehouseName={warehouse.name}
+          onSettings={handleSettings}
+          onDelete={handleDelete}
+        />
+      }
+    />
+  );
+}
 
 export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: WarehouseListProps) {
   const t = useTranslations('warehouses.list');
@@ -40,6 +111,13 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
     [warehouses, activeFilter, search],
   );
 
+  const handleFilterChange = useCallback((filter: WarehouseFilter) => setActiveFilter(filter), []);
+
+  const handleSearchChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setSearch(event.target.value),
+    [],
+  );
+
   return (
     <section className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -52,35 +130,14 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
             const isActive = activeFilter === filter;
 
             return (
-              <Button
+              <WarehouseFilterButton
                 key={filter}
-                type="button"
-                variant="ghost"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setActiveFilter(filter)}
-                className={cn(
-                  'gap-2 px-3',
-                  isActive
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {t(`filters.${filter}`)}
-
-                <Text
-                  as="span"
-                  size="xs"
-                  className={cn(
-                    'rounded-full px-1.5 py-0.5',
-                    isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-background text-muted-foreground',
-                  )}
-                >
-                  {counts[filter]}
-                </Text>
-              </Button>
+                filter={filter}
+                label={t(`filters.${filter}`)}
+                count={counts[filter]}
+                isActive={isActive}
+                onFilterChange={handleFilterChange}
+              />
             );
           })}
         </div>
@@ -94,7 +151,7 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
             id="warehouse-search"
             type="search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={handleSearchChange}
             placeholder={t('searchPlaceholder')}
           />
         </div>
@@ -127,16 +184,11 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {filteredWarehouses.map((warehouse) => (
-            <WarehouseCard
+            <WarehouseListCard
               key={warehouse.warehouseId}
               warehouse={warehouse}
-              actions={
-                <WarehouseCardMenu
-                  warehouseName={warehouse.name}
-                  onSettings={() => onSettings(warehouse)}
-                  onDelete={() => onDelete(warehouse)}
-                />
-              }
+              onSettings={onSettings}
+              onDelete={onDelete}
             />
           ))}
 

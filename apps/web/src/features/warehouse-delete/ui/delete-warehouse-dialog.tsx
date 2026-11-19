@@ -12,7 +12,7 @@ import {
   Text,
 } from '@robots/ui';
 import { useTranslations } from 'next-intl';
-import { type FormEvent, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useCallback, useState } from 'react';
 
 type DeleteWarehouseDialogProps = {
   warehouse: MockWarehouse | null;
@@ -30,30 +30,43 @@ export function DeleteWarehouseDialog({
   const t = useTranslations('warehouses.delete');
   const [confirmation, setConfirmation] = useState('');
 
+  const isConfirmed = warehouse !== null && confirmation === warehouse.name;
+
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) {
+        setConfirmation('');
+      }
+
+      onOpenChange(nextOpen);
+    },
+    [onOpenChange],
+  );
+
+  const handleConfirmationChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setConfirmation(event.target.value),
+    [],
+  );
+
+  const handleCancel = useCallback(() => handleOpenChange(false), [handleOpenChange]);
+
+  const handleSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+
+      if (!warehouse || !isConfirmed) {
+        return;
+      }
+
+      onConfirm(warehouse.warehouseId);
+      handleOpenChange(false);
+    },
+    [handleOpenChange, isConfirmed, onConfirm, warehouse],
+  );
+
   if (!warehouse) {
     return null;
   }
-
-  const isConfirmed = confirmation === warehouse.name;
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) {
-      setConfirmation('');
-    }
-
-    onOpenChange(nextOpen);
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!isConfirmed) {
-      return;
-    }
-
-    onConfirm(warehouse.warehouseId);
-    handleOpenChange(false);
-  };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -97,7 +110,7 @@ export function DeleteWarehouseDialog({
               <Input
                 id="warehouse-delete-confirmation"
                 value={confirmation}
-                onChange={(event) => setConfirmation(event.target.value)}
+                onChange={handleConfirmationChange}
                 placeholder={warehouse.name}
                 autoComplete="off"
                 className="mt-3"
@@ -110,7 +123,7 @@ export function DeleteWarehouseDialog({
           </div>
 
           <footer className="flex justify-end gap-3 border-t px-6 py-4">
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={handleCancel}>
               {t('cancel')}
             </Button>
 
