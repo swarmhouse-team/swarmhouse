@@ -1,4 +1,4 @@
-import { cn } from '@robots/ui';
+import { Text, cn } from '@robots/ui';
 import { useTranslations } from 'next-intl';
 
 import type { WarehouseRole } from '../model/mocks';
@@ -12,9 +12,12 @@ export function WarehouseRoleBadge({ role, className }: WarehouseRoleBadgeProps)
   const t = useTranslations('warehouses.roles');
 
   return (
-    <span
+    <Text
+      as="span"
+      size="xs"
+      weight="medium"
       className={cn(
-        'inline-flex h-6 items-center rounded-full px-2.5 text-xs font-medium',
+        'inline-flex h-6 items-center rounded-full px-2.5',
         role === 'owner'
           ? 'bg-primary text-primary-foreground'
           : 'border bg-secondary text-secondary-foreground',
@@ -22,6 +25,6 @@ export function WarehouseRoleBadge({ role, className }: WarehouseRoleBadgeProps)
       )}
     >
       {t(role)}
-    </span>
+    </Text>
   );
 }

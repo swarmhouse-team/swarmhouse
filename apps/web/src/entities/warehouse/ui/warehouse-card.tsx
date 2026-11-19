@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardTitle, cn } from '@robots/ui';
+import { Card, CardHeader, CardTitle, Text, cn } from '@robots/ui';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
@@ -32,21 +32,23 @@ export function WarehouseCard({ warehouse, actions, className }: WarehouseCardPr
         aria-label={t('mapPlaceholderLabel', { name })}
         className="flex aspect-video items-center justify-center border-b bg-muted/60"
       >
-        <span className="text-sm text-muted-foreground">{t('mapPlaceholder')}</span>
+        <Text as="span" variant="muted" size="sm">
+          {t('mapPlaceholder')}
+        </Text>
       </div>
 
       <CardHeader className="gap-4 py-5">
         <div className="space-y-2">
           <CardTitle className="truncate">{name}</CardTitle>
 
-          <p className="text-sm text-muted-foreground">
+          <Text variant="muted" size="sm">
             {t('summary', {
               width: mapSize.width,
               height: mapSize.height,
               robots: robotsCount,
               stations: stationsCount,
             })}
-          </p>
+          </Text>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">

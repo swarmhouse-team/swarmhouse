@@ -18,6 +18,7 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  Text,
   cn,
 } from '@robots/ui';
 import { useFormatter, useTranslations } from 'next-intl';
@@ -90,55 +91,64 @@ export function WarehouseSettingsDialog({
     onOpenChange(false);
   };
 
+  const handleGeneralTabClick = () => setActiveTab('general');
+
+  const handleUsersTabClick = () => setActiveTab('users');
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-3xl">
         <div className="grid min-h-130 md:grid-cols-[190px_1fr]">
           <aside className="border-b bg-muted/30 p-5 md:border-r md:border-b-0">
             <div className="mb-6">
-              <p className="font-semibold">{t('title')}</p>
+              <Text weight="semibold">{t('title')}</Text>
 
-              <p className="mt-1 truncate text-xs text-muted-foreground">{warehouse.name}</p>
+              <Text variant="muted" size="xs" className="mt-1 truncate">
+                {warehouse.name}
+              </Text>
             </div>
 
             <nav
               aria-label={t('navigationLabel')}
               className="flex gap-2 overflow-x-auto md:flex-col"
             >
-              <button
+              <Button
                 type="button"
-                onClick={() => setActiveTab('general')}
+                variant="ghost"
+                onClick={handleGeneralTabClick}
                 className={cn(
-                  'rounded-md px-3 py-2 text-left text-sm transition-colors',
+                  'w-full justify-start px-3 text-left',
                   activeTab === 'general'
                     ? 'bg-background font-medium shadow-sm'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
               >
                 {t('tabs.general')}
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 disabled
                 title={t('tabs.unavailable')}
-                className="cursor-not-allowed rounded-md px-3 py-2 text-left text-sm text-muted-foreground opacity-50"
+                className="w-full justify-start px-3 text-left text-muted-foreground"
               >
                 {t('tabs.size')}
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
-                onClick={() => setActiveTab('users')}
+                variant="ghost"
+                onClick={handleUsersTabClick}
                 className={cn(
-                  'rounded-md px-3 py-2 text-left text-sm transition-colors',
+                  'w-full justify-start px-3 text-left',
                   activeTab === 'users'
                     ? 'bg-background font-medium shadow-sm'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 )}
               >
                 {t('tabs.users')}
-              </button>
+              </Button>
             </nav>
           </aside>
 
@@ -165,9 +175,9 @@ export function WarehouseSettingsDialog({
                           <div className="flex items-center justify-between gap-4">
                             <FormLabel>{t('general.nameLabel')}</FormLabel>
 
-                            <span className="text-xs text-muted-foreground">
+                            <Text as="span" variant="muted" size="xs">
                               {t('general.characterCount', { count: nameLength, max: 100 })}
-                            </span>
+                            </Text>
                           </div>
 
                           <FormControl>

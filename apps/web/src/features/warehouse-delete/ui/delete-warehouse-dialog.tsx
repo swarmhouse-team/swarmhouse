@@ -1,7 +1,16 @@
 'use client';
 
 import type { MockWarehouse } from '@/entities/warehouse';
-import { Button, Dialog, DialogContent, DialogDescription, DialogTitle, Input } from '@robots/ui';
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  Input,
+  Label,
+  Text,
+} from '@robots/ui';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
 
@@ -58,22 +67,32 @@ export function DeleteWarehouseDialog({
             </div>
 
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-              <p className="text-sm font-medium text-destructive">{t('consequencesTitle')}</p>
+              <Text variant="destructive" size="sm" weight="medium">
+                {t('consequencesTitle')}
+              </Text>
 
               <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                <li>{t('consequences.map')}</li>
-                <li>{t('consequences.robotsAndStations')}</li>
-                <li>{t('consequences.settingsAndMembers')}</li>
-                <li>{t('consequences.simulationData')}</li>
+                <Text as="li" variant="muted" size="sm">
+                  {t('consequences.map')}
+                </Text>
+                <Text as="li" variant="muted" size="sm">
+                  {t('consequences.robotsAndStations')}
+                </Text>
+                <Text as="li" variant="muted" size="sm">
+                  {t('consequences.settingsAndMembers')}
+                </Text>
+                <Text as="li" variant="muted" size="sm">
+                  {t('consequences.simulationData')}
+                </Text>
               </ul>
             </div>
 
             <div>
-              <label htmlFor="warehouse-delete-confirmation" className="text-sm font-medium">
-                {t('confirmationLabel')}
-              </label>
+              <Label htmlFor="warehouse-delete-confirmation">{t('confirmationLabel')}</Label>
 
-              <p className="mt-1 wrap-break-word text-sm font-semibold">{warehouse.name}</p>
+              <Text size="sm" weight="semibold" className="mt-1 wrap-break-word">
+                {warehouse.name}
+              </Text>
 
               <Input
                 id="warehouse-delete-confirmation"
@@ -84,7 +103,9 @@ export function DeleteWarehouseDialog({
                 className="mt-3"
               />
 
-              <p className="mt-2 text-xs text-muted-foreground">{t('confirmationHint')}</p>
+              <Text variant="muted" size="xs" className="mt-2">
+                {t('confirmationHint')}
+              </Text>
             </div>
           </div>
 

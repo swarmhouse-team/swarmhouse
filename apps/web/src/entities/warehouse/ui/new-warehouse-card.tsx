@@ -1,4 +1,4 @@
-import { cn } from '@robots/ui';
+import { Button, Text, cn } from '@robots/ui';
 import { useTranslations } from 'next-intl';
 
 type NewWarehouseCardProps = {
@@ -10,13 +10,13 @@ export function NewWarehouseCard({ onClick, className }: NewWarehouseCardProps) 
   const t = useTranslations('warehouses.newCard');
 
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
       onClick={onClick}
       className={cn(
-        'flex min-h-72 w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-6 text-card-foreground transition-colors',
+        'h-auto min-h-72 w-full flex-col gap-3 whitespace-normal rounded-xl border-dashed bg-card p-6 text-card-foreground shadow-none',
         'hover:border-foreground/40 hover:bg-muted/40',
-        'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none',
         className,
       )}
     >
@@ -27,9 +27,13 @@ export function NewWarehouseCard({ onClick, className }: NewWarehouseCardProps) 
         +
       </span>
 
-      <span className="font-semibold">{t('title')}</span>
+      <Text as="span" weight="semibold">
+        {t('title')}
+      </Text>
 
-      <span className="text-sm text-muted-foreground">{t('description')}</span>
-    </button>
+      <Text as="span" variant="muted" size="sm">
+        {t('description')}
+      </Text>
+    </Button>
   );
 }

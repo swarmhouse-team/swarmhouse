@@ -6,7 +6,7 @@ import {
   WarehouseCardMenu,
   type MockWarehouse,
 } from '@/entities/warehouse';
-import { Input, cn } from '@robots/ui';
+import { Button, Heading, Input, Label, Text, cn } from '@robots/ui';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
@@ -52,15 +52,15 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
             const isActive = activeFilter === filter;
 
             return (
-              <button
+              <Button
                 key={filter}
                 type="button"
+                variant="ghost"
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveFilter(filter)}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                  'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                  'gap-2 px-3',
                   isActive
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground',
@@ -68,25 +68,27 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
               >
                 {t(`filters.${filter}`)}
 
-                <span
+                <Text
+                  as="span"
+                  size="xs"
                   className={cn(
-                    'rounded-full px-1.5 py-0.5 text-xs',
+                    'rounded-full px-1.5 py-0.5',
                     isActive
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-background text-muted-foreground',
                   )}
                 >
                   {counts[filter]}
-                </span>
-              </button>
+                </Text>
+              </Button>
             );
           })}
         </div>
 
         <div className="w-full lg:max-w-xs">
-          <label htmlFor="warehouse-search" className="sr-only">
+          <Label htmlFor="warehouse-search" className="sr-only">
             {t('searchLabel')}
-          </label>
+          </Label>
 
           <Input
             id="warehouse-search"
@@ -101,18 +103,26 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
       {warehouses.length === 0 ? (
         <div className="space-y-6 rounded-xl border border-dashed p-8 text-center">
           <div>
-            <h2 className="font-semibold">{t('empty.title')}</h2>
+            <Heading level={2} size="sm" className="text-base">
+              {t('empty.title')}
+            </Heading>
 
-            <p className="mt-2 text-sm text-muted-foreground">{t('empty.description')}</p>
+            <Text variant="muted" size="sm" className="mt-2">
+              {t('empty.description')}
+            </Text>
           </div>
 
           <NewWarehouseCard onClick={onCreate} className="mx-auto max-w-sm" />
         </div>
       ) : filteredWarehouses.length === 0 ? (
         <div className="rounded-xl border border-dashed p-12 text-center">
-          <h2 className="font-semibold">{t('noResults.title')}</h2>
+          <Heading level={2} size="sm" className="text-base">
+            {t('noResults.title')}
+          </Heading>
 
-          <p className="mt-2 text-sm text-muted-foreground">{t('noResults.description')}</p>
+          <Text variant="muted" size="sm" className="mt-2">
+            {t('noResults.description')}
+          </Text>
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">

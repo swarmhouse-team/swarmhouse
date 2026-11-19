@@ -2,7 +2,18 @@
 
 import { type WarehouseMember, type WarehouseMemberRole } from '@/entities/warehouse';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Form, FormControl, FormField, FormItem, FormMessage, Input, cn } from '@robots/ui';
+import {
+  Button,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+  Heading,
+  Input,
+  Text,
+  cn,
+} from '@robots/ui';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 
@@ -101,24 +112,33 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
             />
 
             <div className="flex gap-2">
-              <div className="flex h-9 items-center rounded-md border bg-muted/30 px-3 text-sm text-muted-foreground">
+              <Text
+                as="div"
+                variant="muted"
+                size="sm"
+                className="flex h-9 items-center rounded-md border bg-muted/30 px-3"
+              >
                 {t('observerRole')}
-              </div>
+              </Text>
 
               <Button type="submit">{t('invite')}</Button>
             </div>
           </form>
         </Form>
 
-        <p className="text-xs text-muted-foreground">{t('observerDescription')}</p>
+        <Text variant="muted" size="xs">
+          {t('observerDescription')}
+        </Text>
 
         <div>
           <div className="mb-3 flex items-center justify-between gap-4">
-            <h3 className="text-sm font-semibold">{t('participants')}</h3>
+            <Heading level={3} size="sm" className="text-sm">
+              {t('participants')}
+            </Heading>
 
-            <span className="text-xs text-muted-foreground">
+            <Text as="span" variant="muted" size="xs">
               {t('participantsCount', { active: activeCount, pending: pendingCount })}
-            </span>
+            </Text>
           </div>
 
           <ul className="divide-y rounded-lg border">
@@ -135,22 +155,26 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
                   </div>
 
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
+                    <Text size="sm" weight="medium" className="truncate">
                       {member.name}
                       {member.isCurrentUser ? ` ${t('currentUser')}` : ''}
-                    </p>
+                    </Text>
 
-                    <p className="truncate text-xs text-muted-foreground">
+                    <Text variant="muted" size="xs" className="truncate">
                       {member.status === 'pending' ? t('invitationSent') : member.email}
-                    </p>
+                    </Text>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 sm:justify-end">
                   {member.status === 'pending' ? (
-                    <span className="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-800">
+                    <Text
+                      as="span"
+                      size="xs"
+                      className="rounded-full bg-amber-100 px-2 py-1 text-amber-800"
+                    >
                       {t('pending')}
-                    </span>
+                    </Text>
                   ) : (
                     <div className="relative">
                       <select
@@ -187,11 +211,13 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
                     <>
                       <span aria-hidden="true" className="h-5 w-px bg-border" />
 
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon"
                         aria-label={t('removeLabel', { name: member.name })}
                         onClick={() => handleRemove(member.id)}
-                        className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       >
                         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="size-4">
                           <path
@@ -201,7 +227,7 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
                             strokeLinecap="round"
                           />
                         </svg>
-                      </button>
+                      </Button>
                     </>
                   ) : null}
                 </div>
