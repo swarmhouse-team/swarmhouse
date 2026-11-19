@@ -7,6 +7,10 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   API_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
   DATABASE_URL: z.string().regex(/^postgres(ql)?:\/\//, 'должен начинаться с postgresql://'),
+  /** Секрет подписи JWT. */
+  JWT_ACCESS_SECRET: z.string().min(1),
+  /** Время жизни access-токена (формат ms: 15m, 1h, ...). */
+  JWT_ACCESS_TTL: z.string().min(1).default('15m'),
   CACHE_DRIVER: z.enum(['memory', 'redis']),
   REDIS_URL: z.string().optional(),
   CACHE_KEY_PREFIX: z.string().optional(),
@@ -17,6 +21,8 @@ export interface Env {
   NODE_ENV: 'development' | 'test' | 'production';
   API_PORT: number;
   DATABASE_URL: string;
+  JWT_ACCESS_SECRET: string;
+  JWT_ACCESS_TTL: string;
   CACHE_DRIVER: 'memory' | 'redis';
   REDIS_URL?: string;
   CACHE_KEY_PREFIX?: string;
@@ -37,6 +43,8 @@ export function validateEnv(raw: Record<string, unknown>): Env {
       NODE_ENV: parsed.NODE_ENV,
       API_PORT: parsed.API_PORT,
       DATABASE_URL: parsed.DATABASE_URL,
+      JWT_ACCESS_SECRET: parsed.JWT_ACCESS_SECRET,
+      JWT_ACCESS_TTL: parsed.JWT_ACCESS_TTL,
       CACHE_DRIVER: 'memory',
       CACHE_MEMORY_MAX_ENTRIES: parseMaxEntries(parsed.CACHE_MEMORY_MAX_ENTRIES),
     };
@@ -46,6 +54,8 @@ export function validateEnv(raw: Record<string, unknown>): Env {
     NODE_ENV: parsed.NODE_ENV,
     API_PORT: parsed.API_PORT,
     DATABASE_URL: parsed.DATABASE_URL,
+    JWT_ACCESS_SECRET: parsed.JWT_ACCESS_SECRET,
+    JWT_ACCESS_TTL: parsed.JWT_ACCESS_TTL,
     CACHE_DRIVER: 'redis',
     REDIS_URL: parseRedisUrl(parsed.REDIS_URL),
     CACHE_KEY_PREFIX: parseKeyPrefix(parsed.CACHE_KEY_PREFIX),

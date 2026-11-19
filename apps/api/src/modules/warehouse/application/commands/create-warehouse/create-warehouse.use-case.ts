@@ -5,13 +5,13 @@ import type { LoggerPort } from '../../../../../common/application/logger.port';
 import { Warehouse } from '../../../domain/entities/warehouse';
 import { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { invalidateWarehouseCache } from '../../cache/invalidate-warehouse-cache';
-import type { UnitOfWork } from '../../ports/system/unit-of-work';
+import type { WarehouseUnitOfWork } from '../../ports/system/warehouse-unit-of-work';
 import type { CreateWarehouseInput, CreateWarehouseResult } from './create-warehouse.types';
 
 /** Creates a warehouse and its single empty map in one transaction. */
 export class CreateWarehouse {
   constructor(
-    private readonly unitOfWork: UnitOfWork,
+    private readonly unitOfWork: WarehouseUnitOfWork,
     private readonly ids: IdGenerator,
     private readonly clock: Clock,
     private readonly cache: CachePort,

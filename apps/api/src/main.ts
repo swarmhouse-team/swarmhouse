@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
 
 import { AppModule } from './app.module';
@@ -17,6 +18,7 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { abortOnError: false });
   const config = app.get<ConfigService<Env, true>>(ConfigService);
 
+  app.use(cookieParser());
   app.setGlobalPrefix(GLOBAL_PREFIX);
   app.enableShutdownHooks();
   app.useWebSocketAdapter(
@@ -33,6 +35,8 @@ async function bootstrap(): Promise<void> {
     .setTitle('Robots API')
     .setDescription('Платформа управления роботами на симулируемом складе')
     .setVersion('0.0.0')
+    .addBearerAuth()
+    .addCookieAuth('refresh_token')
     .build();
   const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, swaggerConfig));
   SwaggerModule.setup(`${GLOBAL_PREFIX}/docs`, app, document);

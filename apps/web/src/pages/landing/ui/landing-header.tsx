@@ -1,11 +1,16 @@
 import { Button, Text } from '@robots/ui';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+
+import { LocaleSwitcher } from '@/features/switch-locale';
+import { Link } from '@/shared/i18n';
 
 export function LandingHeader() {
+  const t = useTranslations('landing');
+
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" aria-label="Swarmhouse — главная" className="flex items-center gap-2">
+        <Link href="/" aria-label={t('header.homeLabel')} className="flex items-center gap-2">
           <Text
             as="span"
             size="sm"
@@ -13,30 +18,34 @@ export function LandingHeader() {
             aria-hidden="true"
             className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground"
           >
-            S
+            {t('header.logo')}
           </Text>
 
-          <Text as="span" size="sm" weight="semibold">
-            Swarmhouse
+          <Text as="span" size="sm" weight="semibold" className="hidden sm:inline">
+            {t('header.brand')}
           </Text>
         </Link>
 
         <nav
-          aria-label="Навигация по главной странице"
+          aria-label={t('header.navLabel')}
           className="ml-auto hidden gap-5 text-sm text-muted-foreground sm:flex"
         >
           <a href="#how-it-works" className="transition-colors hover:text-foreground">
-            Как это работает
+            {t('nav.howItWorks')}
           </a>
 
           <a href="#features" className="transition-colors hover:text-foreground">
-            Возможности
+            {t('nav.features')}
           </a>
         </nav>
 
-        <Button asChild size="sm" className="ml-auto sm:ml-0">
-          <Link href="/login">Войти</Link>
-        </Button>
+        <div className="ml-auto flex items-center gap-3 sm:ml-0">
+          <LocaleSwitcher />
+
+          <Button asChild size="sm">
+            <Link href="/login">{t('header.signIn')}</Link>
+          </Button>
+        </div>
       </div>
     </header>
   );

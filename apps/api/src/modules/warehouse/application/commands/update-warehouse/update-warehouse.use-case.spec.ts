@@ -15,7 +15,7 @@ import type {
   SaveWarehouseResult,
   StoredWarehouse,
 } from '../../ports/repositories/warehouse.repository';
-import { stubUnitOfWork } from '../../testing/stub-unit-of-work';
+import { stubUnitOfWork } from '../../testing/stub-warehouse-unit-of-work';
 import {
   createRecordingNotifier,
   type WarehouseNotice,

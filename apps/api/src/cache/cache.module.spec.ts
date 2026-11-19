@@ -163,6 +163,7 @@ function testingConfig(values: Record<string, string>) {
       validateEnv({
         NODE_ENV: 'test',
         DATABASE_URL: 'postgresql://localhost:5432/robots',
+        JWT_ACCESS_SECRET: 'test-secret',
         ...values,
       }),
   });

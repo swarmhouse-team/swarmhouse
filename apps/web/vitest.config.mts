@@ -8,11 +8,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(import.meta.dirname, 'src'),
+      '@locales': resolve(import.meta.dirname, 'locales'),
     },
   },
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.spec.{ts,tsx}'],
+    // next-intl импортирует `next/navigation` без расширения — Node ESM это не резолвит,
+    // поэтому пакет прогоняем через Vite.
+    server: { deps: { inline: ['next-intl'] } },
   },
 });

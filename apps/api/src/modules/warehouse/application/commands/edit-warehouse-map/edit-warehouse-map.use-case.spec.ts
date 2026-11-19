@@ -18,7 +18,7 @@ import {
   WarehouseMapNotFoundError,
 } from '../../errors/application.errors';
 import type { SaveMapResult } from '../../ports/repositories/warehouse-map.repository';
-import { stubUnitOfWork } from '../../testing/stub-unit-of-work';
+import { stubUnitOfWork } from '../../testing/stub-warehouse-unit-of-work';
 import {
   createRecordingLogger,
   type LogEntry,

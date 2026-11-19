@@ -11,8 +11,8 @@ import { scriptedIds } from '../../../../../common/testing/scripted-ids';
 import type { Warehouse } from '../../../domain/entities/warehouse';
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { InvalidNameError } from '../../../domain/errors/value.errors';
-import { stubUnitOfWork } from '../../testing/stub-unit-of-work';
-import type { UnitOfWork } from '../../ports/system/unit-of-work';
+import { stubUnitOfWork } from '../../testing/stub-warehouse-unit-of-work';
+import type { WarehouseUnitOfWork } from '../../ports/system/warehouse-unit-of-work';
 import { WAREHOUSE_LIST_CACHE_KEY } from '../../queries/warehouse-cache.policy';
 import { CreateWarehouse } from './create-warehouse.use-case';
 
@@ -74,7 +74,7 @@ function createHarness(options?: {
       },
     },
   });
-  const unitOfWork: UnitOfWork = {
+  const unitOfWork: WarehouseUnitOfWork = {
     execute(work) {
       executeCount += 1;
       return inner.execute(work);

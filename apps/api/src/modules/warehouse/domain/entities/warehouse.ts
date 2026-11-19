@@ -1,23 +1,23 @@
 import { normalizeId } from '../vo/id';
-import { Name } from '../vo/name';
+import { WarehouseName } from '../vo/warehouse-name';
 
 /** Warehouse aggregate root. It validates only its own name and does not know about the map. */
 export class Warehouse {
   readonly id: string;
-  readonly name: Name;
+  readonly name: WarehouseName;
 
-  private constructor(id: string, name: Name) {
+  private constructor(id: string, name: WarehouseName) {
     this.id = id;
     this.name = name;
     Object.freeze(this);
   }
 
   static create(id: string, name: string): Warehouse {
-    return new Warehouse(normalizeId(id), Name.create(name));
+    return new Warehouse(normalizeId(id), WarehouseName.create(name));
   }
 
-  /** Returns a new warehouse with the same id and a name checked by `Name`. */
+  /** Returns a new warehouse with the same id and a name checked by `WarehouseName`. */
   rename(name: string): Warehouse {
-    return new Warehouse(this.id, Name.create(name));
+    return new Warehouse(this.id, WarehouseName.create(name));
   }
 }
