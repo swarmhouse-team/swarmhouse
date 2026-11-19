@@ -1,7 +1,8 @@
 'use client';
 
 import { type WarehouseMember, type WarehouseMemberRole } from '@/entities/warehouse';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useZodResolver } from '@/shared/i18n';
+import { inviteWarehouseMemberSchema, type InviteWarehouseMember } from '@robots/shared';
 import {
   Button,
   Form,
@@ -22,11 +23,6 @@ import {
 import { useTranslations } from 'next-intl';
 import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-
-import {
-  inviteWarehouseMemberSchema,
-  type InviteWarehouseMember,
-} from '../model/invite-warehouse-member';
 
 type WarehouseUsersTabProps = {
   members: readonly WarehouseMember[];
@@ -143,7 +139,7 @@ function WarehouseMemberRow({ member, onRoleChange, onRemove }: WarehouseMemberR
 export function WarehouseUsersTab({ members, onMembersChange, onDone }: WarehouseUsersTabProps) {
   const t = useTranslations('warehouses.settings.users');
   const form = useForm<InviteWarehouseMember>({
-    resolver: zodResolver(inviteWarehouseMemberSchema),
+    resolver: useZodResolver(inviteWarehouseMemberSchema),
     defaultValues: {
       email: '',
     },

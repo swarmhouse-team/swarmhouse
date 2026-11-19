@@ -6,6 +6,7 @@ import {
   createWarehouseResponseSchema,
   editWarehouseMapRequestSchema,
   editWarehouseMapResponseSchema,
+  inviteWarehouseMemberSchema,
   renameWarehouseRequestSchema,
   renameWarehouseResponseSchema,
   mapVersionConflictErrorSchema,
@@ -62,6 +63,19 @@ describe('warehouse requests', () => {
     expect(renameWarehouseRequestSchema.safeParse({}).success).toBe(false);
     expect(warehousePathParamsSchema.safeParse({ warehouseId: 'wh-1' }).success).toBe(false);
     expect(editWarehouseMapRequestSchema.safeParse({ expectedVersion: '0' }).success).toBe(false);
+  });
+
+  it('validates an email for a warehouse invitation', () => {
+    expect(inviteWarehouseMemberSchema.parse({ email: 'observer@example.com' })).toEqual({
+      email: 'observer@example.com',
+    });
+    expect(inviteWarehouseMemberSchema.safeParse({ email: 'not-an-email' }).success).toBe(false);
+    expect(
+      inviteWarehouseMemberSchema.safeParse({
+        email: 'observer@example.com',
+        role: 'owner',
+      }).success,
+    ).toBe(false);
   });
 });
 

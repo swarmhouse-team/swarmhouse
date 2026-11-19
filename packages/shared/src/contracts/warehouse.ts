@@ -94,6 +94,12 @@ export const renameWarehouseRequestSchema = z.strictObject({
 
 export type RenameWarehouseRequest = z.infer<typeof renameWarehouseRequestSchema>;
 
+export const inviteWarehouseMemberSchema = z.strictObject({
+  email: z.email(),
+});
+
+export type InviteWarehouseMember = z.infer<typeof inviteWarehouseMemberSchema>;
+
 export const warehousePathParamsSchema = z.strictObject({
   warehouseId: uuidSchema,
 });
