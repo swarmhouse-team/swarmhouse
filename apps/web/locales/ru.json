@@ -114,6 +114,11 @@
   "notFound": {
     "title": "Страница не найдена"
   },
+  "ui": {
+    "dialog": {
+      "close": "Закрыть"
+    }
+  },
   "warehouses": {
     "page": {
       "title": "Склады",

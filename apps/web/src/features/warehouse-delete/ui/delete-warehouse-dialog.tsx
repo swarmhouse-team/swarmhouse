@@ -4,8 +4,11 @@ import type { MockWarehouse } from '@/entities/warehouse';
 import {
   Button,
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
   Input,
   Label,
@@ -72,13 +75,13 @@ export function DeleteWarehouseDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <form onSubmit={handleSubmit}>
-          <div className="space-y-5 p-6">
-            <div>
-              <DialogTitle>{t('title')}</DialogTitle>
+          <DialogHeader className="pb-0">
+            <DialogTitle>{t('title')}</DialogTitle>
 
-              <DialogDescription className="mt-2">{t('description')}</DialogDescription>
-            </div>
+            <DialogDescription>{t('description')}</DialogDescription>
+          </DialogHeader>
 
+          <DialogBody className="space-y-5">
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
               <Text variant="destructive" size="sm" weight="medium">
                 {t('consequencesTitle')}
@@ -120,9 +123,9 @@ export function DeleteWarehouseDialog({
                 {t('confirmationHint')}
               </Text>
             </div>
-          </div>
+          </DialogBody>
 
-          <footer className="flex justify-end gap-3 border-t px-6 py-4">
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={handleCancel}>
               {t('cancel')}
             </Button>
@@ -130,7 +133,7 @@ export function DeleteWarehouseDialog({
             <Button type="submit" variant="destructive" disabled={!isConfirmed}>
               {t('submit')}
             </Button>
-          </footer>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

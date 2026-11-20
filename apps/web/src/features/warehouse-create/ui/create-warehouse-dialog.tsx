@@ -10,8 +10,11 @@ import {
 import {
   Button,
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
   Form,
   FormControl,
@@ -75,10 +78,12 @@ export function CreateWarehouseDialog({
       <DialogContent className="max-w-md">
         <Form {...form}>
           <form onSubmit={submit}>
-            <div className="space-y-5 p-6">
+            <DialogHeader className="pb-0">
               <DialogTitle>{t('title')}</DialogTitle>
               <DialogDescription className="sr-only">{t('description')}</DialogDescription>
+            </DialogHeader>
 
+            <DialogBody>
               <FormField
                 control={form.control}
                 name="name"
@@ -99,9 +104,9 @@ export function CreateWarehouseDialog({
                   </FormItem>
                 )}
               />
-            </div>
+            </DialogBody>
 
-            <footer className="flex justify-end gap-3 border-t px-6 py-4">
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={handleCancel}>
                 {t('cancel')}
               </Button>
@@ -112,7 +117,7 @@ export function CreateWarehouseDialog({
               >
                 {t('submit')}
               </Button>
-            </footer>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

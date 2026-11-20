@@ -6,6 +6,8 @@ import { inviteWarehouseMemberSchema, type InviteWarehouseMember } from '@robots
 import {
   Avatar,
   Button,
+  DialogBody,
+  DialogFooter,
   Form,
   FormControl,
   FormField,
@@ -178,7 +180,7 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex-1 space-y-6 p-6">
+      <DialogBody className="flex-1 space-y-6">
         <Form {...form}>
           <form onSubmit={handleInvite} className="flex flex-col gap-3 sm:flex-row sm:items-start">
             <FormField
@@ -241,13 +243,13 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
             ))}
           </ul>
         </div>
-      </div>
+      </DialogBody>
 
-      <footer className="flex justify-end border-t px-6 py-4">
+      <DialogFooter className="gap-0">
         <Button type="button" onClick={onDone}>
           {t('done')}
         </Button>
-      </footer>
+      </DialogFooter>
     </div>
   );
 }

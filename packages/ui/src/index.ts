@@ -22,6 +22,12 @@ export { Input } from './components/input';
 export { Icon, type IconName, type IconProps } from './components/icon';
 export { Label } from './components/label';
 export { Toaster, toast } from './components/toaster';
+export {
+  defaultUiText,
+  UiTextProvider,
+  useUiText,
+  type UiText,
+} from './providers/ui-text-provider';
 export { cn } from './lib/cn';
 export {
   Heading,
@@ -37,7 +43,15 @@ export {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './components/dropdown-menu';
-export { Dialog, DialogContent, DialogDescription, DialogTitle } from './components/dialog';
+export {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './components/dialog';
 export {
   Select,
   SelectContent,
@@ -48,3 +62,4 @@ export {
   SelectTrigger,
   SelectValue,
 } from './components/select';
+export { Tabs, TabsContent, TabsList, TabsTrigger } from './components/tabs';

@@ -12,8 +12,11 @@ import {
 import {
   Button,
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
   Form,
   FormControl,
@@ -23,14 +26,19 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   Text,
-  cn,
 } from '@robots/ui';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useCallback, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 type SettingsTab = 'general' | 'users';
+
+const SETTINGS_TABS_ORIENTATION = 'vertical' as const;
 
 type WarehouseSettingsDialogProps = {
   warehouse: MockWarehouse | null;
@@ -96,9 +104,7 @@ export function WarehouseSettingsDialog({
     onOpenChange(false);
   }, [onOpenChange, reset, warehouse]);
 
-  const handleGeneralTabClick = useCallback(() => setActiveTab('general'), []);
-
-  const handleUsersTabClick = useCallback(() => setActiveTab('users'), []);
+  const handleTabChange = useCallback((tab: string) => setActiveTab(tab as SettingsTab), []);
 
   const handleMembersChange = useCallback(
     (members: readonly WarehouseMember[]) => {
@@ -127,7 +133,12 @@ export function WarehouseSettingsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-3xl">
-        <div className="grid min-h-130 md:grid-cols-[190px_1fr]">
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          orientation={SETTINGS_TABS_ORIENTATION}
+          className="grid min-h-130 gap-0 md:grid-cols-[190px_1fr]"
+        >
           <aside className="border-b bg-muted/30 p-5 md:border-r md:border-b-0">
             <div className="mb-6">
               <Text weight="semibold">{t('title')}</Text>
@@ -137,52 +148,37 @@ export function WarehouseSettingsDialog({
               </Text>
             </div>
 
-            <nav
+            <TabsList
               aria-label={t('navigationLabel')}
-              className="-m-1 flex gap-2 overflow-x-auto p-1 md:m-0 md:flex-col md:overflow-visible md:p-0"
+              className="-m-1 flex w-auto flex-col items-stretch gap-2 rounded-none bg-transparent p-1 text-foreground md:m-0 md:p-0"
             >
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleGeneralTabClick}
-                className={cn(
-                  'w-full justify-start px-3 text-left',
-                  activeTab === 'general'
-                    ? 'bg-background font-medium shadow-sm'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                )}
+              <TabsTrigger
+                value="general"
+                className="w-full justify-start text-left text-muted-foreground hover:bg-muted hover:text-foreground data-[state=active]:text-foreground"
               >
                 {t('tabs.general')}
-              </Button>
+              </TabsTrigger>
 
-              <Button
-                type="button"
-                variant="ghost"
+              <TabsTrigger
+                value="size"
                 disabled
                 title={t('tabs.unavailable')}
-                className="w-full justify-start px-3 text-left text-muted-foreground"
+                className="w-full justify-start text-left text-muted-foreground"
               >
                 {t('tabs.size')}
-              </Button>
+              </TabsTrigger>
 
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleUsersTabClick}
-                className={cn(
-                  'w-full justify-start px-3 text-left',
-                  activeTab === 'users'
-                    ? 'bg-background font-medium shadow-sm'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                )}
+              <TabsTrigger
+                value="users"
+                className="w-full justify-start text-left text-muted-foreground hover:bg-muted hover:text-foreground data-[state=active]:text-foreground"
               >
                 {t('tabs.users')}
-              </Button>
-            </nav>
+              </TabsTrigger>
+            </TabsList>
           </aside>
 
           <div className="flex min-w-0 flex-col">
-            <header className="border-b px-6 py-5 pr-14">
+            <DialogHeader className="border-b px-6 py-5 pr-14">
               <DialogTitle>
                 {activeTab === 'general' ? t('tabs.general') : t('tabs.users')}
               </DialogTitle>
@@ -190,12 +186,12 @@ export function WarehouseSettingsDialog({
               <DialogDescription className="mt-1">
                 {activeTab === 'general' ? t('general.description') : t('users.description')}
               </DialogDescription>
-            </header>
+            </DialogHeader>
 
-            {activeTab === 'general' ? (
+            <TabsContent value="general" className="flex flex-1 flex-col">
               <Form {...form}>
                 <form onSubmit={submit} className="flex flex-1 flex-col">
-                  <div className="flex-1 space-y-6 p-6">
+                  <DialogBody className="flex-1 space-y-6">
                     <FormField
                       control={form.control}
                       name="name"
@@ -265,9 +261,9 @@ export function WarehouseSettingsDialog({
                         </div>
                       </dl>
                     </div>
-                  </div>
+                  </DialogBody>
 
-                  <footer className="flex justify-end gap-3 border-t px-6 py-4">
+                  <DialogFooter>
                     <Button type="button" variant="outline" onClick={handleCancel}>
                       {t('general.cancel')}
                     </Button>
@@ -275,18 +271,20 @@ export function WarehouseSettingsDialog({
                     <Button type="submit" disabled={!isDirty || !isValid || isSubmitting}>
                       {t('general.save')}
                     </Button>
-                  </footer>
+                  </DialogFooter>
                 </form>
               </Form>
-            ) : (
+            </TabsContent>
+
+            <TabsContent value="users" className="flex flex-1 flex-col">
               <WarehouseUsersTab
                 members={warehouse.members}
                 onMembersChange={handleMembersChange}
                 onDone={handleDone}
               />
-            )}
+            </TabsContent>
           </div>
-        </div>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

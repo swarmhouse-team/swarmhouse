@@ -114,6 +114,11 @@
   "notFound": {
     "title": "Page not found"
   },
+  "ui": {
+    "dialog": {
+      "close": "Close"
+    }
+  },
   "warehouses": {
     "page": {
       "title": "Warehouses",
