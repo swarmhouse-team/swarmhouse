@@ -150,11 +150,9 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
   const pendingCount = members.filter((member) => member.status === 'pending').length;
 
   const handleInvite = form.handleSubmit(({ email }) => {
-    const normalizedEmail = email.trim().toLocaleLowerCase();
+    const normalizedEmail = email.trim().toLowerCase();
 
-    const alreadyExists = members.some(
-      (member) => member.email.toLocaleLowerCase() === normalizedEmail,
-    );
+    const alreadyExists = members.some((member) => member.email.toLowerCase() === normalizedEmail);
 
     if (alreadyExists) {
       form.setError('email', {

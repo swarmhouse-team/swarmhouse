@@ -198,7 +198,7 @@
         "description": "Warehouse name and information",
         "nameLabel": "Name",
         "characterCount": "{count} / {max}",
-        "nameHint": "Between 1 and 100 characters.",
+        "nameHint": "Between {min} and {max} characters.",
         "createdAt": "Created",
         "mapSize": "Map size",
         "mapSizeValue": "{width} × {height} cells",

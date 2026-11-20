@@ -7,7 +7,7 @@ export function filterWarehouses(
   filter: WarehouseFilter,
   search: string,
 ): MockWarehouse[] {
-  const normalizedSearch = search.trim().toLocaleLowerCase('ru-RU');
+  const normalizedSearch = search.trim().toLowerCase();
 
   return warehouses.filter((warehouse) => {
     const matchesFilter =
@@ -16,8 +16,7 @@ export function filterWarehouses(
       (filter === 'available' && warehouse.role === 'observer');
 
     const matchesSearch =
-      normalizedSearch.length === 0 ||
-      warehouse.name.toLocaleLowerCase('ru-RU').includes(normalizedSearch);
+      normalizedSearch.length === 0 || warehouse.name.toLowerCase().includes(normalizedSearch);
 
     return matchesFilter && matchesSearch;
   });

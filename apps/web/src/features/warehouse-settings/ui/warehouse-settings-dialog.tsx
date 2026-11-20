@@ -1,9 +1,14 @@
 'use client';
 
 import { SimulationStatus, type MockWarehouse, type WarehouseMember } from '@/entities/warehouse';
+import { useZodResolver } from '@/shared/i18n';
 import { WarehouseUsersTab } from './warehouse-users-tab';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { renameWarehouseRequestSchema, type RenameWarehouseRequest } from '@robots/shared';
+import {
+  MAX_WAREHOUSE_NAME_LENGTH,
+  MIN_WAREHOUSE_NAME_LENGTH,
+  renameWarehouseRequestSchema,
+  type RenameWarehouseRequest,
+} from '@robots/shared';
 import {
   Button,
   Dialog,
@@ -47,7 +52,7 @@ export function WarehouseSettingsDialog({
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
 
   const form = useForm<RenameWarehouseRequest>({
-    resolver: zodResolver(renameWarehouseRequestSchema),
+    resolver: useZodResolver(renameWarehouseRequestSchema),
     mode: 'onChange',
     defaultValues: {
       name: warehouse?.name ?? '',
@@ -200,15 +205,28 @@ export function WarehouseSettingsDialog({
                             <FormLabel>{t('general.nameLabel')}</FormLabel>
 
                             <Text as="span" variant="muted" size="xs">
-                              {t('general.characterCount', { count: nameLength, max: 100 })}
+                              {t('general.characterCount', {
+                                count: nameLength,
+                                max: MAX_WAREHOUSE_NAME_LENGTH,
+                              })}
                             </Text>
                           </div>
 
                           <FormControl>
-                            <Input {...field} maxLength={100} autoComplete="off" />
+                            <Input
+                              {...field}
+                              minLength={MIN_WAREHOUSE_NAME_LENGTH}
+                              maxLength={MAX_WAREHOUSE_NAME_LENGTH}
+                              autoComplete="off"
+                            />
                           </FormControl>
 
-                          <FormDescription>{t('general.nameHint')}</FormDescription>
+                          <FormDescription>
+                            {t('general.nameHint', {
+                              min: MIN_WAREHOUSE_NAME_LENGTH,
+                              max: MAX_WAREHOUSE_NAME_LENGTH,
+                            })}
+                          </FormDescription>
 
                           <FormMessage />
                         </FormItem>

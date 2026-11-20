@@ -198,7 +198,7 @@
         "description": "Название и информация о складе",
         "nameLabel": "Название",
         "characterCount": "{count} / {max}",
-        "nameHint": "От 1 до 100 символов.",
+        "nameHint": "От {min} до {max} символов.",
         "createdAt": "Дата создания",
         "mapSize": "Размер карты",
         "mapSizeValue": "{width} × {height} клеток",

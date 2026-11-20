@@ -8,6 +8,14 @@ type SimulationStatusProps = {
   className?: string;
 };
 
+type StatusDotProps = {
+  className?: string;
+};
+
+function StatusDot({ className }: StatusDotProps) {
+  return <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', className)} />;
+}
+
 const statusConfig = {
   running: {
     translationKey: 'running',
@@ -40,10 +48,7 @@ export function SimulationStatus({ status, className }: SimulationStatusProps) {
       size="sm"
       className={cn('inline-flex items-center gap-2', className)}
     >
-      <span
-        aria-hidden="true"
-        className={cn('size-2 shrink-0 rounded-full', config.dotClassName)}
-      />
+      <StatusDot className={config.dotClassName} />
 
       {t(config.translationKey)}
     </Text>

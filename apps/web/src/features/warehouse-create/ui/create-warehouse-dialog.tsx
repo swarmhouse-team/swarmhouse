@@ -1,7 +1,12 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { createWarehouseRequestSchema, type CreateWarehouseRequest } from '@robots/shared';
+import { useZodResolver } from '@/shared/i18n';
+import {
+  createWarehouseRequestSchema,
+  MAX_WAREHOUSE_NAME_LENGTH,
+  MIN_WAREHOUSE_NAME_LENGTH,
+  type CreateWarehouseRequest,
+} from '@robots/shared';
 import {
   Button,
   Dialog,
@@ -33,7 +38,7 @@ export function CreateWarehouseDialog({
 }: CreateWarehouseDialogProps) {
   const t = useTranslations('warehouses.create');
   const form = useForm<CreateWarehouseRequest>({
-    resolver: zodResolver(createWarehouseRequestSchema),
+    resolver: useZodResolver(createWarehouseRequestSchema),
     mode: 'onChange',
     defaultValues: {
       name: '',
@@ -84,7 +89,8 @@ export function CreateWarehouseDialog({
                       <Input
                         {...field}
                         autoFocus
-                        maxLength={100}
+                        minLength={MIN_WAREHOUSE_NAME_LENGTH}
+                        maxLength={MAX_WAREHOUSE_NAME_LENGTH}
                         autoComplete="off"
                         placeholder={t('namePlaceholder')}
                       />
