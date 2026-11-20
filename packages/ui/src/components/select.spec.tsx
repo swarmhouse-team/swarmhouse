@@ -39,4 +39,23 @@ describe('Select', () => {
 
     expect(screen.getByRole('combobox', { name: 'Роль пользователя' })).toBeDisabled();
   });
+
+  it('задаёт размер дочерним элементам через корневой Select', () => {
+    render(
+      <Select size="sm" defaultValue="owner">
+        <SelectTrigger aria-label="Роль пользователя">
+          <SelectValue />
+        </SelectTrigger>
+
+        <SelectContent>
+          <SelectItem value="owner">Владелец</SelectItem>
+        </SelectContent>
+      </Select>,
+    );
+
+    expect(screen.getByRole('combobox', { name: 'Роль пользователя' })).toHaveAttribute(
+      'data-size',
+      'sm',
+    );
+  });
 });

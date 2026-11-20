@@ -211,7 +211,7 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
       {warehouses.length === 0 ? (
         <div className="space-y-6 rounded-xl border border-dashed p-8 text-center">
           <div>
-            <Heading level={2} size="sm" className="text-base">
+            <Heading level={2} size="base">
               {t('empty.title')}
             </Heading>
 
@@ -224,7 +224,7 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
         </div>
       ) : filteredWarehouses.length === 0 ? (
         <div className="rounded-xl border border-dashed p-12 text-center">
-          <Heading level={2} size="sm" className="text-base">
+          <Heading level={2} size="base">
             {t('noResults.title')}
           </Heading>
 

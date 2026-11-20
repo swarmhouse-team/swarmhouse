@@ -6,6 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  Icon,
 } from '@robots/ui';
 import { useTranslations } from 'next-intl';
 
@@ -28,11 +29,7 @@ export function WarehouseCardMenu({ warehouseName, onSettings, onDelete }: Wareh
           aria-label={t('openLabel', { name: warehouseName })}
           className="bg-background text-xl opacity-0 shadow-sm group-hover:opacity-100 data-[state=open]:opacity-100 focus-visible:opacity-100"
         >
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="currentColor">
-            <circle cx="5" cy="12" r="1.5" />
-            <circle cx="12" cy="12" r="1.5" />
-            <circle cx="19" cy="12" r="1.5" />
-          </svg>
+          <Icon name="ellipsis" className="size-5" />
         </Button>
       </DropdownMenuTrigger>
 

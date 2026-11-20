@@ -1,12 +1,25 @@
 'use client';
 
 import * as SelectPrimitive from '@radix-ui/react-select';
-import type { ComponentProps } from 'react';
+import { createContext, type ComponentProps, useContext } from 'react';
 
 import { cn } from '../lib/cn';
+import { Icon } from './icon';
 
-export function Select(props: ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root {...props} />;
+type SelectSize = 'default' | 'sm';
+
+const SelectSizeContext = createContext<SelectSize>('default');
+
+type SelectProps = ComponentProps<typeof SelectPrimitive.Root> & {
+  size?: SelectSize;
+};
+
+export function Select({ size = 'default', ...props }: SelectProps) {
+  return (
+    <SelectSizeContext.Provider value={size}>
+      <SelectPrimitive.Root {...props} />
+    </SelectSizeContext.Provider>
+  );
 }
 
 export function SelectGroup(props: ComponentProps<typeof SelectPrimitive.Group>) {
@@ -17,23 +30,20 @@ export function SelectValue(props: ComponentProps<typeof SelectPrimitive.Value>)
   return <SelectPrimitive.Value {...props} />;
 }
 
-type SelectTriggerProps = ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: 'default' | 'sm';
-};
-
 export function SelectTrigger({
   className,
-  size = 'default',
   children,
   ...props
-}: SelectTriggerProps) {
+}: ComponentProps<typeof SelectPrimitive.Trigger>) {
+  const size = useContext(SelectSizeContext);
+
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
       className={cn(
         'flex w-fit items-center justify-between gap-2 rounded-md border bg-background px-3 text-sm whitespace-nowrap shadow-xs outline-none transition-[color,box-shadow]',
-        'data-[size=default]:h-9 data-[size=sm]:h-8',
+        'data-[size=default]:h-9 data-[size=default]:text-sm data-[size=sm]:h-8 data-[size=sm]:text-xs',
         'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
         'disabled:cursor-not-allowed disabled:opacity-50',
         'aria-invalid:border-destructive aria-invalid:ring-destructive/20',
@@ -45,20 +55,7 @@ export function SelectTrigger({
       {children}
 
       <SelectPrimitive.Icon asChild>
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 16 16"
-          fill="none"
-          className="size-3.5 text-muted-foreground"
-        >
-          <path
-            d="m4 6 4 4 4-4"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <Icon name="chevronDown" className="size-3.5 text-muted-foreground" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -117,11 +114,15 @@ export function SelectItem({
   children,
   ...props
 }: ComponentProps<typeof SelectPrimitive.Item>) {
+  const size = useContext(SelectSizeContext);
+
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
+      data-size={size}
       className={cn(
-        'relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none select-none',
+        'relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 outline-none select-none',
+        'data-[size=default]:text-sm data-[size=sm]:text-xs',
         'focus:bg-accent focus:text-accent-foreground',
         'data-disabled:pointer-events-none data-disabled:opacity-50',
         className,
@@ -132,15 +133,7 @@ export function SelectItem({
 
       <span className="absolute right-2 flex size-3.5 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
-          <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="size-3.5">
-            <path
-              d="m3.5 8 3 3 6-6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <Icon name="check" className="size-3.5" />
         </SelectPrimitive.ItemIndicator>
       </span>
     </SelectPrimitive.Item>
@@ -169,15 +162,7 @@ function SelectScrollUpButton({
       className={cn('flex cursor-default items-center justify-center py-1', className)}
       {...props}
     >
-      <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="size-3.5">
-        <path
-          d="m4 10 4-4 4 4"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+      <Icon name="chevronUp" className="size-3.5" />
     </SelectPrimitive.ScrollUpButton>
   );
 }
@@ -191,15 +176,7 @@ function SelectScrollDownButton({
       className={cn('flex cursor-default items-center justify-center py-1', className)}
       {...props}
     >
-      <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="size-3.5">
-        <path
-          d="m4 6 4 4 4-4"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+      <Icon name="chevronDown" className="size-3.5" />
     </SelectPrimitive.ScrollDownButton>
   );
 }

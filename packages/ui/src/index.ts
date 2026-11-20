@@ -1,4 +1,5 @@
 export { Button, buttonVariants, type ButtonProps } from './components/button';
+export { Avatar, avatarVariants, type AvatarProps } from './components/avatar';
 export {
   Card,
   CardContent,
@@ -18,6 +19,7 @@ export {
   useFormField,
 } from './components/form';
 export { Input } from './components/input';
+export { Icon, type IconName, type IconProps } from './components/icon';
 export { Label } from './components/label';
 export { Toaster, toast } from './components/toaster';
 export { cn } from './lib/cn';

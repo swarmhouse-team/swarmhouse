@@ -19,11 +19,11 @@ function StatusDot({ className }: StatusDotProps) {
 const statusConfig = {
   running: {
     translationKey: 'running',
-    dotClassName: 'bg-emerald-500',
+    dotClassName: 'bg-success',
   },
   paused: {
     translationKey: 'paused',
-    dotClassName: 'bg-amber-500',
+    dotClassName: 'bg-warning',
   },
   not_started: {
     translationKey: 'notStarted',

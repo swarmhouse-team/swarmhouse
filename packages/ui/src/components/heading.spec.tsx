@@ -35,6 +35,19 @@ describe('Heading', () => {
     expect(heading).toHaveClass('text-lg');
   });
 
+  it.each([
+    ['base', 'text-base'],
+    ['xs', 'text-sm'],
+  ] as const)('supports the compact %s size', (size, className) => {
+    render(
+      <Heading level={3} size={size}>
+        Компактный заголовок
+      </Heading>,
+    );
+
+    expect(screen.getByRole('heading', { level: 3 })).toHaveClass(className);
+  });
+
   it('renders its child when asChild is enabled', () => {
     render(
       <Heading level={3} asChild>

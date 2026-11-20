@@ -4,6 +4,7 @@ import { type WarehouseMember, type WarehouseMemberRole } from '@/entities/wareh
 import { useZodResolver } from '@/shared/i18n';
 import { inviteWarehouseMemberSchema, type InviteWarehouseMember } from '@robots/shared';
 import {
+  Avatar,
   Button,
   Form,
   FormControl,
@@ -11,6 +12,7 @@ import {
   FormItem,
   FormMessage,
   Heading,
+  Icon,
   Input,
   Select,
   SelectContent,
@@ -18,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
   Text,
-  cn,
 } from '@robots/ui';
 import { useTranslations } from 'next-intl';
 import { useCallback } from 'react';
@@ -57,14 +58,9 @@ function WarehouseMemberRow({ member, onRoleChange, onRemove }: WarehouseMemberR
   return (
     <li className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div
-          className={cn(
-            'flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium',
-            member.status === 'pending' && 'border border-dashed',
-          )}
-        >
+        <Avatar variant={member.status === 'pending' ? 'dashed' : 'default'}>
           {member.status === 'pending' ? '@' : getInitials(member.name)}
-        </div>
+        </Avatar>
 
         <div className="min-w-0">
           <Text size="sm" weight="medium" className="truncate">
@@ -80,30 +76,27 @@ function WarehouseMemberRow({ member, onRoleChange, onRemove }: WarehouseMemberR
 
       <div className="flex items-center gap-2 sm:justify-end">
         {member.status === 'pending' ? (
-          <Text as="span" size="xs" className="rounded-full bg-amber-100 px-2 py-1 text-amber-800">
+          <Text
+            as="span"
+            size="xs"
+            className="rounded-full bg-warning/15 px-2 py-1 text-warning-foreground"
+          >
             {t('pending')}
           </Text>
         ) : (
           <Select
+            size="sm"
             value={member.role}
             disabled={member.isCurrentUser}
             onValueChange={handleRoleChange}
           >
-            <SelectTrigger
-              size="sm"
-              aria-label={t('roleLabel', { name: member.name })}
-              className="min-w-28 text-xs"
-            >
+            <SelectTrigger aria-label={t('roleLabel', { name: member.name })} className="min-w-28">
               <SelectValue />
             </SelectTrigger>
 
             <SelectContent>
-              <SelectItem value="owner" className="text-xs">
-                {t('ownerRole')}
-              </SelectItem>
-              <SelectItem value="observer" className="text-xs">
-                {t('observerRole')}
-              </SelectItem>
+              <SelectItem value="owner">{t('ownerRole')}</SelectItem>
+              <SelectItem value="observer">{t('observerRole')}</SelectItem>
             </SelectContent>
           </Select>
         )}
@@ -114,20 +107,12 @@ function WarehouseMemberRow({ member, onRoleChange, onRemove }: WarehouseMemberR
 
             <Button
               type="button"
-              variant="ghost"
-              size="icon"
+              variant="ghost-destructive"
+              size="icon-sm"
               aria-label={t('removeLabel', { name: member.name })}
               onClick={handleRemove}
-              className="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             >
-              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="size-4">
-                <path
-                  d="M18 6 6 18M6 6l12 12"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <Icon name="x" />
             </Button>
           </>
         ) : null}
@@ -236,7 +221,7 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
 
         <div>
           <div className="mb-3 flex items-center justify-between gap-4">
-            <Heading level={3} size="sm" className="text-sm">
+            <Heading level={3} size="xs">
               {t('participants')}
             </Heading>
 
