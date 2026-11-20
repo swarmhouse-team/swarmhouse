@@ -18,4 +18,24 @@ export default defineConfig([
     files: ['./src/features/switch-locale/**'],
     rules: { 'fsd/insignificant-slice': 'off' },
   },
+  {
+    // Эти слайсы выделены отдельно согласно архитектуре страницы складов.
+    files: [
+      './src/entities/warehouse/**',
+      './src/features/warehouse-create/**',
+      './src/features/warehouse-delete/**',
+      './src/features/warehouse-settings/**',
+      './src/widgets/warehouse-list/**',
+    ],
+    rules: {
+      'fsd/insignificant-slice': 'off',
+    },
+  },
+  {
+    // Feature-слайсы описывают разные действия над одной сущностью warehouse.
+    files: ['./src/features/**'],
+    rules: {
+      'fsd/repetitive-naming': 'off',
+    },
+  },
 ]);

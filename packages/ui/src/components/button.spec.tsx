@@ -14,11 +14,20 @@ describe('Button', () => {
   it('с asChild рендерит дочерний элемент вместо button', () => {
     render(
       <Button asChild>
-        <a href="/warehouses">Склады</a>
+        <a href="https://example.com">Склады</a>
       </Button>,
     );
 
     expect(screen.getByRole('link', { name: 'Склады' })).toHaveAttribute('data-slot', 'button');
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('поддерживает компактную иконку с destructive hover', () => {
+    render(<Button variant="ghost-destructive" size="icon-sm" aria-label="Удалить пользователя" />);
+
+    expect(screen.getByRole('button', { name: 'Удалить пользователя' })).toHaveClass(
+      'size-8',
+      'hover:text-destructive',
+    );
   });
 });
