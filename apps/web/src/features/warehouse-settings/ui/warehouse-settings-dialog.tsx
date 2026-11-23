@@ -132,12 +132,12 @@ export function WarehouseSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-3xl">
+      <DialogContent className="h-[min(32.5rem,calc(100dvh-2rem))] max-w-3xl">
         <Tabs
           value={activeTab}
           onValueChange={handleTabChange}
           orientation={SETTINGS_TABS_ORIENTATION}
-          className="grid min-h-130 gap-0 md:grid-cols-[190px_1fr]"
+          className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-0 md:grid-cols-[190px_1fr] md:grid-rows-1"
         >
           <aside className="border-b bg-muted/30 p-5 md:border-r md:border-b-0">
             <div className="mb-6">
@@ -177,7 +177,7 @@ export function WarehouseSettingsDialog({
             </TabsList>
           </aside>
 
-          <div className="flex min-w-0 flex-col">
+          <div className="flex min-h-0 min-w-0 flex-col">
             <DialogHeader className="border-b px-6 py-5 pr-14">
               <DialogTitle>
                 {activeTab === 'general' ? t('tabs.general') : t('tabs.users')}
@@ -188,9 +188,9 @@ export function WarehouseSettingsDialog({
               </DialogDescription>
             </DialogHeader>
 
-            <TabsContent value="general" className="flex flex-1 flex-col">
+            <TabsContent value="general" className="flex min-h-0 flex-1 flex-col">
               <Form {...form}>
-                <form onSubmit={submit} className="flex flex-1 flex-col">
+                <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
                   <DialogBody className="flex-1 space-y-6">
                     <FormField
                       control={form.control}
@@ -276,7 +276,7 @@ export function WarehouseSettingsDialog({
               </Form>
             </TabsContent>
 
-            <TabsContent value="users" className="flex flex-1 flex-col">
+            <TabsContent value="users" className="flex min-h-0 flex-1 flex-col">
               <WarehouseUsersTab
                 members={warehouse.members}
                 onMembersChange={handleMembersChange}

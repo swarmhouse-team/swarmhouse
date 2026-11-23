@@ -31,21 +31,27 @@ export function DialogHeader({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn('flex flex-col gap-1.5 p-6 pr-14', className)}
+      className={cn('flex shrink-0 flex-col gap-1.5 p-6 pr-14', className)}
       {...props}
     />
   );
 }
 
 export function DialogBody({ className, ...props }: ComponentProps<'div'>) {
-  return <div data-slot="dialog-body" className={cn('p-6', className)} {...props} />;
+  return (
+    <div
+      data-slot="dialog-body"
+      className={cn('min-h-0 overflow-y-auto p-6', className)}
+      {...props}
+    />
+  );
 }
 
 export function DialogFooter({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       data-slot="dialog-footer"
-      className={cn('flex justify-end gap-3 border-t px-6 py-4', className)}
+      className={cn('flex shrink-0 justify-end gap-3 border-t px-6 py-4', className)}
       {...props}
     />
   );
@@ -64,7 +70,7 @@ export function DialogContent({
 
       <DialogPrimitive.Content
         className={cn(
-          'dialog-content-motion fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg overflow-hidden rounded-xl border bg-background shadow-xl',
+          'dialog-content-motion fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-hidden rounded-xl border bg-background shadow-xl',
           className,
         )}
         {...props}

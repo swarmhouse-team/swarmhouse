@@ -27,7 +27,7 @@ export function WarehouseCardMenu({ warehouseName, onSettings, onDelete }: Wareh
           variant="outline"
           size="icon"
           aria-label={t('openLabel', { name: warehouseName })}
-          className="bg-background text-xl opacity-0 shadow-sm group-hover:opacity-100 data-[state=open]:opacity-100 focus-visible:opacity-100"
+          className="bg-background text-xl shadow-sm [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 data-[state=open]:opacity-100 focus-visible:opacity-100"
         >
           <Icon name="ellipsis" className="size-5" />
         </Button>

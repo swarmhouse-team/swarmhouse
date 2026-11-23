@@ -37,9 +37,9 @@ export function WarehouseCard({ warehouse, actions, className }: WarehouseCardPr
         </Text>
       </div>
 
-      <CardHeader className="gap-4 py-5">
-        <div className="space-y-2">
-          <CardTitle className="truncate">{name}</CardTitle>
+      <CardHeader className="min-w-0 gap-4 py-5">
+        <div className="min-w-0 space-y-2">
+          <CardTitle className="truncate pr-4">{name}</CardTitle>
 
           <Text variant="muted" size="sm">
             {t('summary', {

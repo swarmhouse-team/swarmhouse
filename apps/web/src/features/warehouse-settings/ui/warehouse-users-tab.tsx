@@ -179,7 +179,7 @@ export function WarehouseUsersTab({ members, onMembersChange, onDone }: Warehous
   );
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <DialogBody className="flex-1 space-y-6">
         <Form {...form}>
           <form onSubmit={handleInvite} className="flex flex-col gap-3 sm:flex-row sm:items-start">
