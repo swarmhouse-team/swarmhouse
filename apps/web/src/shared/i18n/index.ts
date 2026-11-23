@@ -1,5 +1,6 @@
 export { type Messages } from './messages';
 export { LocalIntlProvider } from './provider/local-intl-provider';
+export { UiIntlProvider } from './provider/ui-intl-provider';
 export { getPathname, Link, redirect, usePathname, useRouter } from './routing/navigation';
 export { routing } from './routing/routing';
 export {

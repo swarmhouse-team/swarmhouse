@@ -114,6 +114,122 @@
   "notFound": {
     "title": "Страница не найдена"
   },
+  "ui": {
+    "dialog": {
+      "close": "Закрыть"
+    }
+  },
+  "warehouses": {
+    "page": {
+      "title": "Склады",
+      "subtitle": "Управляйте складами, участниками и настройками симуляции.",
+      "create": "Создать склад"
+    },
+    "newCard": {
+      "title": "Новый склад",
+      "description": "Создать новый склад"
+    },
+    "card": {
+      "mapPlaceholderLabel": "Плейсхолдер карты склада «{name}»",
+      "mapPlaceholder": "Превью карты",
+      "summary": "{width} × {height} клеток · {robots, plural, one {# робот} few {# робота} many {# роботов} other {# робота}} · {stations, plural, one {# ст.} other {# ст.}}"
+    },
+    "menu": {
+      "openLabel": "Открыть меню склада «{name}»",
+      "settings": "Настройки склада",
+      "delete": "Удалить склад"
+    },
+    "roles": {
+      "owner": "Владелец",
+      "observer": "Наблюдатель"
+    },
+    "statuses": {
+      "running": "Идёт",
+      "paused": "Пауза",
+      "notStarted": "Не запущена"
+    },
+    "list": {
+      "filterLabel": "Фильтр складов",
+      "filters": {
+        "all": "Все",
+        "mine": "Мои",
+        "available": "Доступные мне"
+      },
+      "searchLabel": "Поиск по названию склада",
+      "searchPlaceholder": "Поиск по названию",
+      "empty": {
+        "title": "Складов пока нет",
+        "description": "Создайте первый склад, чтобы начать работу."
+      },
+      "noResults": {
+        "title": "Ничего не найдено",
+        "description": "Попробуйте изменить поисковый запрос или выбрать другой фильтр."
+      }
+    },
+    "create": {
+      "title": "Новый склад",
+      "description": "Введите название нового склада.",
+      "nameLabel": "Название",
+      "namePlaceholder": "Например, Центральный склад",
+      "cancel": "Отмена",
+      "submit": "Создать склад"
+    },
+    "delete": {
+      "title": "Удалить склад?",
+      "description": "Это действие нельзя отменить.",
+      "consequencesTitle": "Вместе со складом будут удалены:",
+      "consequences": {
+        "map": "карта склада;",
+        "robotsAndStations": "роботы и станции;",
+        "settingsAndMembers": "настройки и участники;",
+        "simulationData": "связанные данные симуляции."
+      },
+      "confirmationLabel": "Введите название склада для подтверждения:",
+      "confirmationHint": "Название должно совпадать полностью, включая регистр.",
+      "cancel": "Отмена",
+      "submit": "Удалить склад"
+    },
+    "settings": {
+      "title": "Настройки склада",
+      "navigationLabel": "Разделы настроек",
+      "notAvailable": "—",
+      "tabs": {
+        "general": "Основное",
+        "size": "Размер",
+        "users": "Пользователи",
+        "unavailable": "Раздел пока не реализован"
+      },
+      "general": {
+        "description": "Название и информация о складе",
+        "nameLabel": "Название",
+        "characterCount": "{count} / {max}",
+        "nameHint": "От {min} до {max} символов.",
+        "createdAt": "Дата создания",
+        "mapSize": "Размер карты",
+        "mapSizeValue": "{width} × {height} клеток",
+        "simulationStatus": "Статус симуляции",
+        "cancel": "Отмена",
+        "save": "Сохранить"
+      },
+      "users": {
+        "description": "Управление доступом к складу",
+        "emailPlaceholder": "name@company.com",
+        "observerRole": "Наблюдатель",
+        "ownerRole": "Владелец",
+        "invite": "Пригласить",
+        "observerDescription": "Наблюдатель видит карту и симуляцию в реальном времени.",
+        "participants": "Участники",
+        "participantsCount": "{active} доступно · {pending} ожидает",
+        "currentUser": "(вы)",
+        "invitationSent": "Приглашение отправлено",
+        "pending": "Ожидает",
+        "roleLabel": "Роль пользователя {name}",
+        "removeLabel": "Удалить пользователя {name}",
+        "alreadyInvited": "Этот пользователь уже приглашён",
+        "done": "Готово"
+      }
+    }
+  },
   "errors": {
     "generic": "Что-то пошло не так. Попробуйте ещё раз.",
     "api": {
