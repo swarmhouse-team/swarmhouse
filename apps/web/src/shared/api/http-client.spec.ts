@@ -2,7 +2,7 @@ import { API_ERROR_CODES } from '@robots/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
-import { http } from './http-client';
+import { configureHttpAuth, http } from './http-client';
 import { HttpError } from './http-error';
 import { createQueryClient } from './query-client';
 
@@ -25,7 +25,11 @@ async function catchError(promise: Promise<unknown>): Promise<unknown> {
 const schema = z.object({ status: z.literal('ok') });
 
 describe('http', () => {
+  let resetHttpAuth: (() => void) | undefined;
+
   afterEach(() => {
+    resetHttpAuth?.();
+    resetHttpAuth = undefined;
     vi.unstubAllGlobals();
   });
 
@@ -118,6 +122,83 @@ describe('http', () => {
     const error = await catchError(http('/health'));
 
     expect(error).toMatchObject({ status: 0, code: API_ERROR_CODES.NETWORK_ERROR });
+  });
+
+  it('adds the access token to the Authorization header', async () => {
+    const fetchMock = vi.fn(async () => Response.json({ status: 'ok' }));
+    vi.stubGlobal('fetch', fetchMock);
+    resetHttpAuth = configureHttpAuth({
+      getAccessToken: () => 'access-token',
+      refreshAccessToken: vi.fn(),
+      onAuthenticationFailure: vi.fn(),
+    });
+
+    await http('/health', { schema });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/health',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer access-token' }),
+      }),
+    );
+  });
+
+  it('refreshes once after 401 and repeats the request with the new token', async () => {
+    let accessToken = 'expired-token';
+    const refresh = vi.fn(async () => {
+      accessToken = 'new-token';
+      return accessToken;
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({ code: 'UNAUTHORIZED', message: 'Expired' }, { status: 401 }),
+      )
+      .mockResolvedValueOnce(Response.json({ status: 'ok' }));
+    vi.stubGlobal('fetch', fetchMock);
+    resetHttpAuth = configureHttpAuth({
+      getAccessToken: () => accessToken,
+      refreshAccessToken: refresh,
+      onAuthenticationFailure: vi.fn(),
+    });
+
+    await expect(http('/health', { schema })).resolves.toEqual({ status: 'ok' });
+
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/health',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer new-token' }),
+      }),
+    );
+  });
+
+  it('uses one refresh request for simultaneous 401 responses', async () => {
+    let accessToken = 'expired-token';
+    const refresh = vi.fn(async () => {
+      accessToken = 'new-token';
+      return accessToken;
+    });
+    const fetchMock = vi.fn(async (_url: string, options: RequestInit) => {
+      const headers = options.headers as Record<string, string>;
+      return headers.Authorization === 'Bearer new-token'
+        ? Response.json({ status: 'ok' })
+        : Response.json({ code: 'UNAUTHORIZED', message: 'Expired' }, { status: 401 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    resetHttpAuth = configureHttpAuth({
+      getAccessToken: () => accessToken,
+      refreshAccessToken: refresh,
+      onAuthenticationFailure: vi.fn(),
+    });
+
+    await expect(
+      Promise.all([http('/first', { schema }), http('/second', { schema })]),
+    ).resolves.toEqual([{ status: 'ok' }, { status: 'ok' }]);
+
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 });
 

@@ -6,6 +6,15 @@ import { HttpError } from './http-error';
 /** Браузер ходит на свой origin, Next проксирует `/api/*` в бэкенд (см. next.config.ts). */
 const API_BASE_URL = '/api';
 
+type HttpAuthHandlers = {
+  getAccessToken: () => string | null;
+  refreshAccessToken: () => Promise<string | null>;
+  onAuthenticationFailure: () => void;
+};
+
+let authHandlers: HttpAuthHandlers | null = null;
+let refreshPromise: Promise<string | null> | null = null;
+
 export type HttpOptions<T> = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   /** Сериализуется в JSON. */
@@ -14,14 +23,37 @@ export type HttpOptions<T> = {
   schema?: ZodType<T>;
   signal?: AbortSignal;
   headers?: Record<string, string>;
+  /** Не запускать refresh при 401. Нужен для самих auth-запросов. */
+  skipAuthRefresh?: boolean;
 };
+
+/** Подключает session-стор к HTTP-клиенту без зависимости shared-слоя от entities. */
+export function configureHttpAuth(handlers: HttpAuthHandlers): () => void {
+  authHandlers = handlers;
+
+  return () => {
+    if (authHandlers === handlers) {
+      authHandlers = null;
+      refreshPromise = null;
+    }
+  };
+}
 
 /**
  * Единственная точка HTTP-запросов к API.
  * При любом сбое бросает `HttpError` с телом в формате `ApiError`.
  */
 export async function http<T = unknown>(path: string, options: HttpOptions<T> = {}): Promise<T> {
-  const { method = 'GET', body, schema, signal, headers } = options;
+  return sendRequest(path, options, false);
+}
+
+async function sendRequest<T>(
+  path: string,
+  options: HttpOptions<T>,
+  retriedAfterRefresh: boolean,
+): Promise<T> {
+  const { method = 'GET', body, schema, signal, headers, skipAuthRefresh = false } = options;
+  const accessToken = authHandlers?.getAccessToken();
 
   let response: Response;
   try {
@@ -32,6 +64,7 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
       headers: {
         Accept: 'application/json',
         ...(body !== undefined && { 'Content-Type': 'application/json' }),
+        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
         ...headers,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -45,6 +78,14 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
       code: API_ERROR_CODES.NETWORK_ERROR,
       message: 'Cannot reach the server',
     });
+  }
+
+  if (response.status === 401 && authHandlers && !skipAuthRefresh) {
+    if (retriedAfterRefresh) {
+      authHandlers.onAuthenticationFailure();
+    } else if (await refreshAccessTokenOnce()) {
+      return sendRequest(path, options, true);
+    }
   }
 
   if (!response.ok) {
@@ -66,6 +107,33 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
       { cause },
     );
   }
+}
+
+function refreshAccessTokenOnce(): Promise<string | null> {
+  if (!refreshPromise) {
+    const handlers = authHandlers;
+    if (!handlers) {
+      return Promise.resolve(null);
+    }
+
+    refreshPromise = handlers
+      .refreshAccessToken()
+      .then((accessToken) => {
+        if (!accessToken) {
+          handlers.onAuthenticationFailure();
+        }
+        return accessToken;
+      })
+      .catch(() => {
+        handlers.onAuthenticationFailure();
+        return null;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
 }
 
 async function parseApiError(response: Response): Promise<ApiError> {
