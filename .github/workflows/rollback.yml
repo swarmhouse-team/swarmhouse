@@ -1,0 +1,16 @@
+name: Roll back production application
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  rollback:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/app-switch.yml
+    with:
+      command: rollback
+    secrets:
+      APP_DEPLOY_SSH_KEY: ${{ secrets.APP_DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}

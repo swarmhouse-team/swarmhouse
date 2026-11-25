@@ -1,0 +1,55 @@
+name: Switch production application version
+
+on:
+  workflow_call:
+    inputs:
+      command:
+        required: true
+        type: string
+    secrets:
+      APP_DEPLOY_SSH_KEY:
+        required: true
+      DEPLOY_KNOWN_HOSTS:
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: application-production-switch
+  queue: max
+
+jobs:
+  deploy:
+    name: Switch the production application version
+    environment: production
+    permissions: {}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      APP_COMMAND: ${{ inputs.command }}
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+      DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+      APP_DEPLOY_SSH_KEY: ${{ secrets.APP_DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+    steps:
+      - name: Switch version over SSH
+        shell: bash
+        run: |
+          : "${DEPLOY_HOST:?Set DEPLOY_HOST}"
+          : "${DEPLOY_USER:?Set DEPLOY_USER}"
+          : "${APP_DEPLOY_SSH_KEY:?Set APP_DEPLOY_SSH_KEY}"
+          : "${DEPLOY_KNOWN_HOSTS:?Set DEPLOY_KNOWN_HOSTS}"
+          [[ "$DEPLOY_PORT" =~ ^[1-9][0-9]{0,4}$ ]] && (( DEPLOY_PORT <= 65535 )) || exit 1
+
+          umask 077
+          ssh_dir="$(mktemp -d)"
+          trap 'rm -rf -- "$ssh_dir"' EXIT
+          printf '%s\n' "$APP_DEPLOY_SSH_KEY" | tr -d '\r' > "$ssh_dir/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" | tr -d '\r' > "$ssh_dir/known_hosts"
+
+          ssh -i "$ssh_dir/key" -p "$DEPLOY_PORT" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$ssh_dir/known_hosts" -o ConnectTimeout=15 \
+            -o ServerAliveInterval=15 -o ServerAliveCountMax=3 \
+            -- "$DEPLOY_USER@$DEPLOY_HOST" "$APP_COMMAND"
