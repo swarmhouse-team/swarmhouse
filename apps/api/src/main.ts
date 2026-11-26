@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
+import { ROBOT_ENGINE_VERSION } from '@robots/simulation';
 
 import { AppModule } from './app.module';
 import type { Env } from './config/env';
@@ -32,6 +33,7 @@ async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
   logger.log(`API: http://localhost:${port}/${GLOBAL_PREFIX}`);
   logger.log(`Swagger: http://localhost:${port}/${GLOBAL_PREFIX}/docs`);
+  logger.log(`Robot Engine: v${ROBOT_ENGINE_VERSION}`);
 }
 
 // Явно завершаемся с кодом 1: не полагаемся на поведение Node по умолчанию для необработанных

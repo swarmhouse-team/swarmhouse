@@ -1,0 +1,159 @@
+import type { RobotRoute, RobotState, Position, Grid, Direction, RouteStep } from '../contracts';
+
+import type { SimulationState } from './types';
+
+export function isInsideGrid(position: Position, grid: Grid): boolean {
+  return position.x >= 0 && position.x < grid.width && position.y >= 0 && position.y < grid.height;
+}
+export function isObstacle(position: Position, grid: Grid): boolean {
+  return grid.obstacles.some((obstacle) => obstacle.x === position.x && obstacle.y === position.y);
+}
+
+export function validateRouteStep(
+  currentPosition: Position,
+  currentDirection: Direction,
+  step: RouteStep,
+): boolean {
+  const leftTurns = {
+    UP: 'LEFT',
+    LEFT: 'DOWN',
+    DOWN: 'RIGHT',
+    RIGHT: 'UP',
+  } as const;
+  const rightTurns = {
+    UP: 'RIGHT',
+    RIGHT: 'DOWN',
+    DOWN: 'LEFT',
+    LEFT: 'UP',
+  } as const;
+  const offsets = {
+    UP: { x: 0, y: -1 },
+    RIGHT: { x: 1, y: 0 },
+    DOWN: { x: 0, y: 1 },
+    LEFT: { x: -1, y: 0 },
+  } as const;
+
+  if (step.action === 'WAIT') {
+    return (
+      step.position.x === currentPosition.x &&
+      step.position.y === currentPosition.y &&
+      step.direction === currentDirection
+    );
+  }
+  if (step.action === 'TURN_LEFT') {
+    return (
+      step.position.x === currentPosition.x &&
+      step.position.y === currentPosition.y &&
+      step.direction === leftTurns[currentDirection]
+    );
+  }
+  if (step.action === 'TURN_RIGHT') {
+    return (
+      step.position.x === currentPosition.x &&
+      step.position.y === currentPosition.y &&
+      step.direction === rightTurns[currentDirection]
+    );
+  }
+  if (step.action === 'FORWARD') {
+    const offset = offsets[currentDirection];
+
+    return (
+      step.position.x === currentPosition.x + offset.x &&
+      step.position.y === currentPosition.y + offset.y &&
+      step.direction === currentDirection
+    );
+  }
+
+  return false;
+}
+export function validateRouteActions(robot: RobotState, route: RobotRoute, grid: Grid): boolean {
+  let currentPosition = robot.position;
+  let currentDirection = robot.direction;
+
+  for (const step of route.steps) {
+    if (!isInsideGrid(step.position, grid)) {
+      return false;
+    }
+
+    if (isObstacle(step.position, grid)) {
+      return false;
+    }
+
+    if (!validateRouteStep(currentPosition, currentDirection, step)) {
+      return false;
+    }
+
+    currentPosition = step.position;
+    currentDirection = step.direction;
+  }
+
+  return true;
+}
+
+function getRobotPositionAtTick(
+  robot: RobotState,
+  route: RobotRoute | undefined,
+  tick: number,
+): Position {
+  if (!route || tick <= route.startTick) {
+    return robot.position;
+  }
+
+  const step = route.steps.find((step) => step.tick === tick);
+
+  if (step) {
+    return step.position;
+  }
+
+  const lastStep = route.steps[route.steps.length - 1];
+
+  if (tick > lastStep.tick) {
+    return lastStep.position;
+  }
+
+  return robot.position;
+}
+export function isCellOccupiedAtTick(
+  state: SimulationState,
+  robotId: string,
+  position: Position,
+  tick: number,
+): boolean {
+  return state.robots.some((otherRobot) => {
+    if (otherRobot.id === robotId) {
+      return false;
+    }
+
+    const route = state.routes.find((route) => route.robotId === otherRobot.id);
+
+    const otherPosition = getRobotPositionAtTick(otherRobot, route, tick);
+
+    return otherPosition.x === position.x && otherPosition.y === position.y;
+  });
+}
+export function isSwapConflict(
+  state: SimulationState,
+  robotId: string,
+  from: Position,
+  to: Position,
+  tick: number,
+): boolean {
+  return state.robots.some((otherRobot) => {
+    if (from.x === to.x && from.y === to.y) {
+      return false;
+    }
+    if (otherRobot.id === robotId) {
+      return false;
+    }
+
+    const route = state.routes.find((route) => route.robotId === otherRobot.id);
+
+    const otherFrom = getRobotPositionAtTick(otherRobot, route, tick - 1);
+
+    const otherTo = getRobotPositionAtTick(otherRobot, route, tick);
+
+    return (
+      otherFrom.x === to.x && otherFrom.y === to.y && otherTo.x === from.x && otherTo.y === from.y
+    );
+  });
+}
