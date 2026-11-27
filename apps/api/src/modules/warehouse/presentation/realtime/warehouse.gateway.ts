@@ -27,12 +27,12 @@ import { NestjsLogger } from '../../../../common/infrastructure/nestjs-logger';
 import { EditWarehouseMap } from '../../application/commands/edit-warehouse-map/edit-warehouse-map.use-case';
 import { GetWarehouse } from '../../application/queries/get-warehouse/get-warehouse.use-case';
 import { normalizeId } from '../../domain/vo/id';
-import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
+import { WarehouseRoomPublisher } from '../../../warehouse-realtime/warehouse-room.publisher';
 import {
   warehousePayloadBytes,
   warehouseRoom,
-} from '../../infrastructure/realtime/warehouse-socket.constants';
-import { WarehouseSubscriptionBook } from '../../infrastructure/realtime/warehouse-subscription.book';
+} from '../../../warehouse-realtime/warehouse-socket.constants';
+import { WarehouseSubscriptionBook } from '../../../warehouse-realtime/warehouse-subscription.book';
 import { toEditWarehouseMapAckData } from './edit-warehouse-map-ack';
 
 /**
@@ -45,13 +45,13 @@ export class WarehouseGateway implements OnGatewayInit, OnGatewayDisconnect {
   constructor(
     private readonly getWarehouse: GetWarehouse,
     private readonly editWarehouseMap: EditWarehouseMap,
-    private readonly notifier: SocketIoWarehouseNotifier,
+    private readonly publisher: WarehouseRoomPublisher,
     private readonly subscriptions: WarehouseSubscriptionBook,
     @Inject(NestjsLogger) private readonly logger: LoggerPort,
   ) {}
 
   afterInit(server: Server | Namespace): void {
-    this.notifier.attach(server);
+    this.publisher.attach(server);
   }
 
   handleDisconnect(client: Socket): void {
@@ -59,7 +59,7 @@ export class WarehouseGateway implements OnGatewayInit, OnGatewayDisconnect {
   }
 
   onApplicationShutdown(): void {
-    this.notifier.detach();
+    this.publisher.detach();
   }
 
   @SubscribeMessage(WAREHOUSE_REALTIME_EVENTS.subscribe)
