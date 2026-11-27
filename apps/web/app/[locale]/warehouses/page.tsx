@@ -1,6 +1,7 @@
 import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 
+import { RequireSession } from '@/app/layout';
 import { WarehousesPage } from '@/pages/warehouses';
 import { routing } from '@/shared/i18n';
 
@@ -10,5 +11,9 @@ export default async function Page({ params }: PageProps<'/[locale]/warehouses'>
     setRequestLocale(locale);
   }
 
-  return <WarehousesPage />;
+  return (
+    <RequireSession>
+      <WarehousesPage />
+    </RequireSession>
+  );
 }

@@ -33,7 +33,9 @@ export function LoginForm() {
     try {
       const { accessToken } = await login(credentials);
       useSessionStore.getState().setAccessToken(accessToken);
-      router.replace('/warehouses');
+      const next = new URLSearchParams(window.location.search).get('next');
+      // Разрешаем возврат только на известный закрытый маршрут.
+      router.replace(next && /^\/warehouses(?:[?#]|$)/.test(next) ? next : '/warehouses');
     } catch (error) {
       form.setError('root', {
         message:

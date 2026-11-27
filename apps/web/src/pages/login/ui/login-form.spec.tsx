@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HttpError } from '@/shared/api';
 import { renderWithProviders } from '@/shared/lib/test-utils';
@@ -26,7 +26,16 @@ describe('LoginForm', () => {
     vi.clearAllMocks();
   });
 
-  it('signs in and opens the warehouses page', async () => {
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+  });
+
+  it.each([
+    ['', '/warehouses'],
+    ['/warehouses?filter=mine#list', '/warehouses?filter=mine#list'],
+    ['https://example.com', '/warehouses'],
+  ])('signs in with return target "%s"', async (next, destination) => {
+    window.history.replaceState(null, '', `/ru/login?next=${encodeURIComponent(next)}`);
     mocks.login.mockResolvedValue({ accessToken: 'access-token' });
     renderWithProviders(<LoginForm />);
 
@@ -43,7 +52,7 @@ describe('LoginForm', () => {
       }),
     );
     expect(mocks.setAccessToken).toHaveBeenCalledWith('access-token');
-    expect(mocks.replace).toHaveBeenCalledWith('/warehouses');
+    expect(mocks.replace).toHaveBeenCalledWith(destination);
   });
 
   it('shows an error for invalid credentials', async () => {
