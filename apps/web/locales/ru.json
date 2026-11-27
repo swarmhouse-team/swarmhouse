@@ -104,6 +104,16 @@
       "tagline": "Симуляция складской логистики"
     }
   },
+  "login": {
+    "title": "Вход",
+    "description": "Войдите, чтобы управлять складами.",
+    "email": "Email",
+    "password": "Пароль",
+    "submit": "Войти",
+    "submitting": "Входим…",
+    "invalidCredentials": "Неверный email или пароль",
+    "backHome": "Вернуться на главную"
+  },
   "switchLocale": {
     "label": "Язык интерфейса",
     "languages": {
