@@ -10,23 +10,27 @@ export function LoginPage() {
   const t = useTranslations('login');
 
   return (
-    <main className="grid min-h-dvh place-items-center bg-muted/30 px-4 py-16">
-      <div className="absolute top-4 right-4 flex items-center gap-2">
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/">{t('backHome')}</Link>
-        </Button>
-        <LocaleSwitcher />
-      </div>
+    <div className="flex min-h-dvh flex-col bg-muted/30">
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/">{t('backHome')}</Link>
+          </Button>
+          <LocaleSwitcher />
+        </div>
+      </header>
 
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{t('title')}</CardTitle>
-          <CardDescription>{t('description')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <LoginForm />
-        </CardContent>
-      </Card>
-    </main>
+      <main className="grid flex-1 place-items-center px-4 py-12">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>{t('title')}</CardTitle>
+            <CardDescription>{t('description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LoginForm />
+          </CardContent>
+        </Card>
+      </main>
+    </div>
   );
 }

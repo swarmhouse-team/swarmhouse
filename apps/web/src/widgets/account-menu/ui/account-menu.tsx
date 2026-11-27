@@ -81,7 +81,7 @@ function SignedInMenu() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem asChild>
-            <Link href="/warehouses">{t('session.myWarehouses')}</Link>
+            <Link href="/warehouses?filter=mine">{t('session.myWarehouses')}</Link>
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setProfileOpen(true)}>
             {t('session.profile')}

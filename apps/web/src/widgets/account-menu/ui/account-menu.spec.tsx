@@ -33,7 +33,7 @@ it('displays the account details and returns to the sign-in link after logout', 
   fireEvent.keyDown(trigger, { key: 'Enter' });
   expect(await screen.findByRole('menuitem', { name: 'Мои склады' })).toHaveAttribute(
     'href',
-    '/warehouses',
+    '/warehouses?filter=mine',
   );
   fireEvent.click(screen.getByRole('menuitem', { name: 'Профиль пользователя' }));
 

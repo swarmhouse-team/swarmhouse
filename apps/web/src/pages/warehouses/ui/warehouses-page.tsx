@@ -5,17 +5,31 @@ import { CreateWarehouseDialog } from '@/features/warehouse-create';
 import { DeleteWarehouseDialog } from '@/features/warehouse-delete';
 import { WarehouseSettingsDialog } from '@/features/warehouse-settings';
 import { AccountMenu } from '@/widgets/account-menu';
-import { WarehouseList } from '@/widgets/warehouse-list';
+import { WarehouseList, type WarehouseFilter } from '@/widgets/warehouse-list';
 import { Button, Heading, Text } from '@robots/ui';
 import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
 export function WarehousesPage() {
   const t = useTranslations('warehouses.page');
+  const filter = useSearchParams()?.get('filter');
+  const activeFilter = filter === 'mine' || filter === 'available' ? filter : 'all';
   const [warehouses, setWarehouses] = useState<MockWarehouse[]>([...warehouseMocks]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedWarehouse, setSelectedWarehouse] = useState<MockWarehouse | null>(null);
   const [warehouseToDelete, setWarehouseToDelete] = useState<MockWarehouse | null>(null);
+
+  const handleFilterChange = useCallback((nextFilter: WarehouseFilter) => {
+    const url = new URL(window.location.href);
+    if (nextFilter === 'all') {
+      url.searchParams.delete('filter');
+    } else {
+      url.searchParams.set('filter', nextFilter);
+    }
+
+    window.history.replaceState(null, '', url);
+  }, []);
 
   const handleWarehouseCreate = useCallback((name: string) => {
     const createdAt = new Date().toISOString();
@@ -135,6 +149,8 @@ export function WarehousesPage() {
 
         <WarehouseList
           warehouses={warehouses}
+          activeFilter={activeFilter}
+          onFilterChange={handleFilterChange}
           onCreate={handleCreateDialogOpen}
           onSettings={handleWarehouseSettings}
           onDelete={handleWarehouseDelete}

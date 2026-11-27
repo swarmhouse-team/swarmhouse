@@ -19,8 +19,9 @@ export function LocaleSwitcher() {
   const [isPending, startTransition] = useTransition();
 
   function switchTo(locale: Locale) {
+    const { search, hash } = window.location;
     startTransition(() => {
-      router.replace(pathname, { locale });
+      router.replace(pathname + search + hash, { locale });
     });
   }
 

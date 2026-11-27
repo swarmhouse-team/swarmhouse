@@ -24,8 +24,15 @@ export function RequireSession({ children }: { children: ReactNode }) {
   }
 
   return (
-    <p role="status" className="p-6 text-center text-sm text-muted-foreground">
-      {t('checking')}
-    </p>
+    <div
+      role="status"
+      className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center"
+    >
+      <span
+        aria-hidden="true"
+        className="size-8 rounded-full border-[3px] border-primary/20 border-t-primary motion-safe:animate-spin"
+      />
+      <p className="text-lg font-medium text-foreground">{t('checking')}</p>
+    </div>
   );
 }

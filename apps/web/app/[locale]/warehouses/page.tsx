@@ -1,5 +1,6 @@
 import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
+import { Suspense } from 'react';
 
 import { RequireSession } from '@/app/layout';
 import { WarehousesPage } from '@/pages/warehouses';
@@ -13,7 +14,9 @@ export default async function Page({ params }: PageProps<'/[locale]/warehouses'>
 
   return (
     <RequireSession>
-      <WarehousesPage />
+      <Suspense>
+        <WarehousesPage />
+      </Suspense>
     </RequireSession>
   );
 }

@@ -1,19 +1,28 @@
 import { warehouseMocks } from '@/entities/warehouse';
 import { renderWithProviders } from '@/shared/lib/test-utils';
 import { fireEvent, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { WarehouseFilter } from '../lib/filter-warehouses';
 import { WarehouseList } from './warehouse-list';
 
-function renderWarehouseList() {
-  return renderWithProviders(
+function WarehouseListFixture() {
+  const [activeFilter, setActiveFilter] = useState<WarehouseFilter>('all');
+  return (
     <WarehouseList
       warehouses={warehouseMocks}
+      activeFilter={activeFilter}
+      onFilterChange={setActiveFilter}
       onCreate={vi.fn()}
       onSettings={vi.fn()}
       onDelete={vi.fn()}
-    />,
+    />
   );
+}
+
+function renderWarehouseList() {
+  return renderWithProviders(<WarehouseListFixture />);
 }
 
 describe('WarehouseList', () => {
@@ -120,7 +129,14 @@ describe('WarehouseList', () => {
 
   it('показывает состояние полного отсутствия складов', () => {
     renderWithProviders(
-      <WarehouseList warehouses={[]} onCreate={vi.fn()} onSettings={vi.fn()} onDelete={vi.fn()} />,
+      <WarehouseList
+        warehouses={[]}
+        activeFilter="all"
+        onFilterChange={vi.fn()}
+        onCreate={vi.fn()}
+        onSettings={vi.fn()}
+        onDelete={vi.fn()}
+      />,
     );
 
     expect(screen.getByText('Складов пока нет')).toBeInTheDocument();
