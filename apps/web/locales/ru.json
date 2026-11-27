@@ -105,7 +105,15 @@
     }
   },
   "session": {
-    "checking": "Проверяем сессию…"
+    "checking": "Проверяем сессию…",
+    "accountMenu": "Меню аккаунта",
+    "myWarehouses": "Мои склады",
+    "profile": "Профиль пользователя",
+    "profileDescription": "Данные вашей учётной записи",
+    "name": "Имя",
+    "signOut": "Выйти",
+    "loadingProfile": "Загружаем профиль…",
+    "retryProfile": "Повторить"
   },
   "login": {
     "title": "Вход",

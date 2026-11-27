@@ -4,6 +4,7 @@ import { warehouseMocks, type MockWarehouse, type WarehouseMember } from '@/enti
 import { CreateWarehouseDialog } from '@/features/warehouse-create';
 import { DeleteWarehouseDialog } from '@/features/warehouse-delete';
 import { WarehouseSettingsDialog } from '@/features/warehouse-settings';
+import { AccountMenu } from '@/widgets/account-menu';
 import { WarehouseList } from '@/widgets/warehouse-list';
 import { Button, Heading, Text } from '@robots/ui';
 import { useTranslations } from 'next-intl';
@@ -124,14 +125,12 @@ export function WarehousesPage() {
             </Text>
           </div>
 
-          <Button
-            type="button"
-            size="lg"
-            onClick={handleCreateDialogOpen}
-            className="mb-4 shrink-0"
-          >
-            {t('create')}
-          </Button>
+          <div className="flex shrink-0 items-center gap-3">
+            <Button type="button" size="lg" onClick={handleCreateDialogOpen}>
+              {t('create')}
+            </Button>
+            <AccountMenu />
+          </div>
         </header>
 
         <WarehouseList

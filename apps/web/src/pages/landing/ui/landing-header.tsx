@@ -1,8 +1,9 @@
-import { Button, Text } from '@robots/ui';
+import { Text } from '@robots/ui';
 import { useTranslations } from 'next-intl';
 
 import { LocaleSwitcher } from '@/features/switch-locale';
 import { Link } from '@/shared/i18n';
+import { AccountMenu } from '@/widgets/account-menu';
 
 export function LandingHeader() {
   const t = useTranslations('landing');
@@ -41,10 +42,7 @@ export function LandingHeader() {
 
         <div className="ml-auto flex items-center gap-3 sm:ml-0">
           <LocaleSwitcher />
-
-          <Button asChild size="sm">
-            <Link href="/login">{t('header.signIn')}</Link>
-          </Button>
+          <AccountMenu />
         </div>
       </div>
     </header>

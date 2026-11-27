@@ -105,7 +105,15 @@
     }
   },
   "session": {
-    "checking": "Checking your session…"
+    "checking": "Checking your session…",
+    "accountMenu": "Account menu",
+    "myWarehouses": "My warehouses",
+    "profile": "User profile",
+    "profileDescription": "Your account details",
+    "name": "Name",
+    "signOut": "Sign out",
+    "loadingProfile": "Loading profile…",
+    "retryProfile": "Try again"
   },
   "login": {
     "title": "Sign in",

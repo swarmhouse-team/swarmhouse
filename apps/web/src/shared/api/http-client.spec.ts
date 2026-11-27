@@ -2,7 +2,7 @@ import { API_ERROR_CODES } from '@robots/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
-import { configureHttpAuth, http } from './http-client';
+import { configureHttpAuth, http, withoutAuthRefresh } from './http-client';
 import { HttpError } from './http-error';
 import { createQueryClient } from './query-client';
 
@@ -199,6 +199,49 @@ describe('http', () => {
 
     expect(refresh).toHaveBeenCalledOnce();
     expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it('waits for an active refresh before signing out and blocks new refreshes', async () => {
+    let accessToken = 'expired-token';
+    let finishRefresh!: () => void;
+    const pendingRefresh = new Promise<void>((resolve) => {
+      finishRefresh = resolve;
+    });
+    const refresh = vi.fn(async () => {
+      await pendingRefresh;
+      accessToken = 'new-token';
+      return accessToken;
+    });
+    const unauthorized = () =>
+      Response.json({ code: 'UNAUTHORIZED', message: 'Expired' }, { status: 401 });
+    const fetchMock = vi.fn(async (url: string, options: RequestInit) => {
+      if (url === '/api/auth/logout') {
+        return new Response(null, { status: 204 });
+      }
+      const headers = options.headers as Record<string, string>;
+      return url === '/api/first' && headers.Authorization === 'Bearer new-token'
+        ? Response.json({ status: 'ok' })
+        : unauthorized();
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    resetHttpAuth = configureHttpAuth({
+      getAccessToken: () => accessToken,
+      refreshAccessToken: refresh,
+      onAuthenticationFailure: vi.fn(),
+    });
+
+    const first = http('/first', { schema });
+    await vi.waitFor(() => expect(refresh).toHaveBeenCalledOnce());
+
+    const signOut = vi.fn(() => http('/auth/logout', { method: 'POST' }));
+    const logoutRequest = withoutAuthRefresh(signOut);
+    await expect(http('/second')).rejects.toMatchObject({ status: 401 });
+    expect(signOut).not.toHaveBeenCalled();
+
+    finishRefresh();
+    await Promise.all([first, logoutRequest]);
+    expect(signOut).toHaveBeenCalledOnce();
+    expect(refresh).toHaveBeenCalledOnce();
   });
 });
 

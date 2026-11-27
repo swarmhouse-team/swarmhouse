@@ -14,6 +14,18 @@ type HttpAuthHandlers = {
 
 let authHandlers: HttpAuthHandlers | null = null;
 let refreshPromise: Promise<string | null> | null = null;
+let authRefreshPauseCount = 0;
+
+/** Дожидается текущего refresh и блокирует новый, пока сервер завершает сессию. */
+export async function withoutAuthRefresh<T>(action: () => Promise<T>): Promise<T> {
+  authRefreshPauseCount += 1;
+  try {
+    await refreshPromise;
+    return await action();
+  } finally {
+    authRefreshPauseCount -= 1;
+  }
+}
 
 export type HttpOptions<T> = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -80,7 +92,12 @@ async function sendRequest<T>(
     });
   }
 
-  if (response.status === 401 && authHandlers && !skipAuthRefresh) {
+  if (
+    response.status === 401 &&
+    authHandlers?.getAccessToken() &&
+    !skipAuthRefresh &&
+    authRefreshPauseCount === 0
+  ) {
     if (retriedAfterRefresh) {
       authHandlers.onAuthenticationFailure();
     } else if (await refreshAccessTokenOnce()) {

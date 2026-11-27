@@ -11,10 +11,11 @@ import {
   FormMessage,
   Input,
 } from '@robots/ui';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 
-import { login, useSessionStore } from '@/entities/session';
+import { currentUserQueryKey, login, useSessionStore } from '@/entities/session';
 import { HttpError, useErrorMessage } from '@/shared/api';
 import { useRouter, useZodResolver } from '@/shared/i18n';
 
@@ -22,6 +23,7 @@ export function LoginForm() {
   const t = useTranslations('login');
   const getErrorMessage = useErrorMessage();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const form = useForm<LoginRequest>({
     resolver: useZodResolver(loginRequestSchema),
     defaultValues: { email: '', password: '' },
@@ -32,6 +34,7 @@ export function LoginForm() {
 
     try {
       const { accessToken } = await login(credentials);
+      queryClient.removeQueries({ queryKey: currentUserQueryKey });
       useSessionStore.getState().setAccessToken(accessToken);
       const next = new URLSearchParams(window.location.search).get('next');
       // Разрешаем возврат только на известный закрытый маршрут.

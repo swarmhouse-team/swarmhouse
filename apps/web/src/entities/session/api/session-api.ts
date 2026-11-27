@@ -6,7 +6,11 @@ import {
   type MeResponse,
 } from '@robots/shared';
 
-import { http } from '@/shared/api';
+import { http, withoutAuthRefresh } from '@/shared/api';
+
+import { useSessionStore } from '../model/session-store';
+
+export const currentUserQueryKey = ['session', 'current-user'] as const;
 
 export function login(credentials: LoginRequest): Promise<LoginResponse> {
   return http('/auth/login', {
@@ -26,9 +30,12 @@ export function refreshAccessToken(): Promise<LoginResponse> {
 }
 
 export function logout(): Promise<void> {
-  return http('/auth/logout', { method: 'POST', skipAuthRefresh: true });
+  return withoutAuthRefresh(async () => {
+    await http('/auth/logout', { method: 'POST', skipAuthRefresh: true });
+    useSessionStore.getState().clearSession();
+  });
 }
 
-export function getCurrentUser(): Promise<MeResponse> {
-  return http('/auth/me', { schema: meResponseSchema });
+export function getCurrentUser(signal?: AbortSignal): Promise<MeResponse> {
+  return http('/auth/me', { schema: meResponseSchema, signal });
 }

@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/entities/session', () => ({
+  currentUserQueryKey: ['session', 'current-user'],
   login: mocks.login,
   useSessionStore: { getState: () => ({ setAccessToken: mocks.setAccessToken }) },
 }));
