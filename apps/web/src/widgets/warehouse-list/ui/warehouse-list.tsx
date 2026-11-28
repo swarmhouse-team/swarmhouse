@@ -14,6 +14,8 @@ import { filterWarehouses, type WarehouseFilter } from '../lib/filter-warehouses
 
 type WarehouseListProps = {
   warehouses: readonly MockWarehouse[];
+  activeFilter: WarehouseFilter;
+  onFilterChange: (filter: WarehouseFilter) => void;
   onCreate: () => void;
   onSettings: (warehouse: MockWarehouse) => void;
   onDelete: (warehouse: MockWarehouse) => void;
@@ -97,9 +99,15 @@ function WarehouseListCard({ warehouse, onSettings, onDelete }: WarehouseListCar
   );
 }
 
-export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: WarehouseListProps) {
+export function WarehouseList({
+  warehouses,
+  activeFilter,
+  onFilterChange,
+  onCreate,
+  onSettings,
+  onDelete,
+}: WarehouseListProps) {
   const t = useTranslations('warehouses.list');
-  const [activeFilter, setActiveFilter] = useState<WarehouseFilter>('all');
   const [search, setSearch] = useState('');
   const filterIndicatorRef = useRef<HTMLDivElement>(null);
   const filterButtonRefs = useRef<Record<WarehouseFilter, HTMLButtonElement | null>>({
@@ -121,8 +129,6 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
     () => filterWarehouses(warehouses, activeFilter, search),
     [warehouses, activeFilter, search],
   );
-
-  const handleFilterChange = useCallback((filter: WarehouseFilter) => setActiveFilter(filter), []);
 
   const handleFilterButtonRef = useCallback(
     (filter: WarehouseFilter, element: HTMLButtonElement | null) => {
@@ -186,7 +192,7 @@ export function WarehouseList({ warehouses, onCreate, onSettings, onDelete }: Wa
                 label={t(`filters.${filter}`)}
                 count={counts[filter]}
                 isActive={isActive}
-                onFilterChange={handleFilterChange}
+                onFilterChange={onFilterChange}
                 onButtonRef={handleFilterButtonRef}
               />
             );

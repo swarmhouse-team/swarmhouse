@@ -1,10 +1,11 @@
-import { Button, Text } from '@robots/ui';
+import { Text } from '@robots/ui';
 import { useTranslations } from 'next-intl';
 
 import { LocaleSwitcher } from '@/features/switch-locale';
 import { Link } from '@/shared/i18n';
+import { AccountMenu } from './account-menu';
 
-export function LandingHeader() {
+export function SiteHeader({ showLandingLinks = false }: { showLandingLinks?: boolean }) {
   const t = useTranslations('landing');
 
   return (
@@ -26,25 +27,24 @@ export function LandingHeader() {
           </Text>
         </Link>
 
-        <nav
-          aria-label={t('header.navLabel')}
-          className="ml-auto hidden gap-5 text-sm text-muted-foreground sm:flex"
-        >
-          <a href="#how-it-works" className="transition-colors hover:text-foreground">
-            {t('nav.howItWorks')}
-          </a>
+        {showLandingLinks && (
+          <nav
+            aria-label={t('header.navLabel')}
+            className="ml-auto hidden gap-5 text-sm text-muted-foreground sm:flex"
+          >
+            <a href="#how-it-works" className="transition-colors hover:text-foreground">
+              {t('nav.howItWorks')}
+            </a>
 
-          <a href="#features" className="transition-colors hover:text-foreground">
-            {t('nav.features')}
-          </a>
-        </nav>
+            <a href="#features" className="transition-colors hover:text-foreground">
+              {t('nav.features')}
+            </a>
+          </nav>
+        )}
 
-        <div className="ml-auto flex items-center gap-3 sm:ml-0">
+        <div className="ml-auto flex items-center gap-3">
           <LocaleSwitcher />
-
-          <Button asChild size="sm">
-            <Link href="/login">{t('header.signIn')}</Link>
-          </Button>
+          <AccountMenu />
         </div>
       </div>
     </header>

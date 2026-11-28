@@ -104,6 +104,23 @@
       "tagline": "Warehouse logistics simulation"
     }
   },
+  "session": {
+    "checking": "Checking your session…",
+    "accountMenu": "Account menu",
+    "myWarehouses": "My warehouses",
+    "profile": "User profile",
+    "signOut": "Sign out"
+  },
+  "login": {
+    "title": "Sign in",
+    "description": "Sign in to manage your warehouses.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "invalidCredentials": "Invalid email or password",
+    "backHome": "Back to home"
+  },
   "switchLocale": {
     "label": "Interface language",
     "languages": {

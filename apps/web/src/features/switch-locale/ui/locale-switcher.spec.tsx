@@ -1,5 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderWithProviders } from '@/shared/lib/test-utils';
 
@@ -28,12 +28,17 @@ describe('LocaleSwitcher', () => {
     expect(screen.getByRole('navigation', { name: 'Interface language' })).toBeInTheDocument();
   });
 
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+  });
+
   it('открывает ту же страницу на выбранном языке', () => {
+    window.history.replaceState(null, '', '/ru/warehouses?filter=mine#list');
     renderWithProviders(<LocaleSwitcher />);
 
     fireEvent.click(screen.getByRole('button', { name: 'English' }));
 
-    expect(replace).toHaveBeenCalledWith('/warehouses', { locale: 'en' });
+    expect(replace).toHaveBeenCalledWith('/warehouses?filter=mine#list', { locale: 'en' });
   });
 
   it('повторный выбор текущего языка ничего не делает', () => {

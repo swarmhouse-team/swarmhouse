@@ -6,6 +6,27 @@ import { HttpError } from './http-error';
 /** Браузер ходит на свой origin, Next проксирует `/api/*` в бэкенд (см. next.config.ts). */
 const API_BASE_URL = '/api';
 
+type HttpAuthHandlers = {
+  getAccessToken: () => string | null;
+  refreshAccessToken: () => Promise<string | null>;
+  onAuthenticationFailure: () => void;
+};
+
+let authHandlers: HttpAuthHandlers | null = null;
+let refreshPromise: Promise<string | null> | null = null;
+let authRefreshPauseCount = 0;
+
+/** Дожидается текущего refresh и блокирует новый, пока сервер завершает сессию. */
+export async function withoutAuthRefresh<T>(action: () => Promise<T>): Promise<T> {
+  authRefreshPauseCount += 1;
+  try {
+    await refreshPromise;
+    return await action();
+  } finally {
+    authRefreshPauseCount -= 1;
+  }
+}
+
 export type HttpOptions<T> = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   /** Сериализуется в JSON. */
@@ -14,14 +35,38 @@ export type HttpOptions<T> = {
   schema?: ZodType<T>;
   signal?: AbortSignal;
   headers?: Record<string, string>;
+  /** Публичный запрос: без access-токена и без refresh при 401. */
+  public?: boolean;
 };
+
+/** Подключает session-стор к HTTP-клиенту без зависимости shared-слоя от entities. */
+export function configureHttpAuth(handlers: HttpAuthHandlers): () => void {
+  authHandlers = handlers;
+
+  return () => {
+    if (authHandlers === handlers) {
+      authHandlers = null;
+      refreshPromise = null;
+    }
+  };
+}
 
 /**
  * Единственная точка HTTP-запросов к API.
  * При любом сбое бросает `HttpError` с телом в формате `ApiError`.
  */
 export async function http<T = unknown>(path: string, options: HttpOptions<T> = {}): Promise<T> {
-  const { method = 'GET', body, schema, signal, headers } = options;
+  return sendRequest(path, options, false);
+}
+
+async function sendRequest<T>(
+  path: string,
+  options: HttpOptions<T>,
+  retriedAfterRefresh: boolean,
+): Promise<T> {
+  const { method = 'GET', body, schema, signal, headers, public: isPublic = false } = options;
+  const handlers = authHandlers;
+  const accessToken = isPublic ? null : handlers?.getAccessToken();
 
   let response: Response;
   try {
@@ -32,6 +77,7 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
       headers: {
         Accept: 'application/json',
         ...(body !== undefined && { 'Content-Type': 'application/json' }),
+        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
         ...headers,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -45,6 +91,28 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
       code: API_ERROR_CODES.NETWORK_ERROR,
       message: 'Cannot reach the server',
     });
+  }
+
+  if (
+    response.status === 401 &&
+    handlers &&
+    handlers === authHandlers &&
+    accessToken &&
+    authRefreshPauseCount === 0
+  ) {
+    const currentToken = handlers.getAccessToken();
+    if (currentToken) {
+      if (retriedAfterRefresh) {
+        if (currentToken === accessToken) {
+          handlers.onAuthenticationFailure();
+        }
+      } else if (
+        currentToken !== accessToken ||
+        (await refreshAccessTokenOnce(handlers, currentToken))
+      ) {
+        return sendRequest(path, options, true);
+      }
+    }
   }
 
   if (!response.ok) {
@@ -66,6 +134,33 @@ export async function http<T = unknown>(path: string, options: HttpOptions<T> = 
       { cause },
     );
   }
+}
+
+function refreshAccessTokenOnce(
+  handlers: HttpAuthHandlers,
+  tokenBeforeRefresh: string,
+): Promise<string | null> {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  const pending = Promise.resolve()
+    .then(() => handlers.refreshAccessToken())
+    .catch(() => null)
+    .then((token) => {
+      if (!token && handlers === authHandlers && handlers.getAccessToken() === tokenBeforeRefresh) {
+        handlers.onAuthenticationFailure();
+      }
+      return handlers === authHandlers ? token : null;
+    })
+    .finally(() => {
+      if (refreshPromise === pending) {
+        refreshPromise = null;
+      }
+    });
+
+  refreshPromise = pending;
+  return pending;
 }
 
 async function parseApiError(response: Response): Promise<ApiError> {
