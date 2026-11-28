@@ -20,6 +20,7 @@ export {
 } from './components/form';
 export { Input } from './components/input';
 export { Icon, type IconName, type IconProps } from './components/icon';
+export { Spinner } from './components/spinner';
 export { Label } from './components/label';
 export { Toaster, toast } from './components/toaster';
 export {

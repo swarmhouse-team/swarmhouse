@@ -4,7 +4,7 @@ import { warehouseMocks, type MockWarehouse, type WarehouseMember } from '@/enti
 import { CreateWarehouseDialog } from '@/features/warehouse-create';
 import { DeleteWarehouseDialog } from '@/features/warehouse-delete';
 import { WarehouseSettingsDialog } from '@/features/warehouse-settings';
-import { AccountMenu } from '@/widgets/account-menu';
+import { SiteHeader } from '@/widgets/site-header';
 import { WarehouseList, type WarehouseFilter } from '@/widgets/warehouse-list';
 import { Button, Heading, Text } from '@robots/ui';
 import { useTranslations } from 'next-intl';
@@ -128,56 +128,56 @@ export function WarehousesPage() {
   }, []);
 
   return (
-    <main className="min-h-dvh bg-background">
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <Heading level={1}>{t('title')}</Heading>
+    <div className="min-h-dvh bg-background">
+      <SiteHeader />
+      <main>
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+          <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <Heading level={1}>{t('title')}</Heading>
 
-            <Text variant="muted" className="mt-2">
-              {t('subtitle')}
-            </Text>
-          </div>
+              <Text variant="muted" className="mt-2">
+                {t('subtitle')}
+              </Text>
+            </div>
 
-          <div className="flex shrink-0 items-center gap-3">
-            <Button type="button" size="lg" onClick={handleCreateDialogOpen}>
+            <Button type="button" size="lg" onClick={handleCreateDialogOpen} className="shrink-0">
               {t('create')}
             </Button>
-            <AccountMenu />
           </div>
-        </header>
 
-        <WarehouseList
-          warehouses={warehouses}
-          activeFilter={activeFilter}
-          onFilterChange={handleFilterChange}
-          onCreate={handleCreateDialogOpen}
-          onSettings={handleWarehouseSettings}
-          onDelete={handleWarehouseDelete}
+          <WarehouseList
+            warehouses={warehouses}
+            activeFilter={activeFilter}
+            onFilterChange={handleFilterChange}
+            onCreate={handleCreateDialogOpen}
+            onSettings={handleWarehouseSettings}
+            onDelete={handleWarehouseDelete}
+          />
+        </div>
+
+        <CreateWarehouseDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          onCreate={handleWarehouseCreate}
         />
-      </div>
 
-      <CreateWarehouseDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onCreate={handleWarehouseCreate}
-      />
+        <WarehouseSettingsDialog
+          key={selectedWarehouse?.warehouseId ?? 'warehouse-settings-closed'}
+          warehouse={selectedWarehouse}
+          open={selectedWarehouse !== null}
+          onMembersChange={handleMembersChange}
+          onOpenChange={handleSettingsDialogOpenChange}
+          onSave={handleWarehouseSave}
+        />
 
-      <WarehouseSettingsDialog
-        key={selectedWarehouse?.warehouseId ?? 'warehouse-settings-closed'}
-        warehouse={selectedWarehouse}
-        open={selectedWarehouse !== null}
-        onMembersChange={handleMembersChange}
-        onOpenChange={handleSettingsDialogOpenChange}
-        onSave={handleWarehouseSave}
-      />
-
-      <DeleteWarehouseDialog
-        warehouse={warehouseToDelete}
-        open={warehouseToDelete !== null}
-        onOpenChange={handleDeleteDialogOpenChange}
-        onConfirm={handleWarehouseDeleteConfirm}
-      />
-    </main>
+        <DeleteWarehouseDialog
+          warehouse={warehouseToDelete}
+          open={warehouseToDelete !== null}
+          onOpenChange={handleDeleteDialogOpenChange}
+          onConfirm={handleWarehouseDeleteConfirm}
+        />
+      </main>
+    </div>
   );
 }

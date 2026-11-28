@@ -10,6 +10,7 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  Text,
 } from '@robots/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -17,12 +18,11 @@ import { useForm } from 'react-hook-form';
 
 import { currentUserQueryKey, login, useSessionStore } from '@/entities/session';
 import { HttpError, useErrorMessage } from '@/shared/api';
-import { useRouter, useZodResolver } from '@/shared/i18n';
+import { useZodResolver } from '@/shared/i18n';
 
 export function LoginForm() {
   const t = useTranslations('login');
   const getErrorMessage = useErrorMessage();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const form = useForm<LoginRequest>({
     resolver: useZodResolver(loginRequestSchema),
@@ -36,9 +36,6 @@ export function LoginForm() {
       const { accessToken } = await login(credentials);
       queryClient.removeQueries({ queryKey: currentUserQueryKey });
       useSessionStore.getState().setAccessToken(accessToken);
-      const next = new URLSearchParams(window.location.search).get('next');
-      // Разрешаем возврат только на известный закрытый маршрут.
-      router.replace(next && /^\/warehouses(?:[?#]|$)/.test(next) ? next : '/warehouses');
     } catch (error) {
       form.setError('root', {
         message:
@@ -83,9 +80,9 @@ export function LoginForm() {
         />
 
         {rootError && (
-          <p role="alert" className="text-sm text-destructive">
+          <Text role="alert" size="sm" variant="destructive">
             {rootError}
-          </p>
+          </Text>
         )}
 
         <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>

@@ -11,8 +11,7 @@ import {
 import { useTranslations } from 'next-intl';
 
 import { Link } from '@/shared/i18n';
-
-import { LandingHeader } from './landing-header';
+import { SiteHeader } from '@/widgets/site-header';
 
 const STEPS = ['buildMap', 'addRobots', 'createTasks', 'observe'] as const;
 
@@ -36,7 +35,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-dvh bg-background">
-      <LandingHeader />
+      <SiteHeader showLandingLinks />
 
       <main>
         <section className="border-b">

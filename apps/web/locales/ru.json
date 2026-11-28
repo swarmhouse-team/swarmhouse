@@ -109,11 +109,7 @@
     "accountMenu": "Меню аккаунта",
     "myWarehouses": "Мои склады",
     "profile": "Профиль пользователя",
-    "profileDescription": "Данные вашей учётной записи",
-    "name": "Имя",
-    "signOut": "Выйти",
-    "loadingProfile": "Загружаем профиль…",
-    "retryProfile": "Повторить"
+    "signOut": "Выйти"
   },
   "login": {
     "title": "Вход",

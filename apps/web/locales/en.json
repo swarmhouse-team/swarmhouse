@@ -109,11 +109,7 @@
     "accountMenu": "Account menu",
     "myWarehouses": "My warehouses",
     "profile": "User profile",
-    "profileDescription": "Your account details",
-    "name": "Name",
-    "signOut": "Sign out",
-    "loadingProfile": "Loading profile…",
-    "retryProfile": "Try again"
+    "signOut": "Sign out"
   },
   "login": {
     "title": "Sign in",

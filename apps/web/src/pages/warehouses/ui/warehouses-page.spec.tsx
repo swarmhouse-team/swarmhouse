@@ -1,4 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
 
 import { renderWithProviders } from '@/shared/lib/test-utils';
@@ -10,6 +11,12 @@ vi.mock('next/navigation', async (importOriginal) => ({
   useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
+vi.mock('@/shared/i18n/routing/navigation', () => ({
+  Link: (props: ComponentProps<'a'>) => <a {...props} />,
+  usePathname: () => '/warehouses',
+  useRouter: () => ({ replace: vi.fn() }),
+}));
+
 afterEach(() => {
   window.history.replaceState(null, '', '/');
 });
@@ -17,6 +24,11 @@ afterEach(() => {
 it('opens the filter from the account link and keeps the URL in sync with the tabs', () => {
   window.history.replaceState(null, '', '/ru/warehouses?filter=mine&view=cards#list');
   const { rerender } = renderWithProviders(<WarehousesPage />);
+
+  expect(screen.getByRole('banner')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /Swarmhouse/ })).toHaveAttribute('href', '/');
+  expect(screen.getByRole('button', { name: 'Русский' })).toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Как это работает' })).not.toBeInTheDocument();
 
   expect(screen.getByRole('tab', { name: /Мои/ })).toHaveAttribute('aria-selected', 'true');
   expect(screen.getByText('Центральный склад')).toBeInTheDocument();

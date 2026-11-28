@@ -1,16 +1,14 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import { useEffect, type ReactNode } from 'react';
 
-import { useSessionStore } from '@/entities/session';
+import { SessionLoading, useSessionStore } from '@/entities/session';
 import { usePathname, useRouter } from '@/shared/i18n';
 
 export function RequireSession({ children }: { children: ReactNode }) {
   const status = useSessionStore.use.status();
   const pathname = usePathname();
   const router = useRouter();
-  const t = useTranslations('session');
 
   useEffect(() => {
     if (status === 'anonymous') {
@@ -23,16 +21,5 @@ export function RequireSession({ children }: { children: ReactNode }) {
     return children;
   }
 
-  return (
-    <div
-      role="status"
-      className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center"
-    >
-      <span
-        aria-hidden="true"
-        className="size-8 rounded-full border-[3px] border-primary/20 border-t-primary motion-safe:animate-spin"
-      />
-      <p className="text-lg font-medium text-foreground">{t('checking')}</p>
-    </div>
-  );
+  return <SessionLoading className="min-h-dvh" />;
 }

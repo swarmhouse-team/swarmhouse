@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
 
@@ -16,7 +16,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it('displays the account details and returns to the sign-in link after logout', async () => {
+it('shows the profile link and returns to the sign-in link after logout', async () => {
   const fetchMock = vi.fn(async (url: string) => {
     if (url === '/api/auth/me') {
       return Response.json({ id: 'user-1', name: 'Анна Иванова', email: 'anna@example.com' });
@@ -35,14 +35,10 @@ it('displays the account details and returns to the sign-in link after logout', 
     'href',
     '/warehouses?filter=mine',
   );
-  fireEvent.click(screen.getByRole('menuitem', { name: 'Профиль пользователя' }));
-
-  const dialog = await screen.findByRole('dialog', { name: 'Профиль пользователя' });
-  expect(within(dialog).getByText('Анна Иванова')).toBeInTheDocument();
-  expect(within(dialog).getByText('anna@example.com')).toBeInTheDocument();
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Закрыть' }));
-
-  fireEvent.keyDown(trigger, { key: 'Enter' });
+  expect(screen.getByRole('menuitem', { name: 'Профиль пользователя' })).toHaveAttribute(
+    'href',
+    '/profile',
+  );
   fireEvent.click(await screen.findByRole('menuitem', { name: 'Выйти' }));
 
   expect(await screen.findByRole('link', { name: 'Войти' })).toHaveAttribute('href', '/login');
