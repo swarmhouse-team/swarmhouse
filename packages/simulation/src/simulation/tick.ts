@@ -1,6 +1,8 @@
 import type { SimulationState, TickResult, SimulationEvent } from './types';
 import type { RobotState } from '../contracts/robot';
-import { isInsideGrid, isObstacle, validateRouteStep, isHandlingCargo } from './utils';
+
+import { isInsideGrid, isObstacle } from '../utils';
+import { validateRouteStep, isHandlingCargo } from './utils';
 import { processTasks } from './tasks';
 
 export function tick(state: SimulationState): TickResult {

@@ -2,37 +2,13 @@ import type { RobotRoute, RobotState, Position, Grid, Direction, RouteStep } fro
 
 import type { SimulationState } from './types';
 
-export function isInsideGrid(position: Position, grid: Grid): boolean {
-  return position.x >= 0 && position.x < grid.width && position.y >= 0 && position.y < grid.height;
-}
-export function isObstacle(position: Position, grid: Grid): boolean {
-  return grid.obstacles.some((obstacle) => obstacle.x === position.x && obstacle.y === position.y);
-}
+import { isInsideGrid, isObstacle, turnLeft, turnRight, getForwardPosition } from '../utils';
 
 export function validateRouteStep(
   currentPosition: Position,
   currentDirection: Direction,
   step: RouteStep,
 ): boolean {
-  const leftTurns = {
-    UP: 'LEFT',
-    LEFT: 'DOWN',
-    DOWN: 'RIGHT',
-    RIGHT: 'UP',
-  } as const;
-  const rightTurns = {
-    UP: 'RIGHT',
-    RIGHT: 'DOWN',
-    DOWN: 'LEFT',
-    LEFT: 'UP',
-  } as const;
-  const offsets = {
-    UP: { x: 0, y: -1 },
-    RIGHT: { x: 1, y: 0 },
-    DOWN: { x: 0, y: 1 },
-    LEFT: { x: -1, y: 0 },
-  } as const;
-
   if (step.action === 'WAIT') {
     return (
       step.position.x === currentPosition.x &&
@@ -40,26 +16,29 @@ export function validateRouteStep(
       step.direction === currentDirection
     );
   }
+
   if (step.action === 'TURN_LEFT') {
     return (
       step.position.x === currentPosition.x &&
       step.position.y === currentPosition.y &&
-      step.direction === leftTurns[currentDirection]
+      step.direction === turnLeft(currentDirection)
     );
   }
+
   if (step.action === 'TURN_RIGHT') {
     return (
       step.position.x === currentPosition.x &&
       step.position.y === currentPosition.y &&
-      step.direction === rightTurns[currentDirection]
+      step.direction === turnRight(currentDirection)
     );
   }
+
   if (step.action === 'FORWARD') {
-    const offset = offsets[currentDirection];
+    const expectedPosition = getForwardPosition(currentPosition, currentDirection);
 
     return (
-      step.position.x === currentPosition.x + offset.x &&
-      step.position.y === currentPosition.y + offset.y &&
+      step.position.x === expectedPosition.x &&
+      step.position.y === expectedPosition.y &&
       step.direction === currentDirection
     );
   }
