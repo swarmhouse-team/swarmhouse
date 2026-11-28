@@ -5,7 +5,7 @@ import type {
   StoredWarehouse,
   WarehouseRepository,
 } from '../../ports/repositories/warehouse.repository';
-import { stubWarehouses } from '../../testing/stub-warehouse-unit-of-work';
+import { stubWarehouses } from '../../testing/stub-warehouse-repositories';
 import { RecordingCache } from '../../../../../common/testing/recording-cache';
 import { WAREHOUSE_LIST_CACHE_KEY, WAREHOUSE_LIST_TTL_MS } from '../warehouse-cache.policy';
 import { ListWarehouses } from './list-warehouses.use-case';
@@ -54,7 +54,9 @@ describe('ListWarehouses', () => {
     cache.values.set(WAREHOUSE_LIST_CACHE_KEY, { ttlMs: WAREHOUSE_LIST_TTL_MS, value: list });
     const source = repository([]);
 
-    await expect(new ListWarehouses(source.maps, cache).execute()).resolves.toEqual(list);
+    await expect(
+      new ListWarehouses({ isActive: false }, source.maps, cache).execute(),
+    ).resolves.toEqual(list);
     expect(source.calls).toBe(0);
   });
 
@@ -72,7 +74,7 @@ describe('ListWarehouses', () => {
     };
     const source = repository([row]);
 
-    const result = await new ListWarehouses(source.maps, cache).execute();
+    const result = await new ListWarehouses({ isActive: false }, source.maps, cache).execute();
 
     expect(source.calls).toBe(1);
     expect(result).toEqual({
@@ -84,7 +86,9 @@ describe('ListWarehouses', () => {
   it('caches an empty list and a list that contains a legacy null date', async () => {
     const emptyCache = new RecordingCache();
     const empty = repository([]);
-    await expect(new ListWarehouses(empty.maps, emptyCache).execute()).resolves.toEqual({
+    await expect(
+      new ListWarehouses({ isActive: false }, empty.maps, emptyCache).execute(),
+    ).resolves.toEqual({
       items: [],
       total: 0,
     });
@@ -102,7 +106,11 @@ describe('ListWarehouses', () => {
     ];
     const legacy = repository(rows);
 
-    const result = await new ListWarehouses(legacy.maps, legacyCache).execute();
+    const result = await new ListWarehouses(
+      { isActive: false },
+      legacy.maps,
+      legacyCache,
+    ).execute();
 
     expect(result.total).toBe(2);
     expect(result.items).toEqual([
@@ -124,7 +132,7 @@ describe('ListWarehouses', () => {
     const getFailed = new RecordingCache();
     getFailed.getError = new CacheError('unavailable');
     await expect(
-      new ListWarehouses(repository(rows).maps, getFailed).execute(),
+      new ListWarehouses({ isActive: false }, repository(rows).maps, getFailed).execute(),
     ).resolves.toMatchObject({
       total: 1,
     });
@@ -132,7 +140,7 @@ describe('ListWarehouses', () => {
     const setFailed = new RecordingCache();
     setFailed.setError = new CacheError('command_failed');
     await expect(
-      new ListWarehouses(repository(rows).maps, setFailed).execute(),
+      new ListWarehouses({ isActive: false }, repository(rows).maps, setFailed).execute(),
     ).resolves.toMatchObject({
       total: 1,
     });
@@ -141,7 +149,11 @@ describe('ListWarehouses', () => {
   it('does not hide a repository failure', async () => {
     const failure = new Error('database unavailable');
     await expect(
-      new ListWarehouses(repository([], failure).maps, new RecordingCache()).execute(),
+      new ListWarehouses(
+        { isActive: false },
+        repository([], failure).maps,
+        new RecordingCache(),
+      ).execute(),
     ).rejects.toBe(failure);
   });
 });

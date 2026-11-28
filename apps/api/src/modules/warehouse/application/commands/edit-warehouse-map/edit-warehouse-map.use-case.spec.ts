@@ -18,7 +18,8 @@ import {
   WarehouseMapNotFoundError,
 } from '../../errors/application.errors';
 import type { SaveMapResult } from '../../ports/repositories/warehouse-map.repository';
-import { stubUnitOfWork } from '../../testing/stub-warehouse-unit-of-work';
+import { stubMaps } from '../../testing/stub-warehouse-repositories';
+import { FakeTransaction } from '../../../../../common/testing/fake-transaction';
 import {
   createRecordingLogger,
   type LogEntry,
@@ -69,34 +70,30 @@ function createHarness(options?: {
     notices,
     failNotifier: failWith,
   };
-  const unitOfWork = stubUnitOfWork({
-    calls,
-    inserts: { count: 0 },
-    after: options?.afterCallback,
-    maps: {
-      async insert() {
-        calls.push('insert');
-      },
-      async findById(mapId) {
-        calls.push(`findById:${mapId}`);
-        if (options?.findError) {
-          throw options.findError;
-        }
-        return options?.found === undefined
-          ? { snapshot: emptySnapshot(), version: 0 }
-          : options.found;
-      },
-      async save(map, expectedVersion) {
-        calls.push('save');
-        state.saved = { map, expectedVersion };
-        return options?.saveResult ?? { status: 'saved', version: 1 };
-      },
+  const transaction = new FakeTransaction(logger, options?.afterCallback);
+  const maps = stubMaps({
+    async insert() {
+      calls.push('insert');
+    },
+    async findById(mapId) {
+      calls.push(`findById:${mapId}`);
+      if (options?.findError) {
+        throw options.findError;
+      }
+      return options?.found === undefined
+        ? { snapshot: emptySnapshot(), version: 0 }
+        : options.found;
+    },
+    async save(map, expectedVersion) {
+      calls.push('save');
+      state.saved = { map, expectedVersion };
+      return options?.saveResult ?? { status: 'saved', version: 1 };
     },
   });
   const ids = fixedId(options?.nextId ?? ROBOT_ID, () => {
     calls.push('nextId');
   });
-  state.useCase = new EditWarehouseMap(unitOfWork, ids, logger, notifier);
+  state.useCase = new EditWarehouseMap(transaction, maps, ids, logger, notifier);
   return state;
 }
 
@@ -133,7 +130,7 @@ describe('EditWarehouseMap addObstacle', () => {
 
     const result = await harness.useCase.execute(addObstacle(2));
 
-    expect(harness.calls).toEqual(['execute', `findById:${MAP_ID}`, 'save']);
+    expect(harness.calls).toEqual([`findById:${MAP_ID}`, 'save']);
     expect(harness.saved?.expectedVersion).toBe(2);
     expect(harness.saved?.map.snapshot().obstacles).toEqual([{ x: 4, y: 5 }]);
     expect(result).toEqual({
@@ -170,7 +167,7 @@ describe('EditWarehouseMap addObstacle', () => {
       name: 'WarehouseMapNotFoundError',
       details: { mapId: MAP_ID },
     });
-    expect(harness.calls).toEqual(['execute', `findById:${MAP_ID}`]);
+    expect(harness.calls).toEqual([`findById:${MAP_ID}`]);
     expect(harness.logs).toEqual([]);
   });
 
@@ -262,7 +259,7 @@ describe('EditWarehouseMap addObstacle', () => {
     expect(harness.notices).toEqual([]);
   });
 
-  it('logs warehouse.map.updated only after unit of work execute settles', async () => {
+  it('logs warehouse.map.updated only after the transaction commits', async () => {
     let release: (() => void) | undefined;
     const gate = new Promise<void>((resolve) => {
       release = resolve;
@@ -1201,7 +1198,7 @@ describe('EditWarehouseMap station save outcomes', () => {
     },
   );
 
-  it('does not settle before unit of work execute settles for placeStation', async () => {
+  it('does not settle before the transaction commits for placeStation', async () => {
     let release: (() => void) | undefined;
     const gate = new Promise<void>((resolve) => {
       release = resolve;
@@ -1302,7 +1299,7 @@ describe('EditWarehouseMap realtime', () => {
     expect(harness.notices).toHaveLength(1);
     expect(harness.logs).toContainEqual({
       level: 'error',
-      event: 'warehouse.realtime.publish_failed',
+      event: 'transaction.after_commit_failed',
       context: { errorClass: 'Error' },
     });
     expect(harness.logs.map((entry) => entry.event)).toContain('warehouse.map.updated');

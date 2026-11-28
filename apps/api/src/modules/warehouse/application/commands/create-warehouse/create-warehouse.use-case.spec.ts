@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { CacheError } from '../../../../../cache/application/errors/cache.error';
 import { fixedClock } from '../../../../../common/testing/fixed-clock';
@@ -11,8 +11,8 @@ import { scriptedIds } from '../../../../../common/testing/scripted-ids';
 import type { Warehouse } from '../../../domain/entities/warehouse';
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { InvalidNameError } from '../../../domain/errors/value.errors';
-import { stubUnitOfWork } from '../../testing/stub-warehouse-unit-of-work';
-import type { WarehouseUnitOfWork } from '../../ports/system/warehouse-unit-of-work';
+import { stubWarehouses, stubMaps } from '../../testing/stub-warehouse-repositories';
+import { FakeTransaction } from '../../../../../common/testing/fake-transaction';
 import { WAREHOUSE_LIST_CACHE_KEY } from '../../queries/warehouse-cache.policy';
 import { CreateWarehouse } from './create-warehouse.use-case';
 
@@ -27,9 +27,8 @@ interface Harness {
   calls: string[];
   logs: LogEntry[];
   cache: RecordingCache;
-  inserts: { count: number };
   nowCalls: number;
-  executeCount: number;
+  runCount: number;
 }
 
 function createHarness(options?: {
@@ -43,57 +42,53 @@ function createHarness(options?: {
   const cache = new RecordingCache();
   const { logger, logs } = createRecordingLogger();
   const recorded = fixedClock(RECORDED_AT);
-  const inserts = { count: 0 };
-  let executeCount = 0;
-  const inner = stubUnitOfWork({
-    calls,
-    inserts,
-    after: options?.afterCallback,
-    warehouses: {
-      async insert(warehouse, recordedAt) {
-        calls.push('insert-warehouse');
-        await options?.onInsertWarehouse?.();
-        inserted.warehouse = warehouse;
-        inserted.recordedAt = recordedAt;
-      },
-    },
-    maps: {
-      async insert(map) {
-        calls.push('insert-map');
-        await options?.onInsertMap?.();
-        inserted.map = map;
-      },
-      async findById() {
-        return null;
-      },
-      async findByWarehouseId() {
-        return null;
-      },
-      async save() {
-        return { status: 'not_found' };
-      },
+  const transaction = new FakeTransaction(logger, options?.afterCallback);
+  const warehouses = stubWarehouses({
+    async insert(warehouse, recordedAt) {
+      calls.push('insert-warehouse');
+      await options?.onInsertWarehouse?.();
+      inserted.warehouse = warehouse;
+      inserted.recordedAt = recordedAt;
     },
   });
-  const unitOfWork: WarehouseUnitOfWork = {
-    execute(work) {
-      executeCount += 1;
-      return inner.execute(work);
+  const maps = stubMaps({
+    async insert(map) {
+      calls.push('insert-map');
+      await options?.onInsertMap?.();
+      inserted.map = map;
     },
-  };
+    async findById() {
+      return null;
+    },
+    async findByWarehouseId() {
+      return null;
+    },
+    async save() {
+      return { status: 'not_found' };
+    },
+  });
+  const run = vi.spyOn(transaction, 'run');
   const idGenerator = scriptedIds(options?.ids ?? [WAREHOUSE_ID, MAP_ID]);
 
   return {
-    useCase: new CreateWarehouse(unitOfWork, idGenerator, recorded.clock, cache, logger),
+    useCase: new CreateWarehouse(
+      transaction,
+      warehouses,
+      maps,
+      idGenerator,
+      recorded.clock,
+      cache,
+      logger,
+    ),
     inserted,
     calls,
     logs,
     cache,
-    inserts,
     get nowCalls() {
       return recorded.nowCalls();
     },
-    get executeCount() {
-      return executeCount;
+    get runCount() {
+      return run.mock.calls.length;
     },
   };
 }
@@ -138,9 +133,8 @@ describe('CreateWarehouse', () => {
 
     const result = await harness.useCase.execute({ name: '  Main  ' });
 
-    expect(harness.executeCount).toBe(1);
-    expect(harness.calls).toEqual(['execute', 'insert-warehouse', 'insert-map']);
-    expect(harness.inserts.count).toBe(2);
+    expect(harness.runCount).toBe(1);
+    expect(harness.calls).toEqual(['insert-warehouse', 'insert-map']);
     expect(harness.nowCalls).toBe(1);
     expect(harness.inserted.recordedAt).toBe(RECORDED_AT);
     expect(harness.cache.deleted).toEqual([WAREHOUSE_LIST_CACHE_KEY]);
@@ -174,7 +168,7 @@ describe('CreateWarehouse', () => {
     const harness = createHarness();
 
     await expect(harness.useCase.execute({ name: '   ' })).rejects.toBeInstanceOf(InvalidNameError);
-    expect(harness.executeCount).toBe(0);
+    expect(harness.runCount).toBe(0);
     expect(harness.inserted.warehouse).toBeUndefined();
     expect(harness.inserted.map).toBeUndefined();
     expect(harness.logs).toEqual([]);
@@ -189,7 +183,7 @@ describe('CreateWarehouse', () => {
     });
 
     await expect(harness.useCase.execute({ name: 'Main' })).rejects.toBe(failure);
-    expect(harness.calls).toEqual(['execute', 'insert-warehouse']);
+    expect(harness.calls).toEqual(['insert-warehouse']);
     expect(harness.inserted.map).toBeUndefined();
     expect(harness.logs).toEqual([]);
   });
@@ -203,7 +197,7 @@ describe('CreateWarehouse', () => {
     });
 
     await expect(harness.useCase.execute({ name: 'Main' })).rejects.toBe(failure);
-    expect(harness.calls).toEqual(['execute', 'insert-warehouse', 'insert-map']);
+    expect(harness.calls).toEqual(['insert-warehouse', 'insert-map']);
     expect(harness.logs).toEqual([]);
   });
 
@@ -220,7 +214,7 @@ describe('CreateWarehouse', () => {
     expect(harness.logs).toEqual([]);
   });
 
-  it('logs warehouse.created only after unit of work execute settles', async () => {
+  it('logs warehouse.created only after the transaction commits', async () => {
     let release: (() => void) | undefined;
     const gate = new Promise<void>((resolve) => {
       release = resolve;

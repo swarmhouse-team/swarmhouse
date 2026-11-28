@@ -2,7 +2,6 @@ import type { EditWarehouseMapOperation } from '@robots/shared';
 
 import type { IdGenerator } from '../../../../../common/application/id-generator';
 import type { LoggerPort } from '../../../../../common/application/logger.port';
-import { publishAfterCommit } from '../../../../../common/application/publish-after-commit';
 import { Position } from '../../../../../common/domain/position';
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import { normalizeId } from '../../../domain/vo/id';
@@ -11,7 +10,8 @@ import {
   WarehouseMapNotFoundError,
 } from '../../errors/application.errors';
 import { restoreStoredWarehouseMap } from '../../mapping/restore-stored-warehouse-map';
-import type { WarehouseUnitOfWork } from '../../ports/system/warehouse-unit-of-work';
+import type { Transaction } from '../../../../../common/application/transaction';
+import type { WarehouseMapRepository } from '../../ports/repositories/warehouse-map.repository';
 import type { WarehouseNotifier } from '../../ports/system/warehouse-notifier';
 import type { EditWarehouseMapInput, EditWarehouseMapResult } from './edit-warehouse-map.types';
 
@@ -21,22 +21,23 @@ interface AppliedEdit {
 }
 
 /**
- * Applies one map edit inside a unit of work.
+ * Applies one map edit inside a transaction.
  * A no-op returns the consistent snapshot and version of the state it read.
  * `expectedVersion` is checked against that read. A later concurrent change is allowed.
  * A changing `save` performs its own atomic version check.
  */
 export class EditWarehouseMap {
   constructor(
-    private readonly unitOfWork: WarehouseUnitOfWork,
+    private readonly transaction: Transaction,
+    private readonly maps: WarehouseMapRepository,
     private readonly ids: IdGenerator,
     private readonly logger: LoggerPort,
     private readonly notifier: WarehouseNotifier,
   ) {}
 
   async execute(input: EditWarehouseMapInput): Promise<EditWarehouseMapResult> {
-    const result = await this.unitOfWork.execute(async (tx) => {
-      const record = await tx.maps.findById(input.mapId);
+    return this.transaction.run(async () => {
+      const record = await this.maps.findById(input.mapId);
       if (!record) {
         throw new WarehouseMapNotFoundError({ mapId: input.mapId });
       }
@@ -51,6 +52,13 @@ export class EditWarehouseMap {
       const map = restoreStoredWarehouseMap(record.snapshot);
       const applied = this.apply(map, input.operation);
       if (!applied.changed) {
+        this.transaction.afterCommit(() =>
+          this.logger.debug('warehouse.map.noop', {
+            mapId: input.mapId,
+            operationType: input.operation.type,
+            version: record.version,
+          }),
+        );
         return {
           mapId: input.mapId,
           version: record.version,
@@ -59,7 +67,7 @@ export class EditWarehouseMap {
         };
       }
 
-      const saved = await tx.maps.save(map, input.expectedVersion);
+      const saved = await this.maps.save(map, input.expectedVersion);
       if (saved.status === 'conflict') {
         throw new MapVersionConflictError({
           mapId: input.mapId,
@@ -71,42 +79,25 @@ export class EditWarehouseMap {
         throw new WarehouseMapNotFoundError({ mapId: input.mapId });
       }
 
-      return {
+      const change = {
         mapId: input.mapId,
         version: saved.version,
-        changed: true,
-        snapshot: map.snapshot(),
         ...(applied.createdId === undefined ? {} : { createdId: applied.createdId }),
       };
+      const notice = {
+        ...change,
+        warehouseId: map.warehouseId,
+        operation: publishedOperation(structuredClone(input.operation)),
+      };
+      this.transaction.afterCommit(() => this.notifier.mapChanged(notice));
+      this.transaction.afterCommit(() =>
+        this.logger.info('warehouse.map.updated', {
+          ...change,
+          operationType: notice.operation.type,
+        }),
+      );
+      return { ...change, changed: true, snapshot: map.snapshot() };
     });
-
-    if (result.changed) {
-      await publishAfterCommit(this.logger, {
-        publish: () =>
-          this.notifier.mapChanged({
-            warehouseId: result.snapshot.warehouseId,
-            mapId: result.mapId,
-            version: result.version,
-            operation: publishedOperation(input.operation),
-            ...(result.createdId === undefined ? {} : { createdId: result.createdId }),
-          }),
-        publishFailed: 'warehouse.realtime.publish_failed',
-      });
-      this.logger.info('warehouse.map.updated', {
-        mapId: result.mapId,
-        operationType: input.operation.type,
-        version: result.version,
-        ...(result.createdId === undefined ? {} : { createdId: result.createdId }),
-      });
-    } else {
-      this.logger.debug('warehouse.map.noop', {
-        mapId: result.mapId,
-        operationType: input.operation.type,
-        version: result.version,
-      });
-    }
-
-    return result;
   }
 
   private apply(map: WarehouseMap, operation: EditWarehouseMapOperation): AppliedEdit {

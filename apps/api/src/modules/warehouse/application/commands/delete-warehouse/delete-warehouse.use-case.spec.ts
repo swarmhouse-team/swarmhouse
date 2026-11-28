@@ -15,7 +15,8 @@ import {
   type WarehouseNotice,
 } from '../../testing/create-recording-notifier';
 import { RecordingCache } from '../../../../../common/testing/recording-cache';
-import { stubUnitOfWork } from '../../testing/stub-warehouse-unit-of-work';
+import { stubWarehouses, stubMaps } from '../../testing/stub-warehouse-repositories';
+import { FakeTransaction } from '../../../../../common/testing/fake-transaction';
 import {
   WAREHOUSE_LIST_CACHE_KEY,
   warehouseDetailsCacheKey,
@@ -28,7 +29,6 @@ interface Harness {
   logs: LogEntry[];
   notices: WarehouseNotice[];
   cache: RecordingCache;
-  inserts: { count: number };
   failNotifier: (error: Error) => void;
 }
 
@@ -43,42 +43,36 @@ function createHarness(options?: {
   const cache = new RecordingCache();
   const { logger, logs } = createRecordingLogger();
   const { notifier, notices, failWith } = createRecordingNotifier();
-  const inserts = { count: 0 };
-  const unitOfWork = stubUnitOfWork({
-    calls,
-    inserts,
-    after: options?.afterCallback,
-    warehouses: {
-      async findById(warehouseId) {
-        calls.push(`findById:${warehouseId}`);
-        return options?.found === undefined
-          ? { id: 'wh-1', name: 'Main', createdAt: null, updatedAt: null }
-          : options.found;
-      },
-      async delete(warehouseId) {
-        calls.push(`delete-warehouse:${warehouseId}`);
-        if (options?.deleteWarehouseError) {
-          throw options.deleteWarehouseError;
-        }
-        return options?.deleteResult ?? { status: 'deleted' };
-      },
+  const transaction = new FakeTransaction(logger, options?.afterCallback);
+  const warehouses = stubWarehouses({
+    async findById(warehouseId) {
+      calls.push(`findById:${warehouseId}`);
+      return options?.found === undefined
+        ? { id: 'wh-1', name: 'Main', createdAt: null, updatedAt: null }
+        : options.found;
     },
-    maps: {
-      async deleteByWarehouseId(warehouseId) {
-        calls.push(`delete-maps:${warehouseId}`);
-        if (options?.deleteMapsError) {
-          throw options.deleteMapsError;
-        }
-      },
+    async delete(warehouseId) {
+      calls.push(`delete-warehouse:${warehouseId}`);
+      if (options?.deleteWarehouseError) {
+        throw options.deleteWarehouseError;
+      }
+      return options?.deleteResult ?? { status: 'deleted' };
+    },
+  });
+  const maps = stubMaps({
+    async deleteByWarehouseId(warehouseId) {
+      calls.push(`delete-maps:${warehouseId}`);
+      if (options?.deleteMapsError) {
+        throw options.deleteMapsError;
+      }
     },
   });
   return {
-    useCase: new DeleteWarehouse(unitOfWork, cache, logger, notifier),
+    useCase: new DeleteWarehouse(transaction, warehouses, maps, cache, logger, notifier),
     calls,
     logs,
     notices,
     cache,
-    inserts,
     failNotifier: failWith,
   };
 }
@@ -89,13 +83,7 @@ describe('DeleteWarehouse', () => {
 
     await harness.useCase.execute({ warehouseId: 'wh-1' });
 
-    expect(harness.calls).toEqual([
-      'execute',
-      'findById:wh-1',
-      'delete-maps:wh-1',
-      'delete-warehouse:wh-1',
-    ]);
-    expect(harness.inserts.count).toBe(0);
+    expect(harness.calls).toEqual(['findById:wh-1', 'delete-maps:wh-1', 'delete-warehouse:wh-1']);
     expect(harness.cache.deleted).toEqual([
       warehouseDetailsCacheKey('wh-1'),
       WAREHOUSE_LIST_CACHE_KEY,
@@ -132,7 +120,7 @@ describe('DeleteWarehouse', () => {
       name: 'WarehouseNotFoundError',
       details: { warehouseId: 'wh-1' },
     });
-    expect(harness.calls).toEqual(['execute', 'findById:wh-1']);
+    expect(harness.calls).toEqual(['findById:wh-1']);
     expect(harness.logs).toEqual([]);
   });
 
@@ -182,7 +170,7 @@ describe('DeleteWarehouse', () => {
     expect(harness.logs).toEqual([]);
   });
 
-  it('logs warehouse.deleted only after unit of work execute settles', async () => {
+  it('logs warehouse.deleted only after the transaction commits', async () => {
     let release: (() => void) | undefined;
     const gate = new Promise<void>((resolve) => {
       release = resolve;
@@ -246,7 +234,7 @@ describe('DeleteWarehouse', () => {
     ]);
     expect(harness.logs).toContainEqual({
       level: 'error',
-      event: 'warehouse.realtime.publish_failed',
+      event: 'transaction.after_commit_failed',
       context: { errorClass: 'Error' },
     });
     expect(JSON.stringify(harness.logs)).not.toContain('socket down');

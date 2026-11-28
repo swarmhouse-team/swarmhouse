@@ -1,4 +1,4 @@
-import type { PrismaDb } from '../../../../../common/infrastructure/prisma-db';
+import type { PrismaTransaction } from '../../../../../common/infrastructure/prisma-transaction';
 import { Warehouse } from '../../../domain/entities/warehouse';
 import type {
   DeleteWarehouseResult,
@@ -21,10 +21,10 @@ const warehouseSelect = {
 
 /** Stores warehouse rows. It does not open a transaction or touch maps. */
 export class PrismaWarehouseRepository implements WarehouseRepository {
-  constructor(private readonly db: PrismaDb) {}
+  constructor(private readonly transaction: PrismaTransaction) {}
 
   async insert(warehouse: Warehouse, recordedAt: Date): Promise<void> {
-    await this.db.warehouseRecord.create({
+    await this.transaction.db.warehouseRecord.create({
       data: {
         id: warehouse.id,
         name: warehouse.name.value,
@@ -35,7 +35,7 @@ export class PrismaWarehouseRepository implements WarehouseRepository {
   }
 
   async findById(warehouseId: string): Promise<StoredWarehouse | null> {
-    const row = await this.db.warehouseRecord.findUnique({
+    const row = await this.transaction.db.warehouseRecord.findUnique({
       where: { id: warehouseId },
       select: warehouseSelect,
     });
@@ -43,7 +43,7 @@ export class PrismaWarehouseRepository implements WarehouseRepository {
   }
 
   async save(warehouse: Warehouse, updatedAt: Date): Promise<SaveWarehouseResult> {
-    const result = await this.db.warehouseRecord.updateMany({
+    const result = await this.transaction.db.warehouseRecord.updateMany({
       where: { id: warehouse.id },
       data: { name: warehouse.name.value, updatedAt },
     });
@@ -51,7 +51,7 @@ export class PrismaWarehouseRepository implements WarehouseRepository {
   }
 
   async list(): Promise<StoredWarehouse[]> {
-    const rows = await this.db.warehouseRecord.findMany({
+    const rows = await this.transaction.db.warehouseRecord.findMany({
       select: warehouseSelect,
       orderBy: [...warehouseListOrder],
     });
@@ -59,7 +59,7 @@ export class PrismaWarehouseRepository implements WarehouseRepository {
   }
 
   async delete(warehouseId: string): Promise<DeleteWarehouseResult> {
-    const result = await this.db.warehouseRecord.deleteMany({
+    const result = await this.transaction.db.warehouseRecord.deleteMany({
       where: { id: warehouseId },
     });
     return result.count === 1 ? { status: 'deleted' } : { status: 'not_found' };

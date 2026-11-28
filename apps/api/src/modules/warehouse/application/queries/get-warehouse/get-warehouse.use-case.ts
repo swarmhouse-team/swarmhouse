@@ -1,6 +1,7 @@
 import { warehouseDetailsSchema, type WarehouseDetails } from '@robots/shared';
 
 import type { CachePort } from '../../../../../cache/application/ports/cache.port';
+import type { Transaction } from '../../../../../common/application/transaction';
 import { readCache, writeCache } from '../../../../../common/application/read-cache';
 import { WarehouseNotFoundError } from '../../errors/application.errors';
 import type { WarehouseRepository } from '../../ports/repositories/warehouse.repository';
@@ -16,12 +17,15 @@ import { WAREHOUSE_DETAILS_TTL_MS, warehouseDetailsCacheKey } from '../warehouse
  */
 export class GetWarehouse {
   constructor(
+    private readonly transaction: Pick<Transaction, 'isActive'>,
     private readonly warehouses: WarehouseRepository,
     private readonly cache: CachePort,
   ) {}
 
   async execute(input: { warehouseId: string }): Promise<WarehouseDetails> {
     const warehouseId = normalizeId(input.warehouseId);
+    if (this.transaction.isActive) return this.load(warehouseId);
+
     const key = warehouseDetailsCacheKey(warehouseId);
     const cached = await readCache(this.cache, key, warehouseDetailsSchema, (details) => {
       return details.warehouseId === warehouseId;
@@ -30,12 +34,16 @@ export class GetWarehouse {
       return cached;
     }
 
+    const details = await this.load(warehouseId);
+    await writeCache(this.cache, key, details, WAREHOUSE_DETAILS_TTL_MS);
+    return details;
+  }
+
+  private async load(warehouseId: string): Promise<WarehouseDetails> {
     const record = await this.warehouses.findById(warehouseId);
     if (!record) {
       throw new WarehouseNotFoundError({ warehouseId });
     }
-    const details = toWarehouseDetails(record);
-    await writeCache(this.cache, key, details, WAREHOUSE_DETAILS_TTL_MS);
-    return details;
+    return toWarehouseDetails(record);
   }
 }
