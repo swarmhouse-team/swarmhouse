@@ -14,6 +14,10 @@ export const useElementWidth = <T extends HTMLElement>(): [RefObject<T | null>, 
 
     setWidth(element.getBoundingClientRect().width);
 
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) setWidth(entry.contentRect.width);
