@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@feature-sliced/steiger-plugin": "^0.8.2",
+    "@svgr/webpack": "^8.1.0",
     "@tailwindcss/postcss": "^4.3.5",
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/react": "catalog:",
@@ -35,6 +36,7 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "jsdom": "catalog:",
+    "sass": "^1.108.2",
     "steiger": "^0.10.0",
     "tailwindcss": "^4.3.5",
     "typescript": "catalog:",

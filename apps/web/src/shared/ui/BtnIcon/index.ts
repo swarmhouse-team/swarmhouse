@@ -1,0 +1,1 @@
+export { BtnIcon } from './BtnIcon';

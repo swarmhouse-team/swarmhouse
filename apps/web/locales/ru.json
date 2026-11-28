@@ -111,6 +111,68 @@
       "en": "English"
     }
   },
+  "mapEditor": {
+    "backToWarehouses": "Назад к складам",
+    "warehouseName": "Склад «Северный»",
+    "saveState": {
+      "saved": "Все изменения сохранены",
+      "unsaved": "Есть несохранённые изменения"
+    },
+    "modes": {
+      "groupLabel": "Режим склада",
+      "editor": "Редактор",
+      "dispatcher": "Диспетчерская"
+    },
+    "history": {
+      "undo": "Отменить",
+      "undoTitle": "Отменить (Ctrl+Z)",
+      "redo": "Повторить",
+      "redoTitle": "Повторить (Ctrl+Shift+Z)"
+    },
+    "save": "Сохранить карту",
+    "panel": {
+      "label": "Панель редактора",
+      "tabs": {
+        "add": "Добавить",
+        "object": "Объект",
+        "list": "Список",
+        "check": "Проверка"
+      }
+    },
+    "canvas": {
+      "label": "Карта склада {size} на {size} клеток"
+    },
+    "tools": {
+      "groupLabel": "Инструменты карты",
+      "select": "Выбор и перемещение",
+      "obstacle": "Препятствие",
+      "station": "Станция",
+      "robot": "Робот",
+      "erase": "Ластик",
+      "titleWithHotkey": "{label} · {hotkey}"
+    },
+    "hints": {
+      "select": "Кликните по объекту, чтобы выбрать его",
+      "obstacle": "Кликайте по клеткам, чтобы ставить препятствия",
+      "station": "Кликните по свободной клетке, чтобы поставить станцию",
+      "robot": "Кликните по свободной клетке, чтобы поставить робота",
+      "erase": "Кликните по объекту, чтобы удалить его"
+    },
+    "summary": {
+      "stations": "{count, plural, one {# станция} few {# станции} many {# станций} other {# станции}}",
+      "robots": "{count, plural, one {# робот} few {# робота} many {# роботов} other {# робота}}",
+      "obstacles": "{count, plural, one {# препятствие} few {# препятствия} many {# препятствий} other {# препятствия}}"
+    },
+    "zoom": {
+      "groupLabel": "Масштаб",
+      "zoomOut": "Отдалить",
+      "zoomIn": "Приблизить",
+      "fit": "Вписать карту"
+    }
+  },
+  "tabs": {
+    "label": "Разделы панели"
+  },
   "notFound": {
     "title": "Страница не найдена"
   },
