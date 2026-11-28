@@ -6,7 +6,7 @@ import { BtnIcon } from '@/shared/ui/BtnIcon';
 import { HStack, VStack } from '@/shared/ui/Stack';
 import { useCallback, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { EditorTabType, TabItem } from '@/shared/ui/Tabs';
+import { EditorTabType, isEditorTabType, type TabItem } from '../model/types';
 import { Tabs } from '@/shared/ui/Tabs';
 import { WarehouseMap } from '@/widgets/warehouse-map';
 import { validWarehouseMap } from '@robots/shared';
@@ -34,8 +34,10 @@ export const MapEditor = () => {
     { value: EditorTabType.CHECK, content: t('panel.tabs.check') },
   ];
 
-  const onTabClick = useCallback((tab: TabItem) => {
-    setActiveTab(tab.value);
+  const onTabClick = useCallback((tab: { value: string }) => {
+    if (isEditorTabType(tab.value)) {
+      setActiveTab(tab.value);
+    }
   }, []);
 
   return (

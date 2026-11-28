@@ -2,12 +2,15 @@ import { HStack, VStack } from '@/shared/ui/Stack';
 import { classNames } from '@/shared/lib/classNames/classNames';
 import { memo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { EditorTabType, TabItem } from './model';
+export interface TabItem {
+  value: string;
+  content: string;
+}
 
 interface TabsProps {
   data: TabItem[];
   onTabClick: (item: TabItem) => void;
-  value: EditorTabType;
+  value: string;
 }
 
 export const Tabs = memo(function Tabs(props: TabsProps) {

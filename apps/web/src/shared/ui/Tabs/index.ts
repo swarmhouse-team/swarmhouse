@@ -1,2 +1,1 @@
-export { Tabs } from './Tabs';
-export { EditorTabType, type TabItem } from './model';
+export { Tabs, type TabItem } from './Tabs';
