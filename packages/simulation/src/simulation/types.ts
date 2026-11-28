@@ -7,6 +7,7 @@ import type {
   Direction,
   Task,
   SimulationConfig,
+  RobotWaitingReason,
 } from '../contracts';
 
 export type SimulationState = {
@@ -53,12 +54,27 @@ export type SimulationEvent =
       robotId: string;
     }
   | {
-      type: 'TASK_PICKED_UP';
+      type: 'ROBOT_WAITING';
+      robotId: string;
+      reason: RobotWaitingReason;
+    }
+  | {
+      type: 'LOADING_STARTED';
       taskId: string;
       robotId: string;
     }
   | {
-      type: 'TASK_DELIVERED';
+      type: 'LOADING_COMPLETED';
+      taskId: string;
+      robotId: string;
+    }
+  | {
+      type: 'UNLOADING_STARTED';
+      taskId: string;
+      robotId: string;
+    }
+  | {
+      type: 'TASK_COMPLETED';
       taskId: string;
       robotId: string;
     };

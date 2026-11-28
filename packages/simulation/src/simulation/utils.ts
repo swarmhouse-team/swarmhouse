@@ -157,3 +157,11 @@ export function isSwapConflict(
     );
   });
 }
+export function isHandlingCargo(state: SimulationState, robotId: string): boolean {
+  return state.tasks.some(
+    (task) =>
+      task.robotId === robotId &&
+      task.status === 'in_progress' &&
+      (task.phase === 'LOADING' || task.phase === 'UNLOADING'),
+  );
+}

@@ -1,6 +1,7 @@
 import type { SimulationState, TickResult, SimulationEvent } from './types';
 import type { RobotState } from '../contracts/robot';
-import { isInsideGrid, isObstacle, validateRouteStep } from './utils';
+import { isInsideGrid, isObstacle, validateRouteStep, isHandlingCargo } from './utils';
+import { processTasks } from './tasks';
 
 export function tick(state: SimulationState): TickResult {
   const nextTick = state.tick + 1;
@@ -12,6 +13,17 @@ export function tick(state: SimulationState): TickResult {
     if (!route || robot.status === 'fault') {
       nextRobots.push(robot);
       continue;
+    }
+    if (isHandlingCargo(state, robot.id)) {
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_ROUTE',
+          robotIds: [robot.id],
+          tick: nextTick,
+          message: `Robot ${robot.id} cannot execute a route while handling cargo`,
+        },
+      };
     }
 
     const nextStep = route.steps.find((step) => step.tick === nextTick);
@@ -165,14 +177,22 @@ export function tick(state: SimulationState): TickResult {
   }
   const nextRoutes = state.routes.filter((route) => !completedRobotIds.has(route.robotId));
 
+  const intermediateState: SimulationState = {
+    ...state,
+    tick: nextTick,
+    robots: nextRobots,
+    routes: nextRoutes,
+  };
+
+  const taskResult = processTasks(intermediateState);
+
   return {
     success: true,
     state: {
-      ...state,
-      tick: nextTick,
-      robots: nextRobots,
-      routes: nextRoutes,
+      ...intermediateState,
+      robots: taskResult.robots,
+      tasks: taskResult.tasks,
     },
-    events,
+    events: [...events, ...taskResult.events],
   };
 }

@@ -1,7 +1,11 @@
-import type { RobotRoute, Task, RobotState } from '../contracts';
+import type { RobotRoute, Task, RobotState, RobotWaitingReason } from '../contracts';
 import type { SimulationState, SimulationEvent } from './types';
-
-import { validateRouteActions, isCellOccupiedAtTick, isSwapConflict } from './utils';
+import {
+  validateRouteActions,
+  isCellOccupiedAtTick,
+  isSwapConflict,
+  isHandlingCargo,
+} from './utils';
 
 export type SimulationCommand =
   | {
@@ -15,6 +19,11 @@ export type SimulationCommand =
   | {
       type: 'RESTORE_ROBOT';
       robotId: string;
+    }
+  | {
+      type: 'SET_ROBOT_WAITING';
+      robotId: string;
+      reason: RobotWaitingReason;
     }
   | {
       type: 'CREATE_TASK';
@@ -213,6 +222,16 @@ export function applyCommand(state: SimulationState, command: SimulationCommand)
           },
         };
       }
+      if (isHandlingCargo(state, robot.id)) {
+        return {
+          success: false,
+          error: {
+            code: 'INVALID_ROBOT_STATE',
+            robotId: robot.id,
+            message: `Cannot set route for robot ${robot.id}: robot is handling cargo`,
+          },
+        };
+      }
       if (command.route.startTick !== state.tick) {
         return {
           success: false,
@@ -321,13 +340,86 @@ export function applyCommand(state: SimulationState, command: SimulationCommand)
         }
       }
 
+      const hasActiveTask = state.tasks.some(
+        (task) => task.robotId === robot.id && task.status === 'in_progress',
+      );
+
       return {
         success: true,
         state: {
           ...state,
+          robots: state.robots.map((item) =>
+            item.id === robot.id
+              ? {
+                  ...item,
+                  status: hasActiveTask ? 'busy' : 'idle',
+                  waitingReason: undefined,
+                }
+              : item,
+          ),
           routes: [...state.routes.filter((route) => route.robotId !== robot.id), command.route],
         },
         events: [],
+      };
+    }
+    case 'SET_ROBOT_WAITING': {
+      const robot = state.robots.find((robot) => robot.id === command.robotId);
+
+      if (!robot) {
+        return {
+          success: false,
+          error: {
+            code: 'ROBOT_NOT_FOUND',
+            robotId: command.robotId,
+            message: `Robot ${command.robotId} not found`,
+          },
+        };
+      }
+
+      if (robot.status === 'fault') {
+        return {
+          success: false,
+          error: {
+            code: 'INVALID_ROBOT_STATE',
+            robotId: robot.id,
+            message: `Robot ${robot.id} is in fault state`,
+          },
+        };
+      }
+
+      if (isHandlingCargo(state, robot.id)) {
+        return {
+          success: false,
+          error: {
+            code: 'INVALID_ROBOT_STATE',
+            robotId: robot.id,
+            message: `Robot ${robot.id} is handling cargo`,
+          },
+        };
+      }
+
+      return {
+        success: true,
+        state: {
+          ...state,
+          robots: state.robots.map((item) =>
+            item.id === robot.id
+              ? {
+                  ...item,
+                  status: 'waiting',
+                  waitingReason: command.reason,
+                }
+              : item,
+          ),
+          routes: state.routes.filter((route) => route.robotId !== robot.id),
+        },
+        events: [
+          {
+            type: 'ROBOT_WAITING',
+            robotId: robot.id,
+            reason: command.reason,
+          },
+        ],
       };
     }
     case 'FAULT_ROBOT': {
@@ -400,6 +492,11 @@ export function applyCommand(state: SimulationState, command: SimulationCommand)
           },
         };
       }
+      const hasActiveTask = state.tasks.some(
+        (task) => task.robotId === robot.id && task.status === 'in_progress',
+      );
+
+      const handlingCargo = isHandlingCargo(state, robot.id);
 
       return {
         success: true,
@@ -409,8 +506,13 @@ export function applyCommand(state: SimulationState, command: SimulationCommand)
             robot.id === command.robotId
               ? {
                   ...robot,
-                  status: 'idle' as const,
-                  waitingReason: undefined,
+                  status: handlingCargo
+                    ? ('busy' as const)
+                    : hasActiveTask
+                      ? ('waiting' as const)
+                      : ('idle' as const),
+                  waitingReason:
+                    hasActiveTask && !handlingCargo ? ('WAITING_FOR_PATH' as const) : undefined,
                 }
               : robot,
           ),
