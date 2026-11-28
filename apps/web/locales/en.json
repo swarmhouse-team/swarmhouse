@@ -111,6 +111,68 @@
       "en": "English"
     }
   },
+  "mapEditor": {
+    "backToWarehouses": "Back to warehouses",
+    "warehouseName": "Northern warehouse",
+    "saveState": {
+      "saved": "All changes saved",
+      "unsaved": "Unsaved changes"
+    },
+    "modes": {
+      "groupLabel": "Warehouse mode",
+      "editor": "Editor",
+      "dispatcher": "Dispatcher"
+    },
+    "history": {
+      "undo": "Undo",
+      "undoTitle": "Undo (Ctrl+Z)",
+      "redo": "Redo",
+      "redoTitle": "Redo (Ctrl+Shift+Z)"
+    },
+    "save": "Save map",
+    "panel": {
+      "label": "Editor panel",
+      "tabs": {
+        "add": "Add",
+        "object": "Object",
+        "list": "List",
+        "check": "Check"
+      }
+    },
+    "canvas": {
+      "label": "Warehouse map {size} by {size} cells"
+    },
+    "tools": {
+      "groupLabel": "Map tools",
+      "select": "Select and move",
+      "obstacle": "Obstacle",
+      "station": "Station",
+      "robot": "Robot",
+      "erase": "Eraser",
+      "titleWithHotkey": "{label} · {hotkey}"
+    },
+    "hints": {
+      "select": "Click an object to select it",
+      "obstacle": "Click cells to place obstacles",
+      "station": "Click an empty cell to place a station",
+      "robot": "Click an empty cell to place a robot",
+      "erase": "Click an object to delete it"
+    },
+    "summary": {
+      "stations": "{count, plural, one {# station} other {# stations}}",
+      "robots": "{count, plural, one {# robot} other {# robots}}",
+      "obstacles": "{count, plural, one {# obstacle} other {# obstacles}}"
+    },
+    "zoom": {
+      "groupLabel": "Zoom",
+      "zoomOut": "Zoom out",
+      "zoomIn": "Zoom in",
+      "fit": "Fit map"
+    }
+  },
+  "tabs": {
+    "label": "Panel sections"
+  },
   "notFound": {
     "title": "Page not found"
   },

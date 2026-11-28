@@ -15,6 +15,15 @@ const apiInternalUrl = process.env.API_INTERNAL_URL ?? 'http://localhost:3001';
 const nextConfig: NextConfig = {
   // @robots/ui поставляется исходниками (TSX), его компилирует Next.
   transpilePackages: ['@robots/ui'],
+  turbopack: {
+    // SVG импортируется как React-компонент: `import Icon from './x.svg'`.
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
   async rewrites() {
     return [
       // Браузер всегда ходит на свой origin: /api/* проксируется в бэкенд.
