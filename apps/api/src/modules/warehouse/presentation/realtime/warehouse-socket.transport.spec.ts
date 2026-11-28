@@ -23,7 +23,7 @@ import { GetWarehouse } from '../../application/queries/get-warehouse/get-wareho
 import { createRecordingLogger } from '../../../../common/testing/create-recording-logger';
 import { WarehouseMap } from '../../domain/entities/warehouse-map';
 import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
-import { WarehouseSubscriptionBook } from '../../infrastructure/realtime/warehouse-subscription.book';
+import { WarehouseRealtimeModule } from '../../../warehouse-realtime/warehouse-realtime.module';
 import { WarehouseGateway } from './warehouse.gateway';
 
 const ALLOWED = 'http://allowed.example';
@@ -42,14 +42,12 @@ describe('warehouse socket transport', () => {
   beforeAll(async () => {
     executions = [];
     finds = [];
-    const book = new WarehouseSubscriptionBook();
     const { logger } = createRecordingLogger();
-    notifier = new SocketIoWarehouseNotifier(logger, book);
     const known = new Set([WAREHOUSE_A, WAREHOUSE_B]);
     const moduleRef = await Test.createTestingModule({
+      imports: [WarehouseRealtimeModule],
       providers: [
-        { provide: WarehouseSubscriptionBook, useValue: book },
-        { provide: SocketIoWarehouseNotifier, useValue: notifier },
+        SocketIoWarehouseNotifier,
         { provide: NestjsLogger, useValue: logger },
         {
           provide: GetWarehouse,
@@ -90,6 +88,7 @@ describe('warehouse socket transport', () => {
       ],
     }).compile();
 
+    notifier = moduleRef.get(SocketIoWarehouseNotifier);
     app = moduleRef.createNestApplication();
     app.useWebSocketAdapter(new AppSocketIoAdapter(app, [ALLOWED]));
     await app.listen(0);

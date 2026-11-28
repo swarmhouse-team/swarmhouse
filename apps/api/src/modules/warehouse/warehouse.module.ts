@@ -18,14 +18,14 @@ import { PrismaWarehouseMapRepository } from './infrastructure/prisma/repositori
 import { PrismaWarehouseRepository } from './infrastructure/prisma/repositories/prisma-warehouse.repository';
 import { WarehouseUnitOfWork } from './infrastructure/prisma/transaction/warehouse-unit-of-work';
 import { SocketIoWarehouseNotifier } from './infrastructure/realtime/socket-io-warehouse-notifier';
-import { WarehouseSubscriptionBook } from './infrastructure/realtime/warehouse-subscription.book';
+import { WarehouseRealtimeModule } from '../warehouse-realtime/warehouse-realtime.module';
 import { WarehouseMapsController } from './presentation/http/warehouse-maps.controller';
 import { WarehousesController } from './presentation/http/warehouses.controller';
 import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
 
 /** Warehouse HTTP, the `/warehouse` socket, and the use cases behind them. */
 @Module({
-  imports: [PrismaModule, CacheModule],
+  imports: [PrismaModule, CacheModule, WarehouseRealtimeModule],
   controllers: [WarehousesController, WarehouseMapsController],
   providers: [
     {
@@ -118,10 +118,6 @@ import { WarehouseGateway } from './presentation/realtime/warehouse.gateway';
         logger: NestjsLogger,
         notifier: SocketIoWarehouseNotifier,
       ) => new DeleteWarehouse(unitOfWork, cache, logger, notifier),
-    },
-    {
-      provide: WarehouseSubscriptionBook,
-      useFactory: () => new WarehouseSubscriptionBook(),
     },
     SocketIoWarehouseNotifier,
     WarehouseGateway,

@@ -11,9 +11,9 @@ import {
 import { GetWarehouse } from '../../application/queries/get-warehouse/get-warehouse.use-case';
 import { createRecordingLogger } from '../../../../common/testing/create-recording-logger';
 import { WarehouseMap } from '../../domain/entities/warehouse-map';
-import { SocketIoWarehouseNotifier } from '../../infrastructure/realtime/socket-io-warehouse-notifier';
-import { warehouseRoom } from '../../infrastructure/realtime/warehouse-socket.constants';
-import { WarehouseSubscriptionBook } from '../../infrastructure/realtime/warehouse-subscription.book';
+import { WarehouseRoomPublisher } from '../../../warehouse-realtime/warehouse-room.publisher';
+import { warehouseRoom } from '../../../warehouse-realtime/warehouse-socket.constants';
+import { WarehouseSubscriptionBook } from '../../../warehouse-realtime/warehouse-subscription.book';
 import { WarehouseGateway } from './warehouse.gateway';
 
 const WAREHOUSE_ID = '11111111-1111-4111-8111-11111111111a';
@@ -61,11 +61,11 @@ function setup(options?: { limit?: number }) {
       };
     },
   };
-  const notifier = new SocketIoWarehouseNotifier(logger, book);
+  const publisher = new WarehouseRoomPublisher(logger, book);
   const gateway = new WarehouseGateway(
     getWarehouse,
     edit as unknown as EditWarehouseMap,
-    notifier,
+    publisher,
     book,
     logger,
   );
@@ -75,7 +75,7 @@ function setup(options?: { limit?: number }) {
     logs,
     finds,
     executions,
-    notifier,
+    publisher,
     setFind(next: (id: string) => Promise<{ id: string } | null>) {
       findImpl = next;
     },
@@ -267,7 +267,7 @@ describe('WarehouseGateway map edit', () => {
           });
         },
       } as unknown as EditWarehouseMap,
-      harness.notifier,
+      harness.publisher,
       new WarehouseSubscriptionBook(),
       createRecordingLogger().logger,
     );
