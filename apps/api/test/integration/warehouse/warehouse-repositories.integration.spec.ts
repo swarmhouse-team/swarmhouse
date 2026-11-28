@@ -1,3 +1,5 @@
+import { PrismaTransaction } from '../../../src/common/infrastructure/prisma-transaction';
+import { createRecordingLogger } from '../../../src/common/testing/create-recording-logger';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 const RECORDED_AT = new Date('2026-01-01T00:00:00.000Z');
@@ -33,11 +35,14 @@ function filledMap(mapId = MAP_ID, warehouseId = WAREHOUSE_ID): WarehouseMap {
 }
 
 describe('Prisma warehouse repositories', () => {
-  const prisma = () => getTestPrisma();
-  const warehouses = () => new PrismaWarehouseRepository(prisma());
-  const maps = () => new PrismaWarehouseMapRepository(prisma());
+  let transaction: PrismaTransaction;
+  let warehouses: PrismaWarehouseRepository;
+  let maps: PrismaWarehouseMapRepository;
 
   beforeEach(async () => {
+    transaction = new PrismaTransaction(getTestPrisma(), createRecordingLogger().logger);
+    warehouses = new PrismaWarehouseRepository(transaction);
+    maps = new PrismaWarehouseMapRepository(transaction);
     await cleanWarehouseTables();
   });
 
@@ -48,13 +53,15 @@ describe('Prisma warehouse repositories', () => {
   it('round-trips a warehouse and a map at version 0', async () => {
     const warehouse = Warehouse.create(WAREHOUSE_ID, 'Main');
     const map = filledMap();
-    await warehouses().insert(warehouse, RECORDED_AT);
-    await maps().insert(map);
+    await warehouses.insert(warehouse, RECORDED_AT);
+    await maps.insert(map);
 
-    const storedWarehouse = await warehouses().findById(WAREHOUSE_ID);
-    const byId = await maps().findById(MAP_ID);
-    const byWarehouse = await maps().findByWarehouseId(WAREHOUSE_ID);
-    const row = await prisma().warehouseMapRecord.findUniqueOrThrow({ where: { id: MAP_ID } });
+    const storedWarehouse = await warehouses.findById(WAREHOUSE_ID);
+    const byId = await maps.findById(MAP_ID);
+    const byWarehouse = await maps.findByWarehouseId(WAREHOUSE_ID);
+    const row = await getTestPrisma().warehouseMapRecord.findUniqueOrThrow({
+      where: { id: MAP_ID },
+    });
 
     expect(storedWarehouse).toEqual({
       id: WAREHOUSE_ID,
@@ -74,92 +81,92 @@ describe('Prisma warehouse repositories', () => {
   });
 
   it('saves a new map body and bumps the version once', async () => {
-    await warehouses().insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
+    await warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
     const map = filledMap();
-    await maps().insert(map);
+    await maps.insert(map);
     map.moveRobot(ROBOT_ID, Position.create(6, 6));
     const before = map.snapshot();
 
-    const saved = await maps().save(map, 0);
+    const saved = await maps.save(map, 0);
 
     expect(saved).toEqual({ status: 'saved', version: 1 });
     expect(map.snapshot()).toEqual(before);
-    expect(await maps().findById(MAP_ID)).toEqual({ snapshot: before, version: 1 });
-    expect((await maps().findById(MAP_ID))?.snapshot.warehouseId).toBe(WAREHOUSE_ID);
+    expect(await maps.findById(MAP_ID)).toEqual({ snapshot: before, version: 1 });
+    expect((await maps.findById(MAP_ID))?.snapshot.warehouseId).toBe(WAREHOUSE_ID);
   });
 
   it('reports a conflict for a stale version and leaves the row unchanged', async () => {
-    await warehouses().insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
+    await warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
     const map = filledMap();
-    await maps().insert(map);
+    await maps.insert(map);
     const stored = map.snapshot();
     map.moveRobot(ROBOT_ID, Position.create(6, 6));
 
-    const result = await maps().save(map, 4);
+    const result = await maps.save(map, 4);
 
     expect(result).toEqual({ status: 'conflict', actualVersion: 0 });
-    expect(await maps().findById(MAP_ID)).toEqual({ snapshot: stored, version: 0 });
+    expect(await maps.findById(MAP_ID)).toEqual({ snapshot: stored, version: 0 });
   });
 
   it('does not create a map when saving one that is missing', async () => {
-    const result = await maps().save(filledMap(), 0);
+    const result = await maps.save(filledMap(), 0);
 
     expect(result).toEqual({ status: 'not_found' });
-    expect(await prisma().warehouseMapRecord.count()).toBe(0);
+    expect(await getTestPrisma().warehouseMapRecord.count()).toBe(0);
   });
 
   it('rejects a duplicate warehouse id and a duplicate map id without changing the first row', async () => {
     const warehouse = Warehouse.create(WAREHOUSE_ID, 'Main');
     const map = filledMap();
-    await warehouses().insert(warehouse, RECORDED_AT);
-    await maps().insert(map);
+    await warehouses.insert(warehouse, RECORDED_AT);
+    await maps.insert(map);
 
     await expect(
-      warehouses().insert(Warehouse.create(WAREHOUSE_ID, 'Other'), RECORDED_AT),
+      warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Other'), RECORDED_AT),
     ).rejects.toBeInstanceOf(Error);
-    await expect(maps().insert(filledMap())).rejects.toBeInstanceOf(Error);
+    await expect(maps.insert(filledMap())).rejects.toBeInstanceOf(Error);
 
-    expect(await warehouses().findById(WAREHOUSE_ID)).toEqual({
+    expect(await warehouses.findById(WAREHOUSE_ID)).toEqual({
       id: WAREHOUSE_ID,
       name: 'Main',
       createdAt: RECORDED_AT,
       updatedAt: RECORDED_AT,
     });
-    expect(await maps().findById(MAP_ID)).toEqual({ snapshot: map.snapshot(), version: 0 });
+    expect(await maps.findById(MAP_ID)).toEqual({ snapshot: map.snapshot(), version: 0 });
   });
 
   it('leaves another warehouse map unchanged', async () => {
-    await warehouses().insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
-    await warehouses().insert(Warehouse.create(OTHER_WAREHOUSE_ID, 'Side'), RECORDED_AT);
+    await warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
+    await warehouses.insert(Warehouse.create(OTHER_WAREHOUSE_ID, 'Side'), RECORDED_AT);
     const first = filledMap();
     const second = WarehouseMap.create(OTHER_MAP_ID, OTHER_WAREHOUSE_ID);
     second.placeRobot(ROBOT_ID, 'Other', Position.create(0, 0));
-    await maps().insert(first);
-    await maps().insert(second);
+    await maps.insert(first);
+    await maps.insert(second);
     first.moveRobot(ROBOT_ID, Position.create(6, 6));
 
-    await maps().save(first, 0);
+    await maps.save(first, 0);
 
-    expect(await maps().findById(OTHER_MAP_ID)).toEqual({
+    expect(await maps.findById(OTHER_MAP_ID)).toEqual({
       snapshot: second.snapshot(),
       version: 0,
     });
   });
 
   it('reports an invalid stored shape from the repository and a domain conflict through GetWarehouseMap', async () => {
-    await warehouses().insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
-    await maps().insert(filledMap());
-    await prisma().warehouseMapRecord.update({
+    await warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
+    await maps.insert(filledMap());
+    await getTestPrisma().warehouseMapRecord.update({
       where: { id: MAP_ID },
       data: { content: { width: 20 } },
     });
 
-    await expect(maps().findById(MAP_ID)).rejects.toMatchObject({
+    await expect(maps.findById(MAP_ID)).rejects.toMatchObject({
       name: 'CorruptedMapStateError',
       details: { mapId: MAP_ID, reason: 'INVALID_STORED_FORMAT' },
     });
 
-    await prisma().warehouseMapRecord.update({
+    await getTestPrisma().warehouseMapRecord.update({
       where: { id: MAP_ID },
       data: {
         content: {
@@ -172,79 +179,82 @@ describe('Prisma warehouse repositories', () => {
       },
     });
 
-    await expect(maps().findById(MAP_ID)).resolves.toMatchObject({ version: 0 });
-    await expect(new GetWarehouseMap(maps()).execute({ mapId: MAP_ID })).rejects.toBeInstanceOf(
+    await expect(maps.findById(MAP_ID)).resolves.toMatchObject({ version: 0 });
+    await expect(new GetWarehouseMap(maps).execute({ mapId: MAP_ID })).rejects.toBeInstanceOf(
       CorruptedMapStateError,
     );
-    await expect(new GetWarehouseMap(maps()).execute({ mapId: MAP_ID })).rejects.toMatchObject({
+    await expect(new GetWarehouseMap(maps).execute({ mapId: MAP_ID })).rejects.toMatchObject({
       details: { mapId: MAP_ID, reason: 'DOMAIN_INVARIANT' },
     });
   });
 
   it('updates only the warehouse name and does not insert a missing warehouse', async () => {
-    await warehouses().insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
+    await warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
 
-    expect(await warehouses().save(Warehouse.create(WAREHOUSE_ID, 'Renamed'), UPDATED_AT)).toEqual({
+    expect(await warehouses.save(Warehouse.create(WAREHOUSE_ID, 'Renamed'), UPDATED_AT)).toEqual({
       status: 'saved',
     });
-    expect(await warehouses().findById(WAREHOUSE_ID)).toEqual({
+    expect(await warehouses.findById(WAREHOUSE_ID)).toEqual({
       id: WAREHOUSE_ID,
       name: 'Renamed',
       createdAt: RECORDED_AT,
       updatedAt: UPDATED_AT,
     });
     expect(
-      await warehouses().save(Warehouse.create(OTHER_WAREHOUSE_ID, 'Missing'), UPDATED_AT),
+      await warehouses.save(Warehouse.create(OTHER_WAREHOUSE_ID, 'Missing'), UPDATED_AT),
     ).toEqual({
       status: 'not_found',
     });
-    expect(await warehouses().findById(OTHER_WAREHOUSE_ID)).toBeNull();
+    expect(await warehouses.findById(OTHER_WAREHOUSE_ID)).toBeNull();
   });
 
   it('deletes only the warehouse row and leaves a foreign-key error unchanged', async () => {
-    await warehouses().insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
-    await maps().insert(filledMap());
+    await warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
+    await maps.insert(filledMap());
 
-    await expect(warehouses().delete(WAREHOUSE_ID)).rejects.toBeInstanceOf(Error);
-    expect(await warehouses().findById(WAREHOUSE_ID)).toEqual({
+    await expect(warehouses.delete(WAREHOUSE_ID)).rejects.toBeInstanceOf(Error);
+    expect(await warehouses.findById(WAREHOUSE_ID)).toEqual({
       id: WAREHOUSE_ID,
       name: 'Main',
       createdAt: RECORDED_AT,
       updatedAt: RECORDED_AT,
     });
-    expect(await maps().findById(MAP_ID)).not.toBeNull();
+    expect(await maps.findById(MAP_ID)).not.toBeNull();
 
-    await maps().deleteByWarehouseId(WAREHOUSE_ID);
-    expect(await maps().findByWarehouseId(WAREHOUSE_ID)).toBeNull();
-    expect(await warehouses().delete(WAREHOUSE_ID)).toEqual({ status: 'deleted' });
-    expect(await warehouses().delete(WAREHOUSE_ID)).toEqual({ status: 'not_found' });
-    await expect(maps().deleteByWarehouseId(OTHER_WAREHOUSE_ID)).resolves.toBeUndefined();
+    await maps.deleteByWarehouseId(WAREHOUSE_ID);
+    expect(await maps.findByWarehouseId(WAREHOUSE_ID)).toBeNull();
+    expect(await warehouses.delete(WAREHOUSE_ID)).toEqual({ status: 'deleted' });
+    expect(await warehouses.delete(WAREHOUSE_ID)).toEqual({ status: 'not_found' });
+    await expect(maps.deleteByWarehouseId(OTHER_WAREHOUSE_ID)).resolves.toBeUndefined();
   });
 
-  it('uses a transaction client without committing that transaction itself', async () => {
+  it('rolls back successful inserts through both repositories when work throws', async () => {
     const rollback = new Error('rollback');
 
     await expect(
-      prisma().$transaction(async (tx) => {
-        const txWarehouses = new PrismaWarehouseRepository(tx);
-        await txWarehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Inside'), RECORDED_AT);
-        expect(await txWarehouses.findById(WAREHOUSE_ID)).toEqual({
+      transaction.run(async () => {
+        await warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Inside'), RECORDED_AT);
+        expect(await warehouses.findById(WAREHOUSE_ID)).toEqual({
           id: WAREHOUSE_ID,
           name: 'Inside',
           createdAt: RECORDED_AT,
           updatedAt: RECORDED_AT,
         });
+        await maps.insert(filledMap());
+        expect(await maps.findById(MAP_ID)).not.toBeNull();
         throw rollback;
       }),
     ).rejects.toBe(rollback);
 
-    expect(await warehouses().findById(WAREHOUSE_ID)).toBeNull();
+    expect(await maps.findById(MAP_ID)).toBeNull();
+
+    expect(await warehouses.findById(WAREHOUSE_ID)).toBeNull();
   });
 
   it('returns null when a warehouse or a map is missing', async () => {
-    expect(await warehouses().findById(WAREHOUSE_ID)).toBeNull();
-    expect(await maps().findById(MAP_ID)).toBeNull();
-    expect(await maps().findByWarehouseId(WAREHOUSE_ID)).toBeNull();
+    expect(await warehouses.findById(WAREHOUSE_ID)).toBeNull();
+    expect(await maps.findById(MAP_ID)).toBeNull();
+    expect(await maps.findByWarehouseId(WAREHOUSE_ID)).toBeNull();
   });
 });
 

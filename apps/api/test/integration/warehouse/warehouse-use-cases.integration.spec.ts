@@ -1,4 +1,9 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { RecordingCache } from '../../../src/common/testing/recording-cache';
+import { GetWarehouse } from '../../../src/modules/warehouse/application/queries/get-warehouse/get-warehouse.use-case';
+import { ListWarehouses } from '../../../src/modules/warehouse/application/queries/list-warehouses/list-warehouses.use-case';
+import { PrismaTransaction } from '../../../src/common/infrastructure/prisma-transaction';
+import { createRecordingLogger } from '../../../src/common/testing/create-recording-logger';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const RECORDED_AT = new Date('2026-01-01T00:00:00.000Z');
 
@@ -12,7 +17,6 @@ import type { WarehouseNotifier } from '../../../src/modules/warehouse/applicati
 import { WarehouseMap } from '../../../src/modules/warehouse/domain/entities/warehouse-map';
 import { Warehouse } from '../../../src/modules/warehouse/domain/entities/warehouse';
 import { Position } from '../../../src/common/domain/position';
-import { WarehouseUnitOfWork } from '../../../src/modules/warehouse/infrastructure/prisma/transaction/warehouse-unit-of-work';
 import { PrismaWarehouseMapRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse-map.repository';
 import { SystemClock } from '../../../src/common/infrastructure/system-clock';
 import { PrismaWarehouseRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse.repository';
@@ -65,13 +69,15 @@ class UnusedCache extends CachePort {
   }
 }
 
-describe('warehouse use cases in WarehouseUnitOfWork', () => {
-  const prisma = () => getTestPrisma();
-  const unitOfWork = () => new WarehouseUnitOfWork(prisma());
-  const warehouses = () => new PrismaWarehouseRepository(prisma());
-  const maps = () => new PrismaWarehouseMapRepository(prisma());
+describe('warehouse use cases in PrismaTransaction', () => {
+  let transaction: PrismaTransaction;
+  let warehouses: PrismaWarehouseRepository;
+  let maps: PrismaWarehouseMapRepository;
 
   beforeEach(async () => {
+    transaction = new PrismaTransaction(getTestPrisma(), createRecordingLogger().logger);
+    warehouses = new PrismaWarehouseRepository(transaction);
+    maps = new PrismaWarehouseMapRepository(transaction);
     await cleanWarehouseTables();
   });
 
@@ -79,13 +85,81 @@ describe('warehouse use cases in WarehouseUnitOfWork', () => {
     await disconnectTestPrisma();
   });
 
+  it.each([true, false])(
+    'reads its own writes without touching the shared cache (primed: %s)',
+    async (primed) => {
+      const cache = new RecordingCache();
+      const get = new GetWarehouse(transaction, warehouses, cache);
+      const list = new ListWarehouses(transaction, warehouses, cache);
+      const warehouse = Warehouse.create(KEPT_WAREHOUSE_ID, 'Original');
+      const input = { warehouseId: warehouse.id };
+      await warehouses.insert(warehouse, RECORDED_AT);
+      if (primed) {
+        await get.execute(input);
+        await list.execute();
+      }
+      const read = vi.spyOn(cache, 'get');
+      const write = vi.spyOn(cache, 'set');
+      const rollback = new Error('roll back rename');
+      await expect(
+        transaction.run(async () => {
+          await warehouses.save(warehouse.rename('Pending'), RECORDED_AT);
+          expect((await get.execute(input)).name).toBe('Pending');
+          expect((await list.execute()).items.map((item) => item.name)).toEqual(['Pending']);
+          throw rollback;
+        }),
+      ).rejects.toBe(rollback);
+      expect(read).not.toHaveBeenCalled();
+      expect(write).not.toHaveBeenCalled();
+      expect((await get.execute(input)).name).toBe('Original');
+      expect((await list.execute()).items.map((item) => item.name)).toEqual(['Original']);
+    },
+  );
+
+  it('composes create and edit and discards their effects on outer rollback', async () => {
+    const cache = new UnusedCache();
+    const invalidate = vi.spyOn(cache, 'delete');
+    const notifier = { ...silentNotifier, mapChanged: vi.fn() };
+    const create = new CreateWarehouse(
+      transaction,
+      warehouses,
+      maps,
+      fixedIds([NEW_WAREHOUSE_ID, MAP_ID]),
+      new SystemClock(),
+      cache,
+      silentLogger,
+    );
+    const edit = new EditWarehouseMap(transaction, maps, fixedIds([]), silentLogger, notifier);
+    const rollback = new Error('roll back both commands');
+
+    await expect(
+      transaction.run(async () => {
+        const created = await create.execute({ name: 'Side' });
+        const edited = await edit.execute({
+          mapId: created.mapId,
+          expectedVersion: created.version,
+          operation: { type: 'addObstacle', position: { x: 1, y: 1 } },
+        });
+        expect(edited.version).toBe(1);
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+
+    expect(await warehouses.findById(NEW_WAREHOUSE_ID)).toBeNull();
+    expect(await maps.findById(MAP_ID)).toBeNull();
+    expect(invalidate).not.toHaveBeenCalled();
+    expect(notifier.mapChanged).not.toHaveBeenCalled();
+  });
+
   it('rolls back a new warehouse when the map id is already stored', async () => {
     const kept = Warehouse.create(KEPT_WAREHOUSE_ID, 'Kept');
     const map = WarehouseMap.create(MAP_ID, KEPT_WAREHOUSE_ID);
-    await warehouses().insert(kept, RECORDED_AT);
-    await maps().insert(map);
+    await warehouses.insert(kept, RECORDED_AT);
+    await maps.insert(map);
     const useCase = new CreateWarehouse(
-      unitOfWork(),
+      transaction,
+      warehouses,
+      maps,
       fixedIds([NEW_WAREHOUSE_ID, MAP_ID]),
       new SystemClock(),
       new UnusedCache(),
@@ -94,30 +168,30 @@ describe('warehouse use cases in WarehouseUnitOfWork', () => {
 
     await expect(useCase.execute({ name: 'Side' })).rejects.toBeInstanceOf(Error);
 
-    expect(await warehouses().findById(NEW_WAREHOUSE_ID)).toBeNull();
-    expect(await warehouses().findById(KEPT_WAREHOUSE_ID)).toEqual({
+    expect(await warehouses.findById(NEW_WAREHOUSE_ID)).toBeNull();
+    expect(await warehouses.findById(KEPT_WAREHOUSE_ID)).toEqual({
       id: KEPT_WAREHOUSE_ID,
       name: 'Kept',
       createdAt: RECORDED_AT,
       updatedAt: RECORDED_AT,
     });
-    expect(await maps().findById(MAP_ID)).toEqual({ snapshot: map.snapshot(), version: 0 });
+    expect(await maps.findById(MAP_ID)).toEqual({ snapshot: map.snapshot(), version: 0 });
   });
 
   it('restores a deleted map when the callback throws, then deletes through the use case', async () => {
-    await warehouses().insert(Warehouse.create(KEPT_WAREHOUSE_ID, 'Kept'), RECORDED_AT);
+    await warehouses.insert(Warehouse.create(KEPT_WAREHOUSE_ID, 'Kept'), RECORDED_AT);
     const map = WarehouseMap.create(MAP_ID, KEPT_WAREHOUSE_ID);
-    await maps().insert(map);
+    await maps.insert(map);
     const failure = new Error('stop delete');
 
     await expect(
-      unitOfWork().execute(async (tx) => {
-        await tx.maps.deleteByWarehouseId(KEPT_WAREHOUSE_ID);
+      transaction.run(async () => {
+        await maps.deleteByWarehouseId(KEPT_WAREHOUSE_ID);
         throw failure;
       }),
     ).rejects.toBe(failure);
-    expect(await maps().findById(MAP_ID)).toEqual({ snapshot: map.snapshot(), version: 0 });
-    expect(await warehouses().findById(KEPT_WAREHOUSE_ID)).toEqual({
+    expect(await maps.findById(MAP_ID)).toEqual({ snapshot: map.snapshot(), version: 0 });
+    expect(await warehouses.findById(KEPT_WAREHOUSE_ID)).toEqual({
       id: KEPT_WAREHOUSE_ID,
       name: 'Kept',
       createdAt: RECORDED_AT,
@@ -125,7 +199,9 @@ describe('warehouse use cases in WarehouseUnitOfWork', () => {
     });
 
     await new DeleteWarehouse(
-      unitOfWork(),
+      transaction,
+      warehouses,
+      maps,
       new UnusedCache(),
       silentLogger,
       silentNotifier,
@@ -133,15 +209,17 @@ describe('warehouse use cases in WarehouseUnitOfWork', () => {
       warehouseId: KEPT_WAREHOUSE_ID,
     });
 
-    expect(await warehouses().findById(KEPT_WAREHOUSE_ID)).toBeNull();
-    expect(await maps().findByWarehouseId(KEPT_WAREHOUSE_ID)).toBeNull();
+    expect(await warehouses.findById(KEPT_WAREHOUSE_ID)).toBeNull();
+    expect(await maps.findByWarehouseId(KEPT_WAREHOUSE_ID)).toBeNull();
   });
 
   it('deletes a warehouse that has no map', async () => {
-    await warehouses().insert(Warehouse.create(KEPT_WAREHOUSE_ID, 'Kept'), RECORDED_AT);
+    await warehouses.insert(Warehouse.create(KEPT_WAREHOUSE_ID, 'Kept'), RECORDED_AT);
 
     await new DeleteWarehouse(
-      unitOfWork(),
+      transaction,
+      warehouses,
+      maps,
       new UnusedCache(),
       silentLogger,
       silentNotifier,
@@ -149,15 +227,21 @@ describe('warehouse use cases in WarehouseUnitOfWork', () => {
       warehouseId: KEPT_WAREHOUSE_ID,
     });
 
-    expect(await warehouses().findById(KEPT_WAREHOUSE_ID)).toBeNull();
+    expect(await warehouses.findById(KEPT_WAREHOUSE_ID)).toBeNull();
   });
 
   it('does not change the stored map when a robot moves onto its current cell', async () => {
-    await warehouses().insert(Warehouse.create(KEPT_WAREHOUSE_ID, 'Kept'), RECORDED_AT);
+    await warehouses.insert(Warehouse.create(KEPT_WAREHOUSE_ID, 'Kept'), RECORDED_AT);
     const map = WarehouseMap.create(MAP_ID, KEPT_WAREHOUSE_ID);
     map.placeRobot(ROBOT_ID, 'Robot', Position.create(2, 2));
-    await maps().insert(map);
-    const useCase = new EditWarehouseMap(unitOfWork(), fixedIds([]), silentLogger, silentNotifier);
+    await maps.insert(map);
+    const useCase = new EditWarehouseMap(
+      transaction,
+      maps,
+      fixedIds([]),
+      silentLogger,
+      silentNotifier,
+    );
 
     const result = await useCase.execute({
       mapId: MAP_ID,
@@ -167,6 +251,6 @@ describe('warehouse use cases in WarehouseUnitOfWork', () => {
 
     expect(result.changed).toBe(false);
     expect(result.version).toBe(0);
-    expect(await maps().findById(MAP_ID)).toEqual({ snapshot: map.snapshot(), version: 0 });
+    expect(await maps.findById(MAP_ID)).toEqual({ snapshot: map.snapshot(), version: 0 });
   });
 });

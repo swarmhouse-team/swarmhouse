@@ -15,7 +15,8 @@ import type {
   SaveWarehouseResult,
   StoredWarehouse,
 } from '../../ports/repositories/warehouse.repository';
-import { stubUnitOfWork } from '../../testing/stub-warehouse-unit-of-work';
+import { stubWarehouses } from '../../testing/stub-warehouse-repositories';
+import { FakeTransaction } from '../../../../../common/testing/fake-transaction';
 import {
   createRecordingNotifier,
   type WarehouseNotice,
@@ -65,32 +66,35 @@ function createHarness(options?: {
     },
     failNotifier: failWith,
   };
-  const unitOfWork = stubUnitOfWork({
-    calls,
-    inserts: { count: 0 },
-    after: options?.afterCallback,
-    warehouses: {
-      async findById(warehouseId) {
-        calls.push(`findById:${warehouseId}`);
-        if (options?.findError) {
-          throw options.findError;
-        }
-        return options?.found === undefined
-          ? { id: WAREHOUSE_ID, name: 'Main', createdAt: CREATED_AT, updatedAt: CREATED_AT }
-          : options.found;
-      },
-      async save(warehouse, updatedAt) {
-        calls.push('save');
-        if (options?.saveError) {
-          throw options.saveError;
-        }
-        state.saved = warehouse;
-        state.savedAt = updatedAt;
-        return options?.saveResult ?? { status: 'saved' };
-      },
+  const transaction = new FakeTransaction(logger, options?.afterCallback);
+  const warehouses = stubWarehouses({
+    async findById(warehouseId) {
+      calls.push(`findById:${warehouseId}`);
+      if (options?.findError) {
+        throw options.findError;
+      }
+      return options?.found === undefined
+        ? { id: WAREHOUSE_ID, name: 'Main', createdAt: CREATED_AT, updatedAt: CREATED_AT }
+        : options.found;
+    },
+    async save(warehouse, updatedAt) {
+      calls.push('save');
+      if (options?.saveError) {
+        throw options.saveError;
+      }
+      state.saved = warehouse;
+      state.savedAt = updatedAt;
+      return options?.saveResult ?? { status: 'saved' };
     },
   });
-  state.useCase = new UpdateWarehouse(unitOfWork, recorded.clock, cache, logger, notifier);
+  state.useCase = new UpdateWarehouse(
+    transaction,
+    warehouses,
+    recorded.clock,
+    cache,
+    logger,
+    notifier,
+  );
   return state;
 }
 
@@ -118,7 +122,7 @@ describe('UpdateWarehouse', () => {
 
     const result = await harness.useCase.execute({ warehouseId: WAREHOUSE_ID, name: '  North  ' });
 
-    expect(harness.calls).toEqual(['execute', `findById:${WAREHOUSE_ID}`, 'save']);
+    expect(harness.calls).toEqual([`findById:${WAREHOUSE_ID}`, 'save']);
     expect(harness.saved?.id).toBe(WAREHOUSE_ID);
     expect(harness.saved?.name.value).toBe('North');
     expect(harness.nowCalls).toBe(1);
@@ -159,7 +163,7 @@ describe('UpdateWarehouse', () => {
       name: 'WarehouseNotFoundError',
       details: { warehouseId: WAREHOUSE_ID },
     });
-    expect(harness.calls).toEqual(['execute', `findById:${WAREHOUSE_ID}`]);
+    expect(harness.calls).toEqual([`findById:${WAREHOUSE_ID}`]);
     expect(harness.logs).toEqual([]);
   });
 
@@ -235,7 +239,7 @@ describe('UpdateWarehouse', () => {
     expect(harness.logs).toEqual([]);
   });
 
-  it('logs warehouse.renamed only after unit of work execute settles', async () => {
+  it('logs warehouse.renamed only after the transaction commits', async () => {
     let release: (() => void) | undefined;
     const gate = new Promise<void>((resolve) => {
       release = resolve;
@@ -315,7 +319,7 @@ describe('UpdateWarehouse', () => {
     ]);
     expect(harness.logs).toContainEqual({
       level: 'error',
-      event: 'warehouse.realtime.publish_failed',
+      event: 'transaction.after_commit_failed',
       context: { errorClass: 'Error' },
     });
     expect(JSON.stringify(harness.logs)).not.toContain('socket down');

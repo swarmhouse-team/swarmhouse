@@ -7,7 +7,7 @@ import type {
   StoredWarehouse,
   WarehouseRepository,
 } from '../../ports/repositories/warehouse.repository';
-import { stubWarehouses } from '../../testing/stub-warehouse-unit-of-work';
+import { stubWarehouses } from '../../testing/stub-warehouse-repositories';
 import { RecordingCache } from '../../../../../common/testing/recording-cache';
 import { WAREHOUSE_DETAILS_TTL_MS, warehouseDetailsCacheKey } from '../warehouse-cache.policy';
 import { GetWarehouse } from './get-warehouse.use-case';
@@ -58,7 +58,7 @@ describe('GetWarehouse', () => {
     });
     const { maps, calls } = repository(null);
 
-    const result = await new GetWarehouse(maps, cache).execute({
+    const result = await new GetWarehouse({ isActive: false }, maps, cache).execute({
       warehouseId: WAREHOUSE_ID.toUpperCase(),
     });
 
@@ -80,7 +80,7 @@ describe('GetWarehouse', () => {
       }),
     );
 
-    const result = await new GetWarehouse(maps, cache).execute({
+    const result = await new GetWarehouse({ isActive: false }, maps, cache).execute({
       warehouseId: WAREHOUSE_ID.toUpperCase(),
     });
 
@@ -98,7 +98,7 @@ describe('GetWarehouse', () => {
     const { maps } = repository(null);
 
     await expect(
-      new GetWarehouse(maps, cache).execute({ warehouseId: WAREHOUSE_ID }),
+      new GetWarehouse({ isActive: false }, maps, cache).execute({ warehouseId: WAREHOUSE_ID }),
     ).rejects.toBeInstanceOf(WarehouseNotFoundError);
     expect(cache.values.size).toBe(0);
   });
@@ -109,7 +109,9 @@ describe('GetWarehouse', () => {
     cache.values.set(key, { ttlMs: 1, value: { warehouseId: WAREHOUSE_ID } });
     const { maps, calls } = repository(stored({ createdAt: null, updatedAt: null }));
 
-    const broken = await new GetWarehouse(maps, cache).execute({ warehouseId: WAREHOUSE_ID });
+    const broken = await new GetWarehouse({ isActive: false }, maps, cache).execute({
+      warehouseId: WAREHOUSE_ID,
+    });
 
     expect(calls).toEqual([WAREHOUSE_ID]);
     expect(broken).toEqual({
@@ -128,7 +130,9 @@ describe('GetWarehouse', () => {
         updatedAt: null,
       },
     });
-    const foreign = await new GetWarehouse(maps, cache).execute({ warehouseId: WAREHOUSE_ID });
+    const foreign = await new GetWarehouse({ isActive: false }, maps, cache).execute({
+      warehouseId: WAREHOUSE_ID,
+    });
     expect(foreign.warehouseId).toBe(WAREHOUSE_ID);
     expect(calls).toEqual([WAREHOUSE_ID, WAREHOUSE_ID]);
   });
@@ -139,13 +143,13 @@ describe('GetWarehouse', () => {
     getFailed.getError = new CacheError('unavailable');
 
     await expect(
-      new GetWarehouse(maps, getFailed).execute({ warehouseId: WAREHOUSE_ID }),
+      new GetWarehouse({ isActive: false }, maps, getFailed).execute({ warehouseId: WAREHOUSE_ID }),
     ).resolves.toMatchObject({ warehouseId: WAREHOUSE_ID, createdAt: null });
 
     const setFailed = new RecordingCache();
     setFailed.setError = new CacheError('command_failed');
     await expect(
-      new GetWarehouse(maps, setFailed).execute({ warehouseId: WAREHOUSE_ID }),
+      new GetWarehouse({ isActive: false }, maps, setFailed).execute({ warehouseId: WAREHOUSE_ID }),
     ).resolves.toMatchObject({ name: 'Main' });
   });
 
@@ -154,7 +158,9 @@ describe('GetWarehouse', () => {
     const { maps } = repository(null, failure);
 
     await expect(
-      new GetWarehouse(maps, new RecordingCache()).execute({ warehouseId: WAREHOUSE_ID }),
+      new GetWarehouse({ isActive: false }, maps, new RecordingCache()).execute({
+        warehouseId: WAREHOUSE_ID,
+      }),
     ).rejects.toBe(failure);
   });
 
@@ -167,7 +173,7 @@ describe('GetWarehouse', () => {
     const { maps } = repository(stored({ createdAt: null, updatedAt: null }));
 
     await expect(
-      new GetWarehouse(maps, cache).execute({ warehouseId: WAREHOUSE_ID }),
+      new GetWarehouse({ isActive: false }, maps, cache).execute({ warehouseId: WAREHOUSE_ID }),
     ).resolves.toMatchObject({ warehouseId: WAREHOUSE_ID });
   });
 });

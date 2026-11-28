@@ -1,14 +1,14 @@
+import { PrismaTransaction } from '../../../src/common/infrastructure/prisma-transaction';
+import { createRecordingLogger } from '../../../src/common/testing/create-recording-logger';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 const RECORDED_AT = new Date('2026-01-01T00:00:00.000Z');
 
 import { MapVersionConflictError } from '../../../src/modules/warehouse/application/errors/application.errors';
 import type { SaveMapResult } from '../../../src/modules/warehouse/application/ports/repositories/warehouse-map.repository';
-import type { WarehouseRepository } from '../../../src/modules/warehouse/application/ports/repositories/warehouse.repository';
 import { WarehouseMap } from '../../../src/modules/warehouse/domain/entities/warehouse-map';
 import { Warehouse } from '../../../src/modules/warehouse/domain/entities/warehouse';
 import { Position } from '../../../src/common/domain/position';
-import { WarehouseUnitOfWork } from '../../../src/modules/warehouse/infrastructure/prisma/transaction/warehouse-unit-of-work';
 import { PrismaWarehouseMapRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse-map.repository';
 import { PrismaWarehouseRepository } from '../../../src/modules/warehouse/infrastructure/prisma/repositories/prisma-warehouse.repository';
 import { disconnectTestPrisma, getTestPrisma } from '../support/test-database';
@@ -49,13 +49,15 @@ function gateFor(parties: number) {
   };
 }
 
-describe('WarehouseUnitOfWork', () => {
-  const prisma = () => getTestPrisma();
-  const unitOfWork = () => new WarehouseUnitOfWork(prisma());
-  const warehouses = () => new PrismaWarehouseRepository(prisma());
-  const maps = () => new PrismaWarehouseMapRepository(prisma());
+describe('PrismaTransaction', () => {
+  let transaction: PrismaTransaction;
+  let warehouses: PrismaWarehouseRepository;
+  let maps: PrismaWarehouseMapRepository;
 
   beforeEach(async () => {
+    transaction = new PrismaTransaction(getTestPrisma(), createRecordingLogger().logger);
+    warehouses = new PrismaWarehouseRepository(transaction);
+    maps = new PrismaWarehouseMapRepository(transaction);
     await cleanWarehouseTables();
   });
 
@@ -64,9 +66,9 @@ describe('WarehouseUnitOfWork', () => {
   });
 
   it('commits the callback result and lets the callback read its own write', async () => {
-    const result = await unitOfWork().execute(async (tx) => {
-      await tx.warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
-      return tx.warehouses.findById(WAREHOUSE_ID);
+    const result = await transaction.run(async () => {
+      await warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
+      return warehouses.findById(WAREHOUSE_ID);
     });
 
     expect(result).toEqual({
@@ -75,24 +77,24 @@ describe('WarehouseUnitOfWork', () => {
       createdAt: RECORDED_AT,
       updatedAt: RECORDED_AT,
     });
-    expect(await warehouses().findById(WAREHOUSE_ID)).toEqual(result);
+    expect(await warehouses.findById(WAREHOUSE_ID)).toEqual(result);
   });
 
   it('keeps a returned conflict and does not roll the transaction back', async () => {
-    await warehouses().insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
+    await warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
     const map = mapWithRobot();
-    await maps().insert(map);
+    await maps.insert(map);
 
-    const result = await unitOfWork().execute(async (tx) => tx.maps.save(map, 4));
+    const result = await transaction.run(async () => maps.save(map, 4));
 
     expect(result).toEqual({ status: 'conflict', actualVersion: 0 });
-    expect(await maps().findById(MAP_ID)).toEqual({ snapshot: map.snapshot(), version: 0 });
+    expect(await maps.findById(MAP_ID)).toEqual({ snapshot: map.snapshot(), version: 0 });
   });
 
   it('rolls back a saved map when the callback throws the same error', async () => {
-    await warehouses().insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
+    await warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
     const map = mapWithRobot();
-    await maps().insert(map);
+    await maps.insert(map);
     const stored = map.snapshot();
     map.moveRobot(ROBOT_ID, Position.create(6, 6));
     const failure = new MapVersionConflictError({
@@ -102,36 +104,19 @@ describe('WarehouseUnitOfWork', () => {
     });
 
     await expect(
-      unitOfWork().execute(async (tx) => {
-        const saved = await tx.maps.save(map, 0);
+      transaction.run(async () => {
+        const saved = await maps.save(map, 0);
         expect(saved).toEqual({ status: 'saved', version: 1 });
         throw failure;
       }),
     ).rejects.toBe(failure);
 
-    expect(await maps().findById(MAP_ID)).toEqual({ snapshot: stored, version: 0 });
-  });
-
-  it('rejects a repository kept after the transaction has finished', async () => {
-    let captured: WarehouseRepository | undefined;
-
-    await unitOfWork().execute(async (tx) => {
-      captured = tx.warehouses;
-      await tx.warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
-    });
-
-    await expect(captured?.findById(WAREHOUSE_ID)).rejects.toBeInstanceOf(Error);
-    expect(await warehouses().findById(WAREHOUSE_ID)).toEqual({
-      id: WAREHOUSE_ID,
-      name: 'Main',
-      createdAt: RECORDED_AT,
-      updatedAt: RECORDED_AT,
-    });
+    expect(await maps.findById(MAP_ID)).toEqual({ snapshot: stored, version: 0 });
   });
 
   it('lets one concurrent save win and reports a conflict for the other', async () => {
-    await warehouses().insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
-    await maps().insert(mapWithRobot());
+    await warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
+    await maps.insert(mapWithRobot());
     const first = mapWithRobot();
     const second = mapWithRobot();
     first.moveRobot(ROBOT_ID, Position.create(6, 6));
@@ -140,13 +125,13 @@ describe('WarehouseUnitOfWork', () => {
 
     const compete = async (map: WarehouseMap): Promise<SaveMapResult> => {
       try {
-        return await unitOfWork().execute(async (tx) => {
-          const current = await tx.maps.findById(MAP_ID);
+        return await transaction.run(async () => {
+          const current = await maps.findById(MAP_ID);
           if (!current) {
             throw new Error('Map disappeared before the barrier');
           }
           await gate.arrive();
-          return tx.maps.save(map, current.version);
+          return maps.save(map, current.version);
         });
       } catch (error) {
         gate.fail(error);
@@ -166,12 +151,12 @@ describe('WarehouseUnitOfWork', () => {
     expect(saved).toEqual({ status: 'saved', version: 1 });
     expect(conflict?.status).toBe('conflict');
     const winner = results[0] === saved ? first.snapshot() : second.snapshot();
-    expect(await maps().findById(MAP_ID)).toEqual({ snapshot: winner, version: 1 });
+    expect(await maps.findById(MAP_ID)).toEqual({ snapshot: winner, version: 1 });
   });
 
   it('reports a conflict for the save that waits until the first transaction commits', async () => {
-    await warehouses().insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
-    await maps().insert(mapWithRobot());
+    await warehouses.insert(Warehouse.create(WAREHOUSE_ID, 'Main'), RECORDED_AT);
+    await maps.insert(mapWithRobot());
     const first = mapWithRobot();
     const second = mapWithRobot();
     first.moveRobot(ROBOT_ID, Position.create(6, 6));
@@ -186,9 +171,9 @@ describe('WarehouseUnitOfWork', () => {
       markSaved = resolve;
     });
 
-    const pendingFirst = unitOfWork()
-      .execute(async (tx) => {
-        const saved = await tx.maps.save(first, 0);
+    const pendingFirst = transaction
+      .run(async () => {
+        const saved = await maps.save(first, 0);
         markSaved();
         await holdFirst;
         return saved;
@@ -202,13 +187,13 @@ describe('WarehouseUnitOfWork', () => {
     let pendingSecond: Promise<SaveMapResult> | undefined;
     try {
       await firstSaved;
-      pendingSecond = unitOfWork().execute(async (tx) => tx.maps.save(second, 0));
+      pendingSecond = transaction.run(async () => maps.save(second, 0));
       releaseFirst();
       const [firstResult, secondResult] = await Promise.all([pendingFirst, pendingSecond]);
 
       expect(firstResult).toEqual({ status: 'saved', version: 1 });
       expect(secondResult.status).toBe('conflict');
-      expect(await maps().findById(MAP_ID)).toEqual({ snapshot: first.snapshot(), version: 1 });
+      expect(await maps.findById(MAP_ID)).toEqual({ snapshot: first.snapshot(), version: 1 });
     } finally {
       releaseFirst();
       markSaved();

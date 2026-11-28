@@ -15,6 +15,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { httpProviders } from '../../../src/common/http/http.providers';
+import { CachePort } from '../../../src/cache/application/ports/cache.port';
+import { MemoryCache } from '../../../src/cache/infrastructure/memory/memory-cache';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { WarehouseModule } from '../../../src/modules/warehouse/warehouse.module';
 import { disconnectTestPrisma, getTestPrisma } from '../support/test-database';
@@ -30,6 +32,8 @@ describe('warehouse HTTP on the test database', () => {
       imports: [WarehouseModule],
       providers: [...httpProviders],
     })
+      .overrideProvider(CachePort)
+      .useValue(new MemoryCache({ maxEntries: 100 }))
       .overrideProvider(PrismaService)
       .useValue(getTestPrisma())
       .compile();

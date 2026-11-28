@@ -1,4 +1,4 @@
-import type { PrismaDb } from '../../../../../common/infrastructure/prisma-db';
+import type { PrismaTransaction } from '../../../../../common/infrastructure/prisma-transaction';
 import type { Prisma } from '../../../../../generated/prisma/client';
 import type { WarehouseMap } from '../../../domain/entities/warehouse-map';
 import type {
@@ -10,11 +10,11 @@ import { parseMapContent, toMapContent } from '../mapping/map-content.schema';
 
 /** Stores one map row. It does not restore the aggregate or open a transaction. */
 export class PrismaWarehouseMapRepository implements WarehouseMapRepository {
-  constructor(private readonly db: PrismaDb) {}
+  constructor(private readonly transaction: PrismaTransaction) {}
 
   async insert(map: WarehouseMap): Promise<void> {
     const snapshot = map.snapshot();
-    await this.db.warehouseMapRecord.create({
+    await this.transaction.db.warehouseMapRecord.create({
       data: {
         id: snapshot.id,
         warehouseId: snapshot.warehouseId,
@@ -25,14 +25,14 @@ export class PrismaWarehouseMapRepository implements WarehouseMapRepository {
   }
 
   async findById(mapId: string): Promise<StoredWarehouseMap | null> {
-    const row = await this.db.warehouseMapRecord.findUnique({
+    const row = await this.transaction.db.warehouseMapRecord.findUnique({
       where: { id: mapId },
     });
     return row ? this.toStored(row) : null;
   }
 
   async findByWarehouseId(warehouseId: string): Promise<StoredWarehouseMap | null> {
-    const row = await this.db.warehouseMapRecord.findUnique({
+    const row = await this.transaction.db.warehouseMapRecord.findUnique({
       where: { warehouseId },
     });
     return row ? this.toStored(row) : null;
@@ -40,7 +40,7 @@ export class PrismaWarehouseMapRepository implements WarehouseMapRepository {
 
   async save(map: WarehouseMap, expectedVersion: number): Promise<SaveMapResult> {
     const snapshot = map.snapshot();
-    const updated = await this.db.warehouseMapRecord.updateMany({
+    const updated = await this.transaction.db.warehouseMapRecord.updateMany({
       where: { id: snapshot.id, version: expectedVersion },
       data: {
         content: toMapContent(snapshot),
@@ -51,7 +51,7 @@ export class PrismaWarehouseMapRepository implements WarehouseMapRepository {
       return { status: 'saved', version: expectedVersion + 1 };
     }
 
-    const current = await this.db.warehouseMapRecord.findUnique({
+    const current = await this.transaction.db.warehouseMapRecord.findUnique({
       where: { id: snapshot.id },
       select: { version: true },
     });
@@ -62,7 +62,7 @@ export class PrismaWarehouseMapRepository implements WarehouseMapRepository {
   }
 
   async deleteByWarehouseId(warehouseId: string): Promise<void> {
-    await this.db.warehouseMapRecord.deleteMany({
+    await this.transaction.db.warehouseMapRecord.deleteMany({
       where: { warehouseId },
     });
   }
