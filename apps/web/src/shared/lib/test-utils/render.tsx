@@ -4,7 +4,7 @@ import type { ReactElement, ReactNode } from 'react';
 
 import { useQueryClientWithI18n } from '@/shared/api';
 import { type Locale } from '@/shared/config';
-import { LocalIntlProvider } from '@/shared/i18n';
+import { LocalIntlProvider, UiIntlProvider } from '@/shared/i18n';
 
 type RenderWithProvidersOptions = Omit<RenderOptions, 'wrapper'> & {
   /** Язык интерфейса, по умолчанию `ru`. */
@@ -22,7 +22,9 @@ export function renderWithProviders(
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <LocalIntlProvider locale={locale} timeZone="UTC">
-        <QueryProvider>{children}</QueryProvider>
+        <UiIntlProvider>
+          <QueryProvider>{children}</QueryProvider>
+        </UiIntlProvider>
       </LocalIntlProvider>
     );
   }

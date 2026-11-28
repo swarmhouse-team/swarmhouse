@@ -108,6 +108,8 @@ export default defineConfig(
               'fill',
               'aria-current',
               'aria-hidden',
+              'align',
+              'value',
               'data-.*',
             ],
           },

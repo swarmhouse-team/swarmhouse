@@ -2,10 +2,15 @@ import { z } from 'zod';
 
 import { API_ERROR_CODES, apiErrorSchema } from '../api-error';
 
-/** Совпадает с доменным `MAX_NAME_LENGTH`. Длина считается после trim. */
-const MAX_WAREHOUSE_NAME_LENGTH = 100;
+/** Совпадает с доменными ограничениями имени. Длина считается после trim. */
+export const MIN_WAREHOUSE_NAME_LENGTH = 1;
+export const MAX_WAREHOUSE_NAME_LENGTH = 100;
 
-const warehouseNameSchema = z.string().trim().min(1).max(MAX_WAREHOUSE_NAME_LENGTH);
+const warehouseNameSchema = z
+  .string()
+  .trim()
+  .min(MIN_WAREHOUSE_NAME_LENGTH)
+  .max(MAX_WAREHOUSE_NAME_LENGTH);
 
 const uuidSchema = z.uuid();
 
@@ -93,6 +98,12 @@ export const renameWarehouseRequestSchema = z.strictObject({
 });
 
 export type RenameWarehouseRequest = z.infer<typeof renameWarehouseRequestSchema>;
+
+export const inviteWarehouseMemberSchema = z.strictObject({
+  email: z.email(),
+});
+
+export type InviteWarehouseMember = z.infer<typeof inviteWarehouseMemberSchema>;
 
 export const warehousePathParamsSchema = z.strictObject({
   warehouseId: uuidSchema,

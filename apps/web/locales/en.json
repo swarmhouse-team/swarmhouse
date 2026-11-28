@@ -176,6 +176,122 @@
   "notFound": {
     "title": "Page not found"
   },
+  "ui": {
+    "dialog": {
+      "close": "Close"
+    }
+  },
+  "warehouses": {
+    "page": {
+      "title": "Warehouses",
+      "subtitle": "Manage warehouses, members and simulation settings.",
+      "create": "Create warehouse"
+    },
+    "newCard": {
+      "title": "New warehouse",
+      "description": "Create a new warehouse"
+    },
+    "card": {
+      "mapPlaceholderLabel": "Map placeholder for warehouse “{name}”",
+      "mapPlaceholder": "Map preview",
+      "summary": "{width} × {height} cells · {robots, plural, one {# robot} other {# robots}} · {stations, plural, one {# st.} other {# st.}}"
+    },
+    "menu": {
+      "openLabel": "Open menu for warehouse “{name}”",
+      "settings": "Warehouse settings",
+      "delete": "Delete warehouse"
+    },
+    "roles": {
+      "owner": "Owner",
+      "observer": "Observer"
+    },
+    "statuses": {
+      "running": "Running",
+      "paused": "Paused",
+      "notStarted": "Not started"
+    },
+    "list": {
+      "filterLabel": "Warehouse filter",
+      "filters": {
+        "all": "All",
+        "mine": "Mine",
+        "available": "Shared with me"
+      },
+      "searchLabel": "Search warehouses by name",
+      "searchPlaceholder": "Search by name",
+      "empty": {
+        "title": "No warehouses yet",
+        "description": "Create your first warehouse to get started."
+      },
+      "noResults": {
+        "title": "No results found",
+        "description": "Try changing the search query or selecting another filter."
+      }
+    },
+    "create": {
+      "title": "New warehouse",
+      "description": "Enter a name for the new warehouse.",
+      "nameLabel": "Name",
+      "namePlaceholder": "For example, Central warehouse",
+      "cancel": "Cancel",
+      "submit": "Create warehouse"
+    },
+    "delete": {
+      "title": "Delete warehouse?",
+      "description": "This action cannot be undone.",
+      "consequencesTitle": "Deleting the warehouse will also remove:",
+      "consequences": {
+        "map": "the warehouse map;",
+        "robotsAndStations": "robots and stations;",
+        "settingsAndMembers": "settings and members;",
+        "simulationData": "related simulation data."
+      },
+      "confirmationLabel": "Enter the warehouse name to confirm:",
+      "confirmationHint": "The name must match exactly, including letter case.",
+      "cancel": "Cancel",
+      "submit": "Delete warehouse"
+    },
+    "settings": {
+      "title": "Warehouse settings",
+      "navigationLabel": "Settings sections",
+      "notAvailable": "—",
+      "tabs": {
+        "general": "General",
+        "size": "Size",
+        "users": "Users",
+        "unavailable": "This section is not implemented yet"
+      },
+      "general": {
+        "description": "Warehouse name and information",
+        "nameLabel": "Name",
+        "characterCount": "{count} / {max}",
+        "nameHint": "Between {min} and {max} characters.",
+        "createdAt": "Created",
+        "mapSize": "Map size",
+        "mapSizeValue": "{width} × {height} cells",
+        "simulationStatus": "Simulation status",
+        "cancel": "Cancel",
+        "save": "Save"
+      },
+      "users": {
+        "description": "Manage warehouse access",
+        "emailPlaceholder": "name@company.com",
+        "observerRole": "Observer",
+        "ownerRole": "Owner",
+        "invite": "Invite",
+        "observerDescription": "Observers can view the map and simulation in real time.",
+        "participants": "Members",
+        "participantsCount": "{active} active · {pending} pending",
+        "currentUser": "(you)",
+        "invitationSent": "Invitation sent",
+        "pending": "Pending",
+        "roleLabel": "Role for user {name}",
+        "removeLabel": "Remove user {name}",
+        "alreadyInvited": "This user has already been invited",
+        "done": "Done"
+      }
+    }
+  },
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "api": {

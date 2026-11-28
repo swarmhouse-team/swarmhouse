@@ -5,7 +5,7 @@ import type { ComponentProps } from 'react';
 import { cn } from '../lib/cn';
 
 export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
-export type HeadingSize = '2xl' | 'xl' | 'lg' | 'md' | 'sm';
+export type HeadingSize = '2xl' | 'xl' | 'lg' | 'md' | 'sm' | 'base' | 'xs';
 
 const headingTags = {
   1: 'h1',
@@ -33,6 +33,8 @@ export const headingVariants = cva('text-foreground', {
       lg: 'text-2xl font-semibold',
       md: 'text-xl font-semibold',
       sm: 'text-lg font-semibold',
+      base: 'text-base font-semibold',
+      xs: 'text-sm font-semibold',
     },
   },
 });

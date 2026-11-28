@@ -1,11 +1,15 @@
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
+const webDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(webDir, '../..');
+
 // Общий .env лежит в корне монорепозитория, Next сам читает только apps/web/.env*.
-const rootEnvFile = resolve(process.cwd(), '../../.env');
+const rootEnvFile = path.join(repoRoot, '.env');
 if (existsSync(rootEnvFile)) {
   process.loadEnvFile(rootEnvFile);
 }
@@ -13,6 +17,8 @@ if (existsSync(rootEnvFile)) {
 const apiInternalUrl = process.env.API_INTERNAL_URL ?? 'http://localhost:3001';
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
+  outputFileTracingRoot: repoRoot,
   // @robots/ui поставляется исходниками (TSX), его компилирует Next.
   transpilePackages: ['@robots/ui'],
   turbopack: {

@@ -1,0 +1,90 @@
+name: Publish application images
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: application-image-release
+  queue: max
+
+jobs:
+  publish:
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    outputs:
+      promoted: ${{ steps.promote.outputs.promoted }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      API_IMAGE: ghcr.io/${{ github.repository }}-api
+      WEB_IMAGE: ghcr.io/${{ github.repository }}-web
+    steps:
+      - name: Validate release tag
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::Use a stable release tag in vMAJOR.MINOR.PATCH format"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Build API and Web images
+        run: |
+          docker build --target api --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" --label "org.opencontainers.image.version=$RELEASE_TAG" --tag "$API_IMAGE:$RELEASE_TAG" .
+          docker build --target web --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" --label "org.opencontainers.image.version=$RELEASE_TAG" --tag "$WEB_IMAGE:$RELEASE_TAG" .
+
+      - name: Sign in to GitHub Container Registry
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Publish versioned images
+        run: |
+          docker push "$API_IMAGE:$RELEASE_TAG"
+          docker push "$WEB_IMAGE:$RELEASE_TAG"
+
+      - name: Promote the highest stable release to latest
+        id: promote
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          highest_release="$(
+            gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+              --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' \
+              | grep -Ex 'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)' \
+              | LC_ALL=C sort -V \
+              | tail -n 1
+          )"
+
+          if [[ "$RELEASE_TAG" != "$highest_release" ]]; then
+            echo "Published $RELEASE_TAG. The highest stable release is $highest_release."
+            exit 0
+          fi
+
+          for image in "$API_IMAGE" "$WEB_IMAGE"; do
+            docker tag "$image:$RELEASE_TAG" "$image:latest"
+            docker push "$image:latest"
+          done
+          echo "promoted=true" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy application to production
+    needs: publish
+    if: ${{ needs.publish.outputs.promoted == 'true' && vars.APP_DEPLOY_ENABLED == 'true' }}
+    uses: ./.github/workflows/app-switch.yml
+    with:
+      command: ${{ github.event.release.tag_name }}
+    secrets:
+      APP_DEPLOY_SSH_KEY: ${{ secrets.APP_DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
