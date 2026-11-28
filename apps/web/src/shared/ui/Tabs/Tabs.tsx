@@ -2,7 +2,7 @@ import { HStack, VStack } from '@/shared/ui/Stack';
 import { classNames } from '@/shared/lib/classNames/classNames';
 import { memo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { EditorTabType, TabItem } from '@/shared/types';
+import { EditorTabType, TabItem } from './model';
 
 interface TabsProps {
   data: TabItem[];

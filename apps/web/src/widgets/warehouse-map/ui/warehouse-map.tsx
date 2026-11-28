@@ -2,7 +2,7 @@
 import { VStack } from '@/shared/ui/Stack';
 import type { WarehouseMapBody } from '@robots/shared';
 import { useTranslations } from 'next-intl';
-import { getMapSummary } from '../model/lib/map-summary';
+import { getMapSummary } from '../model/map-summary';
 import { EditorToolbar } from './editor-toolbar/editor-toolbar';
 import { EditorSummary, EditorZoom } from './editor-overlays/editor-overlays';
 import { MAP_BASE_SIZE, MapCanvas } from './map-canvas/map-canvas';

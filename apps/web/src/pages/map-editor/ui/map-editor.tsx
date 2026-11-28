@@ -1,14 +1,12 @@
 'use client';
 import { Link } from '@/shared/i18n';
 import { Button, Text } from '@robots/ui';
-import ArrIcon from '@/shared/assets/icons/arr.svg';
-import RedoIcon from '@/shared/assets/icons/redo.svg';
-import UndoIcon from '@/shared/assets/icons/undo.svg';
+import { ArrIcon, RedoIcon, UndoIcon } from '@/shared/icons';
 import { BtnIcon } from '@/shared/ui/BtnIcon';
 import { HStack, VStack } from '@/shared/ui/Stack';
 import { useCallback, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { EditorTabType, TabItem } from '@/shared/types';
+import { EditorTabType, TabItem } from '@/shared/ui/Tabs';
 import { Tabs } from '@/shared/ui/Tabs';
 import { WarehouseMap } from '@/widgets/warehouse-map';
 import { validWarehouseMap } from '@robots/shared';

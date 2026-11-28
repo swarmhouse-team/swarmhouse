@@ -1,11 +1,7 @@
 'use client';
 import { Fragment, type FC, type SVGProps } from 'react';
 import { useTranslations } from 'next-intl';
-import SelectIcon from '@/shared/assets/icons/select.svg';
-import ObstacleIcon from '@/shared/assets/icons/obstacle.svg';
-import StationIcon from '@/shared/assets/icons/station.svg';
-import RobotIcon from '@/shared/assets/icons/robot.svg';
-import EraserIcon from '@/shared/assets/icons/eraser.svg';
+import { SelectIcon, ObstacleIcon, StationIcon, RobotIcon, EraserIcon } from '@/shared/icons';
 import { EditorTool } from '../../model/types';
 
 interface EditorToolbarProps {

@@ -1,6 +1,6 @@
 'use client';
 import { useTranslations } from 'next-intl';
-import type { MapSummary } from '../../model/lib/map-summary';
+import type { MapSummary } from '../../model/map-summary';
 
 interface EditorSummaryProps {
   summary: MapSummary;
