@@ -17,7 +17,7 @@ export function login(credentials: LoginRequest): Promise<LoginResponse> {
     method: 'POST',
     body: credentials,
     schema: loginResponseSchema,
-    skipAuthRefresh: true,
+    public: true,
   });
 }
 
@@ -25,13 +25,13 @@ export function refreshAccessToken(): Promise<LoginResponse> {
   return http('/auth/refresh', {
     method: 'POST',
     schema: loginResponseSchema,
-    skipAuthRefresh: true,
+    public: true,
   });
 }
 
 export function logout(): Promise<void> {
   return withoutAuthRefresh(async () => {
-    await http('/auth/logout', { method: 'POST', skipAuthRefresh: true });
+    await http('/auth/logout', { method: 'POST', public: true });
     useSessionStore.getState().clearSession();
   });
 }

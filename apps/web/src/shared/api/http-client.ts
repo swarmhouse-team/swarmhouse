@@ -35,8 +35,8 @@ export type HttpOptions<T> = {
   schema?: ZodType<T>;
   signal?: AbortSignal;
   headers?: Record<string, string>;
-  /** Не запускать refresh при 401. Нужен для самих auth-запросов. */
-  skipAuthRefresh?: boolean;
+  /** Публичный запрос: без access-токена и без refresh при 401. */
+  public?: boolean;
 };
 
 /** Подключает session-стор к HTTP-клиенту без зависимости shared-слоя от entities. */
@@ -64,8 +64,9 @@ async function sendRequest<T>(
   options: HttpOptions<T>,
   retriedAfterRefresh: boolean,
 ): Promise<T> {
-  const { method = 'GET', body, schema, signal, headers, skipAuthRefresh = false } = options;
-  const accessToken = authHandlers?.getAccessToken();
+  const { method = 'GET', body, schema, signal, headers, public: isPublic = false } = options;
+  const handlers = authHandlers;
+  const accessToken = isPublic ? null : handlers?.getAccessToken();
 
   let response: Response;
   try {
@@ -94,14 +95,23 @@ async function sendRequest<T>(
 
   if (
     response.status === 401 &&
-    authHandlers?.getAccessToken() &&
-    !skipAuthRefresh &&
+    handlers &&
+    handlers === authHandlers &&
+    accessToken &&
     authRefreshPauseCount === 0
   ) {
-    if (retriedAfterRefresh) {
-      authHandlers.onAuthenticationFailure();
-    } else if (await refreshAccessTokenOnce()) {
-      return sendRequest(path, options, true);
+    const currentToken = handlers.getAccessToken();
+    if (currentToken) {
+      if (retriedAfterRefresh) {
+        if (currentToken === accessToken) {
+          handlers.onAuthenticationFailure();
+        }
+      } else if (
+        currentToken !== accessToken ||
+        (await refreshAccessTokenOnce(handlers, currentToken))
+      ) {
+        return sendRequest(path, options, true);
+      }
     }
   }
 
@@ -126,31 +136,31 @@ async function sendRequest<T>(
   }
 }
 
-function refreshAccessTokenOnce(): Promise<string | null> {
-  if (!refreshPromise) {
-    const handlers = authHandlers;
-    if (!handlers) {
-      return Promise.resolve(null);
-    }
-
-    refreshPromise = handlers
-      .refreshAccessToken()
-      .then((accessToken) => {
-        if (!accessToken) {
-          handlers.onAuthenticationFailure();
-        }
-        return accessToken;
-      })
-      .catch(() => {
-        handlers.onAuthenticationFailure();
-        return null;
-      })
-      .finally(() => {
-        refreshPromise = null;
-      });
+function refreshAccessTokenOnce(
+  handlers: HttpAuthHandlers,
+  tokenBeforeRefresh: string,
+): Promise<string | null> {
+  if (refreshPromise) {
+    return refreshPromise;
   }
 
-  return refreshPromise;
+  const pending = Promise.resolve()
+    .then(() => handlers.refreshAccessToken())
+    .catch(() => null)
+    .then((token) => {
+      if (!token && handlers === authHandlers && handlers.getAccessToken() === tokenBeforeRefresh) {
+        handlers.onAuthenticationFailure();
+      }
+      return handlers === authHandlers ? token : null;
+    })
+    .finally(() => {
+      if (refreshPromise === pending) {
+        refreshPromise = null;
+      }
+    });
+
+  refreshPromise = pending;
+  return pending;
 }
 
 async function parseApiError(response: Response): Promise<ApiError> {

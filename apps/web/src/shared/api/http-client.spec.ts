@@ -143,6 +143,34 @@ describe('http', () => {
     );
   });
 
+  it('keeps cookies but skips the Bearer token and refresh for public requests', async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({ code: 'UNAUTHORIZED', message: 'Invalid login' }, { status: 401 }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const refresh = vi.fn();
+    const onAuthenticationFailure = vi.fn();
+    resetHttpAuth = configureHttpAuth({
+      getAccessToken: () => 'access-token',
+      refreshAccessToken: refresh,
+      onAuthenticationFailure,
+    });
+
+    await expect(http('/auth/login', { method: 'POST', public: true })).rejects.toMatchObject({
+      status: 401,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/auth/login',
+      expect.objectContaining({
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+      }),
+    );
+    expect(refresh).not.toHaveBeenCalled();
+    expect(onAuthenticationFailure).not.toHaveBeenCalled();
+  });
+
   it('refreshes once after 401 and repeats the request with the new token', async () => {
     let accessToken = 'expired-token';
     const refresh = vi.fn(async () => {
@@ -196,6 +224,42 @@ describe('http', () => {
     await expect(
       Promise.all([http('/first', { schema }), http('/second', { schema })]),
     ).resolves.toEqual([{ status: 'ok' }, { status: 'ok' }]);
+
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it('retries a late 401 with the token already refreshed by another request', async () => {
+    let accessToken = 'expired-token';
+    let releaseSlowResponse!: () => void;
+    const slowResponse = new Promise<void>((resolve) => {
+      releaseSlowResponse = resolve;
+    });
+    const refresh = vi.fn(async () => {
+      accessToken = 'new-token';
+      return accessToken;
+    });
+    const fetchMock = vi.fn(async (url: string, options: RequestInit) => {
+      const headers = options.headers as Record<string, string>;
+      if (headers.Authorization === 'Bearer new-token') {
+        return Response.json({ status: 'ok' });
+      }
+      if (url === '/api/slow') {
+        await slowResponse;
+      }
+      return Response.json({ code: 'UNAUTHORIZED', message: 'Expired' }, { status: 401 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    resetHttpAuth = configureHttpAuth({
+      getAccessToken: () => accessToken,
+      refreshAccessToken: refresh,
+      onAuthenticationFailure: vi.fn(),
+    });
+
+    const slow = http('/slow', { schema });
+    await expect(http('/fast', { schema })).resolves.toEqual({ status: 'ok' });
+    releaseSlowResponse();
+    await expect(slow).resolves.toEqual({ status: 'ok' });
 
     expect(refresh).toHaveBeenCalledOnce();
     expect(fetchMock).toHaveBeenCalledTimes(4);
