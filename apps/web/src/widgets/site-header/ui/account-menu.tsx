@@ -60,7 +60,7 @@ function SignedInMenu() {
           type="button"
           size="icon"
           variant="ghost"
-          className="group cursor-pointer rounded-full hover:bg-transparent focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring dark:hover:bg-transparent"
+          className="group cursor-pointer rounded-full hover:bg-transparent focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-ring dark:hover:bg-transparent"
           aria-label={t('session.accountMenu')}
           disabled={signOut.isPending}
         >
